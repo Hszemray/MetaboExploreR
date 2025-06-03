@@ -1,7 +1,7 @@
 # utils.R
 
 #Function for logging script run time
-update_script_log <- function(master_list, ...) {
+update_script_log <- function(master_list,  section_name, previous_section_name, next_section_name) {
 
   # Capture the current time
     master_list$project_details$script_log$timestamps[[section_name]] <- Sys.time()
@@ -121,4 +121,3 @@ ensure_packages <- function() {
   message("Installed: ", paste(installed, collapse = ", "))
   message("Already available: ", paste(already_available, collapse = ", "))
 }
-
