@@ -101,12 +101,24 @@ move_folder <- function(source_dir, dest_dir, max_wait = 60) {
 
 # Package management
 ensure_packages <- function() {
-  package_list <- c('statTarget', 'svDialogs', 'ggpubr', 'janitor', 'plotly', 'knitr', 'viridisLite', 'mzR', 'httr', 'cowplot', 'matrixStats', 'tidyverse')
+  package_list <- c('statTarget', 'svDialogs', 'ggpubr', 'janitor', 'plotly',
+                    'knitr', 'viridisLite', 'mzR', 'httr', 'cowplot',
+                    'matrixStats', 'tidyverse')
 
-  for(idx_package in package_list){
-    if(!require(package = idx_package, character.only = TRUE)){
+  installed <- c()
+  already_available <- c()
+
+  for (idx_package in package_list) {
+    if (!require(package = idx_package, character.only = TRUE)) {
+      message("Installing package: ", idx_package)
       install.packages(idx_package, dependencies = TRUE)
-      suppressMessages(require(package = idx_package, character.only = TRUE))
+      suppressPackageStartupMessages(require(package = idx_package, character.only = TRUE))
+      installed <- c(installed, idx_package)
+    } else {
+      already_available <- c(already_available, idx_package)
     }
   }
+  message("Installed: ", paste(installed, collapse = ", "))
+  message("Already available: ", paste(already_available, collapse = ", "))
 }
+
