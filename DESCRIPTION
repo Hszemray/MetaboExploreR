@@ -30,6 +30,7 @@ Imports:
     statTarget,
     stringr,
     svDialogs,
+    testthat,
     tibble,
     tidyr,
     viridisLite
