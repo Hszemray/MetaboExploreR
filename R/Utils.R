@@ -3,7 +3,7 @@
 #' Import specific functions from packages
 #' @name import_external_functions
 #' @importFrom utils installed.packages sessionInfo
-#' @importFrom readr read_csv write_csv
+#' @importFrom readr read_csv write_csv read_tsv write_tsv
 #' @importFrom dplyr mutate_all bind_rows bind_cols filter select rename arrange contains intersect
 #' @importFrom purrr map
 #' @importFrom tibble tibble add_column

@@ -9,14 +9,84 @@ SkylineR(project_directory, mrm_template_list = list())
 \arguments{
 \item{project_directory}{User's path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.}
 
-\item{mrm_template_list}{User's path to desired MRM templates, must be in specified format. Can contain more than one template for multi-method projects.}
+\item{mrm_template_list}{User's Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list(mrm_guide_v1, mrm_guide_v2)}
 }
 \value{
 Curated project directory containing .wiff and .mzml files, and Skyline exports.
 }
 \description{
-This function processes \code{.wiff} files in a specified project directory and converts them to \code{.mzml} files, followed by various processing steps.
+This function processes \code{.wiff} files in a specified project directory and converts them to \code{.mzml} files, followed by targeted analysis using Skyline.
+}
+\details{
+\itemize{
+\item \strong{Input Validation:}
+\itemize{
+\item Validate project_directory
+\item Validate mrm_template_list
+}
+\item \strong{File Handling:}
+\itemize{
+\item Set wiff file paths from project file wiff
+\item Check if wiff files are found
+\item Set plateIDs
+}
+\item \strong{Processing Plates:}
+\itemize{
+\item For each plateID:
+\itemize{
+\item Setup project
+\item mzml conversion with MSConvert
+\item Import mzml
+\item Peak picking/intergration with Skyline MS
+}
+}
+\item \strong{Error Handling:}
+\itemize{
+\item Catch and log errors during plate processing
+}
+\item \strong{Final Cleanup:}
+\itemize{
+\item Archive raw files
+\item Message about availability of chromatograms and reports
+}
+}
 }
 \examples{
-SkylineR(project_directory = "USER/PATH/TO/PROJECT/DIRECTORY", mrm_template_list = list("USER/PATH/TO/user_mrm_template1.csv", "USER/PATH/TO/user_mrm_template2.csv"))
+#mrm_guide structure
+str(mrm_guide)
+spc_tbl_ [1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+$ Molecule List Name            : chr [1:1243] "CE" "CE" "CE" "CE" ... # Molecule Class
+$ Precursor Name                : chr [1:1243] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ... #Molecule Species
+$ Precursor Mz                  : num [1:1243] 615 643 641 671 669 ...
+$ Precursor Charge              : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
+$ Product Mz                    : num [1:1243] 369 369 369 369 369 ...
+$ Product Charge                : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
+$ Explicit Retention Time       : num [1:1243] 11.6 12.3 11.6 12.8 12.3 ...
+$ Explicit Retention Time Window: num [1:1243] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
+$ Note                          : chr [1:1243] "SIL_20:3 cholesteryl-d7 ester" "SIL_20:3 cholesteryl-d7 ester"... #Internal Standard
+$ Source                        : chr [1:1243] NA NA NA NA ...
+$ control_chart                 : logi [1:1243] FALSE FALSE FALSE FALSE FALSE FALSE ... # TRUE = plot for control charts in qcCheckeR
+- attr(*, "spec")=
+  .. cols(
+    ..   `Molecule List Name` = col_character(),
+    ..   `Precursor Name` = col_character(),
+    ..   `Precursor Mz` = col_double(),
+    ..   `Precursor Charge` = col_double(),
+    ..   `Product Mz` = col_double(),
+    ..   `Product Charge` = col_double(),
+    ..   `Explicit Retention Time` = col_double(),
+    ..   `Explicit Retention Time Window` = col_double(),
+    ..   Note = col_character(),
+    ..   Source = col_character(),
+    ..   control_chart = col_logical()
+    .. )
+- attr(*, "problems")=<externalptr>
+
+#Load example mrm_guide
+  file_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+  example_mrm_template <- read_tsv(file_path)
+
+#Run SkylineR function
+SkylineR(project_directory = "USER/PATH/TO/PROJECT/DIRECTORY", mrm_template_list = list("user_mrm_guide_v1.tsv", "user_mrm_guide_v2.tsv"))
+
 }
