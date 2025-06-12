@@ -1,10 +1,35 @@
 Package: MetaboExploreR
-Title: Convert LC-MS wiff files into preprocessed contration data report
+Title: Convert LC-MS wiff files into preprocessed concentration data
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
+    person("Harrison", "Szemray", , "Hszemray@live.com.au", role = c("aut", "cre"))
+    person("Luke", "Whiley", ,"luke.whiley@murdoch.edu.au" , role = c("aut", "cre"))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Imports: 
+    base,
+    cowplot,
+    dplyr,
+    forcats,
+    ggplot2,
+    ggpubr,
+    httr,
+    janitor,
+    knitr,
+    lubridate,
+    magrittr,
+    matrixStats,
+    mzR,
+    plotly,
+    purrr,
+    readr,
+    ropls,
+    statTarget,
+    stringr,
+    svDialogs,
+    tibble,
+    tidyr,
+    viridisLite
