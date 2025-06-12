@@ -158,9 +158,7 @@ qcCheckR <- function(project_directory, mrm_template_list, sample_file) {
     stop("mrm_template_list parameter is required.")
   }
 
-
   # process data
-  for (plateID in plateIDs) {
     tryCatch({
       ##project setup
       master_list <- qcCheckR_setup_project(project_directory)
@@ -191,5 +189,4 @@ qcCheckR <- function(project_directory, mrm_template_list, sample_file) {
       message(paste("Error processing plate", plateID, ":", e$message))
       log_error(paste("Error processing plate", plateID, ":", e$message))
     })
-  }
-}#close of function
+  }#close of function
