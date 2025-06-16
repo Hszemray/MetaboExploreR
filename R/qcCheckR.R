@@ -4,13 +4,14 @@
 #'
 #' @param project_directory A character string specifying the path to the project directory.
 #' @param mrm_template_list A list of MRM templates and associated concentration guide. Must have specific column names. See examples for structure of mrm_template_list. Must include mrm_guide labelled as "SIL_guide" and associated concentration guide labelled as "conc_guide".
+#' @param sample_metadata A data frame containing sample information.
 #' @return A list containing the processed data and generated reports.
 #' @examples
 #' #Example of mrm_template_list structure for multiple methods in a single project
 #' str(mrm_template_list)
 #' List of 2
 #' $ v1:List of 2
-#' ..$ SIL_guide : spc_tbl_ [1,231 × 10] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+#' ..$ SIL_guide : spc_tbl_ [1,231 x 10] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
 #' .. ..$ molecule_list_name            : chr [1:1231] "CE" "CE" "CE" "CE" ...
 #' .. ..$ precursor_name                : chr [1:1231] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ...
 #' .. ..$ precursor_mz                  : num [1:1231] 615 643 641 671 669 ...
@@ -149,7 +150,10 @@
 #' #Run qcCheckR function
 #' qcCheckR(project_directory = "path/to/project_directory", mrm_template_list = mrm_template_list)
 #' @export
-qcCheckR <- function(project_directory, mrm_template_list, sample_file) {
+qcCheckR <- function(project_directory, mrm_template_list, sample_metadata) {
+  #Ask user to authorise install of packages
+  check_and_prompt_suggested_packages()
+
   # validate project_directory
   validate_project_directory(project_directory)
 

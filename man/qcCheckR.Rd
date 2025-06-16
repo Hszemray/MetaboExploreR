@@ -4,12 +4,14 @@
 \alias{qcCheckR}
 \title{Quality Control Check for R}
 \usage{
-qcCheckR(project_directory, mrm_template_list, sample_file)
+qcCheckR(project_directory, mrm_template_list, sample_metadata)
 }
 \arguments{
 \item{project_directory}{A character string specifying the path to the project directory.}
 
 \item{mrm_template_list}{A list of MRM templates and associated concentration guide. Must have specific column names. See examples for structure of mrm_template_list. Must include mrm_guide labelled as "SIL_guide" and associated concentration guide labelled as "conc_guide".}
+
+\item{sample_metadata}{A data frame containing sample information.}
 }
 \value{
 A list containing the processed data and generated reports.
@@ -22,7 +24,7 @@ This function performs a series of quality control checks on the data within a s
 str(mrm_template_list)
 List of 2
 $ v1:List of 2
-..$ SIL_guide : spc_tbl_ [1,231 × 10] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+..$ SIL_guide : spc_tbl_ [1,231 x 10] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
 .. ..$ molecule_list_name            : chr [1:1231] "CE" "CE" "CE" "CE" ...
 .. ..$ precursor_name                : chr [1:1231] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ...
 .. ..$ precursor_mz                  : num [1:1231] 615 643 641 671 669 ...

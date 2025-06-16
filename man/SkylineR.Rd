@@ -4,12 +4,16 @@
 \alias{SkylineR}
 \title{SkylineR}
 \usage{
-SkylineR(project_directory, mrm_template_list = list())
+SkylineR(project_directory, mrm_template_list, QC_sample_label)
 }
 \arguments{
-\item{project_directory}{User's path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.}
+\item{project_directory}{Path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.}
 
-\item{mrm_template_list}{User's Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list(mrm_guide_v1, mrm_guide_v2)}
+\item{mrm_template_list}{Path to Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list("path/to/mrm_guide_v1", "path/to/mrm_guide_v2")}
+
+\item{QC_sample_label}{User specified tag to filter QC samples.
+E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+QC_sample_label = "LTR" to target files containing LTR for QC.}
 }
 \value{
 Curated project directory containing .wiff and .mzml files, and Skyline exports.
@@ -54,7 +58,7 @@ This function processes \code{.wiff} files in a specified project directory and 
 \examples{
 #mrm_guide structure
 str(mrm_guide)
-spc_tbl_ [1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+spc_tbl_[1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
 $ Molecule List Name            : chr [1:1243] "CE" "CE" "CE" "CE" ... # Molecule Class
 $ Precursor Name                : chr [1:1243] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ... #Molecule Species
 $ Precursor Mz                  : num [1:1243] 615 643 641 671 669 ...

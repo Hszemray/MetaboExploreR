@@ -4,7 +4,10 @@
 \alias{qcCheckR_RSD_filter}
 \title{RSD Filter}
 \usage{
-qcCheckR_RSD_filter()
+qcCheckR_RSD_filter(master_list)
+}
+\arguments{
+\item{master_list}{Master_list from previous functions}
 }
 \value{
 The updated \code{master_list} with RSD filter flags.

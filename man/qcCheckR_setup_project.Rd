@@ -6,6 +6,9 @@
 \usage{
 qcCheckR_setup_project(project_directory)
 }
+\arguments{
+\item{project_directory}{project directory inherited from qcCheckR.R}
+}
 \value{
 The updated \code{master_list} object with the project setup details.
 }

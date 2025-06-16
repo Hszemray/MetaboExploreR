@@ -5,12 +5,21 @@
 \title{SkylineR Internal Helper Functions
 Skyline Setup Project}
 \usage{
-skyline_setup_project(project_directory, plateID)
+skyline_setup_project(
+  project_directory,
+  plateID,
+  mrm_template_list,
+  QC_sample_label
+)
 }
 \arguments{
 \item{project_directory}{Directory path for the project folder containing the wiff folder and wiff files.}
 
 \item{plateID}{Plate ID for the current plate.}
+
+\item{mrm_template_list}{list of mrm_guides.}
+
+\item{QC_sample_label}{key for filtering QC samples from sample list.}
 }
 \value{
 The updated \code{master_list} object with the project setup details.

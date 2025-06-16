@@ -73,7 +73,7 @@ validate_template_info <- function(mrm_template_list) {
   for (version in names(mrm_template_list)) {
     for (guide in c("SIL_guide", "conc_guide")) {
       file_path <- mrm_template_list[[version]][[guide]]
-      data <- read.csv(file_path, stringsAsFactors = FALSE)
+      data <- read_tsv(file_path)
 
       # Check column headers
       if (!all(required_columns %in% colnames(data))) {

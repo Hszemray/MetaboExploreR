@@ -2,14 +2,17 @@
 #'
 #' @description This function processes `.wiff` files in a specified project directory and converts them to `.mzml` files, followed by targeted analysis using Skyline.
 #'
-#' @param project_directory User's path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.
-#' @param mrm_template_list User's Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list(mrm_guide_v1, mrm_guide_v2)
+#' @param project_directory Path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.
+#' @param mrm_template_list Path to Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list("path/to/mrm_guide_v1", "path/to/mrm_guide_v2")
+#' @param QC_sample_label User specified tag to filter QC samples.
+#' E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+#' QC_sample_label = "LTR" to target files containing LTR for QC.
 #' @return Curated project directory containing .wiff and .mzml files, and Skyline exports.
 #' @export
 #' @examples
 #' #mrm_guide structure
 #' str(mrm_guide)
-#' spc_tbl_ [1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+#' spc_tbl_[1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
 #' $ Molecule List Name            : chr [1:1243] "CE" "CE" "CE" "CE" ... # Molecule Class
 #' $ Precursor Name                : chr [1:1243] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ... #Molecule Species
 #' $ Precursor Mz                  : num [1:1243] 615 643 641 671 669 ...
@@ -77,12 +80,18 @@
 #'    \item Message about availability of chromatograms and reports
 #'   }
 #' }
-SkylineR <- function(project_directory, mrm_template_list = list()) {
+SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
+  #Ask user to authorise install of packages
+  #check_and_prompt_suggested_packages()
+
   # Validate project_directory
   validate_project_directory(project_directory)
 
+  # Set working directory to project directory
+  setwd(project_directory)
+
   # Validate mrm_template_list
-  validate_mrm_template_list(mrm_template_list)
+  #validate_mrm_template_list(mrm_template_list) # patch to check the mrm_guide has appropriate columns also need to add a check to ensure wiff has a .wiff and a .wiff.scan
 
   # Set wiff file paths from project file wiff
   wiff_file_paths <- list.files(path = paste0(project_directory, "/wiff"), pattern = ".wiff$", full.names = TRUE)
@@ -98,13 +107,13 @@ SkylineR <- function(project_directory, mrm_template_list = list()) {
   # Process each plate
   for (plateID in plateIDs) {
     tryCatch({
-      master_list <- setup_project(project_directory, plateID)
+      master_list <- skyline_setup_project(project_directory, plateID, mrm_template_list, QC_sample_label)
       master_list <- mzml_conversion(plateID, master_list)
       master_list <- import_mzml(plateID, master_list)
       master_list <- peak_picking(plateID, master_list)
     }, error = function(e) {
-      message(paste("Error processing plate", plateID, ":", e$message))
-      log_error(paste("Error processing plate", plateID, ":", e$message))
+      message(paste("Error processing plate ",plateID,": ",e$message))
+      log_error(paste("Error processing plate ",plateID,": ",e$message))
     })
   }
 

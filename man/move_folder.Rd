@@ -12,6 +12,8 @@ move_folder(source_dir, dest_dir, max_wait = 60, max_retries = 30)
 \item{dest_dir}{Directory path for the folder to be copied to.}
 
 \item{max_wait}{Maximum wait time (in seconds) for the system prior to deleting the moved folder.}
+
+\item{max_retries}{Maxiumum number of attempts to try move/delete prior to error. Default 30}
 }
 \value{
 None. The function performs the move operation and prints a message upon successful completion.
@@ -21,6 +23,6 @@ This function moves a folder from the source directory to the destination direct
 }
 \examples{
 \dontrun{
-move_folder("path/to/source", "path/to/destination", 60)
+move_folder(source_dir = "path/to/source", dest_dir = "path/to/destination", max_wait = 60, max_retries = 30)
 }
 }
