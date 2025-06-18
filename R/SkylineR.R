@@ -81,8 +81,6 @@
 #'   }
 #' }
 SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
-  #Ask user to authorise install of packages
-  #check_and_prompt_suggested_packages()
 
   # Validate project_directory
   validate_project_directory(project_directory)
@@ -91,7 +89,7 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   setwd(project_directory)
 
   # Validate mrm_template_list
-  #validate_mrm_template_list(mrm_template_list) # patch to check the mrm_guide has appropriate columns also need to add a check to ensure wiff has a .wiff and a .wiff.scan
+  validate_mrm_template_list(mrm_template_list) # patch to check the mrm_guide has appropriate columns also need to add a check to ensure wiff has a .wiff and a .wiff.scan
 
   # Set wiff file paths from project file wiff
   wiff_file_paths <- list.files(path = paste0(project_directory, "/wiff"), pattern = ".wiff$", full.names = TRUE)
@@ -104,6 +102,11 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   # Set plateIDs
   plateIDs <- str_remove(str_extract(wiff_file_paths, "[^/]+$"), "\\.wiff$")
 
+
+  #Set failed/succesful plates
+  failed_plates <- c()
+  successful_plates <- c()
+
   # Process each plate
   for (plateID in plateIDs) {
     tryCatch({
@@ -111,10 +114,26 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
       master_list <- mzml_conversion(plateID, master_list)
       master_list <- import_mzml(plateID, master_list)
       master_list <- peak_picking(plateID, master_list)
+      successful_plates <- c(successful_plates, plateID)
     }, error = function(e) {
       message(paste("Error processing plate ",plateID,": ",e$message))
       log_error(paste("Error processing plate ",plateID,": ",e$message))
+      failed_plates <<- c(failed_plates, plateID)
     })
+  }
+
+  # Display results
+  message("Processing complete.")
+  if (length(successful_plates) > 0){
+    message("Successful plates: ", paste(successful_plates, collapse = ", "))
+  }
+  if (length(failed_plates) > 0){
+    message("Failed plates: ", paste(failed_plates, collapse = ", "))
+  }
+
+  # Check if all plates failed
+  if (length(successful_plates) == 0) {
+    stop("All plates failed. Halting script.")
   }
 
   # Final cleanup and archiving
