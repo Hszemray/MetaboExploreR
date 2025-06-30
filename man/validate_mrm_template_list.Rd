@@ -16,5 +16,7 @@ TRUE if the validation is successful, otherwise an error is thrown.
 This function checks if the \code{mrm_template_list} parameter is a list of strings.
 }
 \examples{
+\dontrun{
 validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"))
+}
 }

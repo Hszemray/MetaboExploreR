@@ -16,5 +16,7 @@ NULL. Stops execution if validation fails.
 This function validates the mrm_template_list list by checking the column headers and ensuring there are no NA or NULL values in the SIL_guide and conc_guide files.
 }
 \examples{
-validate_template_info(mrm_template_list)
+\dontrun{
+validate_template_info(master_list)
+}
 }

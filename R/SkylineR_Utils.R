@@ -151,7 +151,6 @@ delete_source_directory <- function(source_dir) {
 #' skyline_setup_project("path/to/project_directory", "plateID", mrm_template_list, "QC_sample_label")
 #' }
 skyline_setup_project <- function(project_directory, plateID, mrm_template_list, QC_sample_label) {
-  validate_project_directory(project_directory)
   master_list <- initialise_master_list()
   master_list <- store_environment_details(master_list)
   master_list <- set_project_details(master_list, project_directory, plateID, QC_sample_label)
@@ -324,15 +323,34 @@ set_working_directory <- function(project_directory) {
 #' command <- construct_command_for_terminal(wiff_file_paths, "path/to/project_directory")
 #' }
 construct_command_for_terminal <- function(wiff_file_paths, project_directory) {
+  # Normalize file paths
   file_paths <- gsub("/", "\\\\", wiff_file_paths)
-  base_command <- "\"C:\\Program Files\\ProteoWizard\\ProteoWizard 3.0.25015.b6222f2\\msconvert.exe\" --zlib --filter \"titleMaker <RunId>.<ScanNumber>.<ScanNumber>.<ChargeState> File:\\\"<SourcePath>\\\", NativeID:\\\"<Id>\\\"\""
+
+  # Detect ProteoWizard version folder
+  base_path <- "C:\\Program Files\\ProteoWizard\\"
+  folders <- list.dirs(base_path, full.names = FALSE, recursive = FALSE)
+  version_folder <- folders[grepl("^ProteoWizard", folders)]
+
+  # Use the first match or sort to get the latest version
+  selected_version <- sort(version_folder, decreasing = TRUE)[1]
+  msconvert_path <- file.path(base_path, selected_version, "msconvert.exe")
+
+  # Construct the base command
+  base_command <- sprintf('"%s" --zlib --filter "titleMaker <RunId>.<ScanNumber>.<ScanNumber>.<ChargeState> File:\\"<SourcePath>\\", NativeID:\\"<Id>\\""', msconvert_path)
+
+  # Prepare output directory
   output_dir <- gsub("/", "\\\\", project_directory) %>% paste0(.,"\\msConvert_mzml_output")
+
+  # Quote file paths
   quoted_file_paths <- sapply(file_paths, shQuote)
+
+  # Construct full command
   full_command <- paste(
     base_command,
     paste(quoted_file_paths, collapse = " "),
     "--outdir", shQuote(output_dir)
   )
+
   return(full_command)
 }
 
@@ -1083,7 +1101,7 @@ archive_raw_files <- function(project_directory) {
   validate_project_directory(project_directory)
   archive_files(project_directory, "wiff")
   archive_files(project_directory, "msConvert_mzml_output")
-  message("Skyline R is now finished running all plates :)")
+  message("\n Skyline R is now finished running all plates :)")
 }
 
 ###Sub Functions----

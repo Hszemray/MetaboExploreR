@@ -1,6 +1,8 @@
 # config.R
 
 #Update Script Log Functions----
+
+##Primary Function----
 #' Update Script Log
 #'
 #' This function updates the script log in the `master_list` object by capturing the current time, calculating the runtime for the current section, and creating a message for the log.
@@ -9,10 +11,7 @@
 #' @param section_name A string representing the name of the current section.
 #' @param previous_section_name A string representing the name of the previous section.
 #' @param next_section_name A string representing the name of the next section.
-#'
 #' @return The updated `master_list` object with the new log information.
-
-#'
 #' @examples
 #' \dontrun{
 #' master_list <- list(project_details = list(script_log = list(timestamps = list(start_time = Sys.time()),
@@ -29,6 +28,7 @@ update_script_log <- function(master_list, section_name, previous_section_name, 
   return(master_list)
 }
 
+##Seconday Functions----
 #' Validate Previous Section
 #'
 #' This function validates the previous section name.
@@ -122,14 +122,13 @@ create_message <- function(master_list, section_name, next_section_name) {
 #' @param section_name A string representing the name of the current section.
 #'
 #' @return None
-
 print_message <- function(master_list, section_name) {
   cat(master_list$project_details$script_log$messages[[section_name]])
   return(master_list)
 }
 
 
-#Validate Project Directories Functiions----
+#Validate Project Directories Functions----
 #' Validate Project Directory
 #'
 #' This function checks if the `project_directory` parameter is a single string and if the specified directory exists.
@@ -137,7 +136,9 @@ print_message <- function(master_list, section_name) {
 #' @param project_directory A character string representing the path to the project directory.
 #' @return TRUE if the validation is successful, otherwise an error is thrown.
 #' @examples
+#' \dontrun{
 #' validate_project_directory("path/to/project_directory")
+#' }
 validate_project_directory <- function(project_directory) {
   # Check if project_directory is a single string
   if (!is.character(project_directory) || length(project_directory) != 1) {
@@ -177,7 +178,9 @@ validate_master_list_project_directory <- function(master_list) {
 #' @param mrm_template_list A list of character strings representing the paths to MRM templates.
 #' @return TRUE if the validation is successful, otherwise an error is thrown.
 #' @examples
+#' \dontrun{
 #' validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"))
+#' }
 validate_mrm_template_list <- function(mrm_template_list) {
   # Check if mrm_template_list is a list of strings
   if (!is.list(mrm_template_list) || !all(sapply(mrm_template_list, is.character))) {
@@ -196,7 +199,9 @@ validate_mrm_template_list <- function(mrm_template_list) {
 #' @param error_message A character string representing the error message to be logged.
 #' @return None. The function writes the error message to the log file.
 #' @examples
+#' \dontrun{
 #' log_error("An error occurred while processing the data.")
+#' }
 log_error <- function(error_message) {
   log_file <- "error_log.txt"
   write(error_message, file = log_file, append = TRUE)
@@ -210,9 +215,11 @@ log_error <- function(error_message) {
 #' @param mrm_template_list A list specifying the file paths for the templates.
 #' @return NULL. Stops execution if validation fails.
 #' @examples
-#' validate_template_info(mrm_template_list)
+#' \dontrun{
+#' validate_template_info(master_list)
+#' }
 validate_template_info <- function(mrm_template_list) {
-  required_columns <- c("Column1", "Column2") # Replace with actual required column names
+  required_columns <- c("Molecule List Name", "Precursor Name","Precursor Mz", "Precursor Charge", "Product Mz", "Product Charge", "Explicit Retention Time", "Explicit Retention Time Window", "Note", "control_chart" )
 
   for (version in names(mrm_template_list)) {
     for (guide in c("SIL_guide", "conc_guide")) {
@@ -224,11 +231,86 @@ validate_template_info <- function(mrm_template_list) {
         stop(paste("Missing required columns in", guide, "for version", version))
       }
 
+      # Exclude the 'note' column
+      data_to_check <- data[ , setdiff(names(data), "note")]
+
       # Check for NA or NULL values
-      if (any(is.na(data)) || any(is.null(data))) {
+      if (any(is.na(data_to_check)) || any(sapply(data_to_check, function(x) any(sapply(x, is.null))))) {
         stop(paste("NA or NULL values found in", guide, "for version", version))
       }
+
     }
+  }
+}
+
+# Validate Proteowizard and Skyline install----
+#' Validate Proteowizard and Skyline install
+#'
+#' This function check proteowizard and skyline are correctly installed in users C dive program files.
+#'
+#' @return Returns a program found if installed in correct location or stops script and asks user to install if not.
+#' @examples
+#' \dontrun{
+#' validate_proteowizard_skyline()
+#' }
+validate_proteowizard_skyline <- function() {
+  base_path <- "C:\\Program Files\\"
+  folders <- list.dirs(base_path, full.names = FALSE, recursive = FALSE)
+
+  # Check ProteoWizard
+  if ("ProteoWizard" %in% folders) {
+    message("ProteoWizard found in C:\\Program Files")
+  } else {
+    stop(message("ProteoWizard not found.\nPlease install it in C:\\Program Files from: https://proteowizard.sourceforge.io/download.html"))
+  }
+
+  # Check Skyline
+  if ("Skyline" %in% folders) {
+    message("Skyline found in C:\\Program Files")
+  } else {
+    stop(message("Skyline not found.\nPlease install it in C:\\Program Files from: https://skyline.ms/wiki/home/software/Skyline/page.view?name=install-administator-64"))
+  }
+}
+
+# Validate Wiff files----
+#' Validate Wiff files
+#'
+#' This function checks project directorie contains wiff files and associated wiff.scan files.
+#'
+#' @return validated paths and returns message on outcome of check.
+#' @examples
+#' \dontrun{
+#' wiff_file_paths <- validate_wiff_file()
+#' }
+validate_wiff_file <- function(project_directory) {
+  wiff_path <- file.path(project_directory, "wiff")
+  files <- list.files(path = wiff_path, pattern = "\\.wiff$", full.names = TRUE)
+
+  validated_wiff_files <- c()
+  invalid_wiff_files <- c()
+
+  for (wiff in files) {
+    scan_file <- paste0(wiff, ".scan")
+    if (file.exists(scan_file)) {
+      message("Found matching .wiff.scan for: ", basename(wiff))
+      validated_wiff_files <- c(validated_wiff_files, wiff)
+    } else {
+      message("Missing .wiff.scan for: ", basename(wiff))
+      invalid_wiff_files <- c(invalid_wiff_files, wiff)
+    }
+  }
+
+  if (length(validated_wiff_files) > 0) {
+    message("Returning validated wiff files:\n", paste(validated_wiff_files, collapse = "\n"))
+    return(validated_wiff_files)
+  }
+
+  if (length(invalid_wiff_files) > 0) {
+    message("Invalid wiff files:\n", paste(invalid_wiff_files, collapse = "\n"))
+  }
+
+  if (length(invalid_wiff_files) > 0 && length(validated_wiff_files) == 0) {
+    stop("No valid wiff files for processing.\nPlease ensure you have .wiff and associated .wiff.scan files in the 'wiff' folder of your project directory.")
   }
 }
 

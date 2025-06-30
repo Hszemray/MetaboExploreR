@@ -16,5 +16,7 @@ TRUE if the validation is successful, otherwise an error is thrown.
 This function checks if the \code{project_directory} parameter is a single string and if the specified directory exists.
 }
 \examples{
+\dontrun{
 validate_project_directory("path/to/project_directory")
+}
 }

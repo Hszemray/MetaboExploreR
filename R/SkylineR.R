@@ -91,8 +91,11 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   # Validate mrm_template_list
   validate_mrm_template_list(mrm_template_list) # patch to check the mrm_guide has appropriate columns also need to add a check to ensure wiff has a .wiff and a .wiff.scan
 
-  # Set wiff file paths from project file wiff
-  wiff_file_paths <- list.files(path = paste0(project_directory, "/wiff"), pattern = ".wiff$", full.names = TRUE)
+  # Validate msconvert and skyline are installed in C:/Program Files/
+  validate_proteowizard_skyline()
+
+  # Validate wiff files
+  wiff_file_paths <- validate_wiff_file(project_directory)
 
   # Check if wiff files are found
   if (length(wiff_file_paths) == 0) {
@@ -103,7 +106,7 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   plateIDs <- str_remove(str_extract(wiff_file_paths, "[^/]+$"), "\\.wiff$")
 
 
-  #Set failed/succesful plates
+  #Set failed/successful plates
   failed_plates <- c()
   successful_plates <- c()
 
@@ -123,12 +126,12 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   }
 
   # Display results
-  message("Processing complete.")
+  message("Processing complete! \n")
   if (length(successful_plates) > 0){
-    message("Successful plates: ", paste(successful_plates, collapse = ", "))
+    message("Successful plates:\n", paste(successful_plates, collapse = "\n"))
   }
   if (length(failed_plates) > 0){
-    message("Failed plates: ", paste(failed_plates, collapse = ", "))
+    message("Failed plates:\n", paste(failed_plates, collapse = "\n "))
   }
 
   # Check if all plates failed
@@ -138,7 +141,8 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
 
   # Final cleanup and archiving
   archive_raw_files(project_directory)
-  message("Chromatograms and reports are now available per plate in your specified directory.\nPlease Run qcCheckR to calculate concentrations and QC data")
+  message("\n Chromatograms and reports are now available per plate in ",paste(project_directory),
+          ".\n Please run qcCheckR to calculate concentrations and QC the data")
 }
 
 
