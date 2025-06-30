@@ -1,51 +1,102 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+# LipidExplorer: Targeted Lipidomics Processing Pipeline
 
-# MetaboExploreR
+**Author**: Automated Analysis Pipeline  
+**Date**: June 30, 2025
 
-<!-- badges: start -->
+## Overview
 
-<!-- badges: end -->
+LipidExplorer provides an automated pipeline for processing and quality
+control of targeted lipidomics data. The toolkit consists of two main
+functions:
 
-The goal of MetaboExploreR is to …
+1.  **`SkylineR()`**: Processes raw mass spectrometry data (.wiff
+    files), performs retention time optimization, and prepares data for
+    Skyline analysis  
+2.  **`qcCheckeR()`**: Performs comprehensive quality control, batch
+    correction, and generates analytical reports
 
-## Installation
+## Directory Structure
 
-You can install the development version of MetaboExploreR like so:
+Create this structure before execution:
+
+    project_directory/
+    ├── wiff/          # Raw .wiff files
+    ├── data/          # Processed data (auto-created)
+    └── reports/       # Output reports (auto-created)
+
+## Functions
+
+### 1. SkylineR()
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+SkylineR(project_directory)
 ```
 
-## Example
+#### Processing Workflow:
 
-This is a basic example which shows you how to solve a common problem:
+1.  Converts .wiff → .mzML via ProteoWizard  
+2.  Performs retention time optimization  
+3.  Generates Skyline input files  
+4.  Executes Skyline processing  
+5.  Organizes output into plate-specific folders
+
+### 2. qcCheckeR()
 
 ``` r
-library(MetaboExploreR)
-## basic example code
+qcCheckeR(project_directory)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+#### Quality Control Workflow:
+
+1.  Batch correction using statTarget  
+2.  Sample and feature filtering  
+3.  Quality metric calculation (RSD, missing values)  
+4.  Generation of:
+    - Interactive PCA plots  
+    - Control charts  
+    - Quality summary tables  
+    - HTML/Excel reports
+
+## Usage Example
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+# Process raw data
+SkylineR("~/projects/lipidomics_study")
+
+# Perform quality control
+qcCheckeR("~/projects/lipidomics_study")
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
+## Output Structure
 
-You can also embed plots, for example:
+Post-execution directory:
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+    project_directory/
+    ├── data/
+    │   ├── mzml/             # Converted mass spec files
+    │   ├── skyline/          # Skyline input/output
+    │   ├── rda/              # R data files
+    │   └── batch_correction/ # Batch correction results
+    ├── reports/
+    │   ├── html_report/      # Interactive QC report
+    │   └── xlsx_report/      # Analysis-ready Excel files
+    └── archive/              # Original files backup
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+## Technical Notes
+
+1.  **Dependencies**:
+    - ProteoWizard installed at `C:/Program Files/ProteoWizard/`  
+    - Skyline installed at `C:/Program Files/Skyline/`  
+2.  **Memory Management**: Process large datasets plate-by-plate  
+3.  **Troubleshooting**:
+    - Verify file permissions in project directory  
+    - Check .wiff files for acquisition errors  
+    - Ensure sufficient disk space (\>10 GB recommended)
+
+## Support
+
+For technical assistance, please open an issue at:  
+<https://github.com/Hszemray/MetaboExploreR>
+
+> **Version Information**: LipidExplorer v6.0 (2025-06-30)
