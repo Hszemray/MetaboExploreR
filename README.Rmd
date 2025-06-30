@@ -11,27 +11,24 @@ knitr::opts_chunk$set(
 )
 ```
 
-# LipidExplorer: Targeted Lipidomics Processing Pipeline
+# MetaboExploreR: Targeted Lipidomics Processing Pipeline
 
-**Author**: Automated Analysis Pipeline  
+**Authors**: Harrison John Szemray, Luke Gray Whiley
 **Date**: `r format(Sys.Date(), '%B %d, %Y')`
 
 ## Overview
 
-LipidExplorer provides an automated pipeline for processing and quality control of targeted lipidomics data. The toolkit consists of two main functions:
+MetaboExploreR provides an automated pipeline for processing and quality control of targeted lipidomics data. The toolkit consists of two main functions:
 
-1. **`SkylineR()`**: Processes raw mass spectrometry data (.wiff files), performs retention time optimization, and prepares data for Skyline analysis  
-2. **`qcCheckeR()`**: Performs comprehensive quality control, batch correction, and generates analytical reports
+1. **`SkylineR()`**: Processes raw mass spectrometry data (.wiff files), performs retention time optimization, and prepares data for Skyline analysis, saves Skyline output to project directory.  
+2. **`qcCheckeR()`**: Performs comprehensive quality control, batch correction, and generates analytical reports ready for data analysis
 
 ## Directory Structure
 
 Create this structure before execution:
-
 ```
 project_directory/
 ├── wiff/          # Raw .wiff files
-├── data/          # Processed data (auto-created)
-└── reports/       # Output reports (auto-created)
 ```
 
 ## Functions
@@ -39,20 +36,20 @@ project_directory/
 ### 1. SkylineR()
 
 ```r
-SkylineR(project_directory)
+SkylineR(project_directory, mrm_template_list, QC_sample_label)
 ```
 
 #### Processing Workflow:
 1. Converts .wiff → .mzML via ProteoWizard  
-2. Performs retention time optimization  
+2. Performs retention time optimisation  
 3. Generates Skyline input files  
 4. Executes Skyline processing  
-5. Organizes output into plate-specific folders  
+5. Organises output into plate-specific folders  
 
 ### 2. qcCheckeR()
 
 ```r
-qcCheckeR(project_directory)
+qcCheckeR(project_directory, mrm_template_list, QC_sample_label, user_name)
 ```
 
 #### Quality Control Workflow:
@@ -69,27 +66,33 @@ qcCheckeR(project_directory)
 
 ```r
 # Process raw data
-SkylineR("~/projects/lipidomics_study")
+SkylineR(project_directory = "USER/PATH/TO/PROJECT/DIRECTORY", mrm_template_list = list("user_mrm_guide_v1.tsv", "user_mrm_guide_v2.tsv"))
 
 # Perform quality control
-qcCheckeR("~/projects/lipidomics_study")
+qcCheckR(project_directory = "path/to/project_directory", mrm_template_list = mrm_template_list, user_name = "Jane_Doe")
 ```
 
 ## Output Structure
 
-Post-execution directory:
+Post-execution directory of SkylineR and qcCheckR:
 
 ```
-project_directory/
-├── data/
-│   ├── mzml/             # Converted mass spec files
-│   ├── skyline/          # Skyline input/output
-│   ├── rda/              # R data files
-│   └── batch_correction/ # Batch correction results
-├── reports/
-│   ├── html_report/      # Interactive QC report
-│   └── xlsx_report/      # Analysis-ready Excel files
-└── archive/              # Original files backup
+User Project Directory
+├── Archive #Archive of all mzml and wiff files for backup
+├── ALL
+│   ├── data
+│   │   ├── batch_correction
+│   │   ├── skyline_reports
+│   └── html_report #Summary of project, PCA, and control charts
+│   └── xlsx_report # Data for further user analysis
+├── PLATE_X (This structure will be created per plate)
+    ├── data
+        ├── mzml #mzml files from proteowizard
+        ├── rda  #saved rda from processing
+        ├── sciex_raw #original .wiff files
+        └── skyline #input and output files of Skyline processing
+    
+
 ```
 
 ## Technical Notes
@@ -97,9 +100,13 @@ project_directory/
 1. **Dependencies**:  
    - ProteoWizard installed at `C:/Program Files/ProteoWizard/`  
    - Skyline installed at `C:/Program Files/Skyline/`  
-2. **Memory Management**: Process large datasets plate-by-plate  
+2. **Memory Management(Automated)**: 
+   - Process large datasets plate-by-plate
+   - Offload processed plate data before processing next plate
+   
 3. **Troubleshooting**:  
-   - Verify file permissions in project directory  
+   - Run R as systems administrator
+   - Ensure your R, Rstudio and package versions are all up to date
    - Check .wiff files for acquisition errors  
    - Ensure sufficient disk space (>10 GB recommended)  
 
