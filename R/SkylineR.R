@@ -1,13 +1,13 @@
 #'SkylineR
 #'
-#' @description This function processes `.wiff` files in a specified project directory and converts them to `.mzml` files, followed by targeted analysis using Skyline.
+#' @description This function converts raw data files from mass spec vendors to `.mzml` files, followed by targeted analysis using Skyline.
 #'
 #' @param project_directory Path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.
 #' @param mrm_template_list Path to Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list("path/to/mrm_guide_v1", "path/to/mrm_guide_v2")
 #' @param QC_sample_label User specified tag to filter QC samples.
 #' E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
 #' QC_sample_label = "LTR" to target files containing LTR for QC.
-#' @return Curated project directory containing .wiff and .mzml files, and Skyline exports.
+#' @return Curated project directory containing raw data files and .mzml files, and Skyline exports.
 #' @export
 #' @examples
 #' #mrm_guide structure
@@ -95,16 +95,15 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   validate_proteowizard_skyline()
 
   # Validate wiff files
-  wiff_file_paths <- validate_wiff_file(project_directory)
+  file_paths <- validate_file_types(project_directory)
 
   # Check if wiff files are found
-  if (length(wiff_file_paths) == 0) {
-    stop("No .wiff files found in the specified project directory.")
+  if (length(file_paths) == 0) {
+    stop("No files supported found in the specified project directory for processing. Please check the directory and try again.")
   }
 
   # Set plateIDs
-  plateIDs <- str_remove(str_extract(wiff_file_paths, "[^/]+$"), "\\.wiff$")
-
+  plateIDs <- str_remove(str_extract(file_paths, "[^/]+$"), "\\.(wiff|raw|d|RAW|yep|td2)$")
 
   #Set failed/successful plates
   failed_plates <- c()

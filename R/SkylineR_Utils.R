@@ -127,7 +127,7 @@ wait_until_files_free <- function(files_to_copy, max_wait = 60, max_retries = 30
 delete_source_directory <- function(source_dir) {
   unlink(source_dir, recursive = TRUE, force = TRUE)
   if (dir.exists(source_dir)) {
-    stop(paste("Failed to delete source directory:", source_dir))
+    stop(paste("Failed to delete directory:", source_dir))
   } else {
     message(paste("Successfully moved and deleted:", source_dir))
   }
@@ -218,9 +218,10 @@ set_project_details <- function(master_list, project_directory, plateID, QC_samp
   master_list$project_details$lipidExploreR_version <- "Automated"
   master_list$project_details$user_name <- "Australian National Phenome Centre"
   master_list$project_details$project_name <- str_extract(master_list$project_details$project_dir, "[^/]*$")
-  master_list$project_details$wiff_file_paths <- list.files(path = paste0(master_list$project_details$project_dir, "/wiff"), pattern = paste0(plateID, ".wiff$"), all.files = FALSE,
-                                                            full.names = TRUE, recursive = FALSE,
-                                                            ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
+  master_list$project_details$all_file_paths <- list.files(path = paste0(master_list$project_details$project_dir, "/raw_data"),
+                                                       pattern = paste0(plateID, "\\.(wiff|d|raw)$"),
+                                                       all.files = FALSE, full.names = TRUE, recursive = FALSE,
+                                                       ignore.case = TRUE, include.dirs = FALSE, no.. = FALSE)
   master_list$project_details$plateID <- plateID
   master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$script_log$timestamps$start_time <- Sys.time()
@@ -265,7 +266,7 @@ setup_project_directories <- function(master_list) {
     dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/mzml"), showWarnings = FALSE)
     dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/rda"), showWarnings = FALSE)
     dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/skyline"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/sciex_raw"), showWarnings = FALSE)
+    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/raw_data"), showWarnings = FALSE)
     dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/batch_correction"), showWarnings = FALSE)
     dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/html_report"), showWarnings = FALSE)
   }
@@ -277,7 +278,7 @@ setup_project_directories <- function(master_list) {
 ###Primary Function----
 #' mzml_conversion
 #'
-#' This function converts wiff files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
+#' This function converts raw files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
 #'
 #' @param plateID Plate ID for the current plate.
 #' @param master_list Master list generated internally.
@@ -289,7 +290,7 @@ setup_project_directories <- function(master_list) {
 mzml_conversion <- function(plateID, master_list) {
   validate_master_list_project_directory(master_list)
   set_working_directory(master_list$project_details$project_dir)
-  command <- construct_command_for_terminal(master_list$project_details$wiff_file_paths, master_list$project_details$project_dir)
+  command <- construct_command_for_terminal(master_list$project_details$all_file_paths, master_list$project_details$project_dir)
   execute_command(command)
   master_list <- restructure_directory(master_list, plateID)
   master_list <- update_script_log(master_list, "ms_convert", "project_setup", "mzR_mzml_import")
@@ -313,18 +314,18 @@ set_working_directory <- function(project_directory) {
 
 #' construct_command_for_terminal
 #'
-#' This function constructs the command for terminal to convert wiff files to mzML format.
+#' This function constructs the command for terminal to convert files to mzML format.
 #'
-#' @param wiff_file_paths Vector of wiff file paths.
+#' @param all_file_paths Vector of file paths.
 #' @param project_directory Directory path for the project folder.
 #' @return The constructed command string.
 #' @examples
 #' \dontrun{
-#' command <- construct_command_for_terminal(wiff_file_paths, "path/to/project_directory")
+#' command <- construct_command_for_terminal(all_file_paths, "path/to/project_directory")
 #' }
-construct_command_for_terminal <- function(wiff_file_paths, project_directory) {
+construct_command_for_terminal <- function(all_file_paths, project_directory) {
   # Normalize file paths
-  file_paths <- gsub("/", "\\\\", wiff_file_paths)
+  file_paths <- gsub("/", "\\\\", all_file_paths)
 
   # Detect ProteoWizard version folder
   base_path <- "C:\\Program Files\\ProteoWizard\\"
@@ -356,7 +357,7 @@ construct_command_for_terminal <- function(wiff_file_paths, project_directory) {
 
 #' execute_command
 #'
-#' This function executes the command to convert wiff files to mzML format.
+#' This function executes the command to convert files to mzML format.
 #'
 #' @param command The command string to execute.
 #' @return None. The function executes the command.
@@ -370,7 +371,7 @@ execute_command <- function(command) {
 
 #' restructure_directory
 #'
-#' This function restructures the directory by moving wiff and mzML files to correct locations.
+#' This function restructures the directory by moving raw_data and mzML files to correct locations.
 #'
 #' @param master_list The master list object.
 #' @param plateID Plate ID for the current plate.
@@ -380,37 +381,51 @@ execute_command <- function(command) {
 #' master_list <- restructure_directory(master_list, "plateID")
 #' }
 restructure_directory <- function(master_list, plateID) {
-  temp_path_1 <- list.files(path = file.path(master_list$project_details$project_dir, "wiff"),
-                            pattern = ".wiff$", all.files = FALSE,
-                            full.names = TRUE, recursive = FALSE,
-                            ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
-
-  temp_path_2 <- list.files(path = file.path(master_list$project_details$project_dir, "wiff"),
-                            pattern = ".wiff.scan$", all.files = FALSE,
-                            full.names = TRUE, recursive = FALSE,
-                            ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
-
-  path1 <- str_subset(string = temp_path_1, pattern = paste0(plateID))
-  file.copy(from = paste0(path1), to = paste0(master_list$project_details$project_dir, "/", plateID, "/data/sciex_raw"))
-
-  path2 <- str_subset(string = temp_path_2, pattern = paste0(plateID))
-  file.copy(from = paste0(path2), to = paste0(master_list$project_details$project_dir, "/", plateID, "/data/sciex_raw"))
-
-  master_list$project_details$mzml_file_paths <- list.files(path = file.path(master_list$project_details$project_dir, "msConvert_mzml_output"), pattern = ".mzML$",
-                                                            all.files = FALSE, full.names = TRUE, recursive = FALSE, ignore.case = FALSE, include.dirs = FALSE,
-                                                            no.. = FALSE)
-
-  master_list$project_details$mzml_file_paths <- master_list$project_details$mzml_file_paths[!grepl("COND|Blank|ISTDs", master_list$project_details$mzml_file_paths)]
-
-  temp_paths <- master_list$project_details$mzml_file_paths
+  # Define key paths
   project_dir <- master_list$project_details$project_dir
+  raw_data_dir <- file.path(project_dir, "raw_data")
+  mzml_output_dir <- file.path(project_dir, "msConvert_mzml_output")
+  plate_data_dir <- file.path(project_dir, plateID, "data")
+  raw_data_dest <- file.path(plate_data_dir, "raw_data")
+  mzml_dest <- file.path(plate_data_dir, "mzml")
 
-  path <- str_subset(string = temp_paths, pattern = plateID)
-  destination <- file.path(project_dir, plateID, "data", "mzml")
-  file.copy(from = path, to = destination)
+  # Create destination directories if they don't exist
+  dir.create(raw_data_dest, recursive = TRUE, showWarnings = FALSE)
+  dir.create(mzml_dest, recursive = TRUE, showWarnings = FALSE)
+
+  # Find raw data files matching plateID
+  raw_files <- list.files(path = raw_data_dir,
+                          pattern = "\\.(wiff.scan|wiff|d|raw)$",
+                          full.names = TRUE)
+  matched_raw_files <- str_subset(raw_files, plateID)
+
+  # Copy individual raw files (non-directories)
+  file_info <- file.info(matched_raw_files)
+  raw_file_paths <- matched_raw_files[!file_info$isdir]
+  file.copy(from = raw_file_paths, to = raw_data_dest, recursive = FALSE)
+
+  # Copy entire .d directories
+  d_dirs <- matched_raw_files[file_info$isdir]
+  for (dir in d_dirs) {
+    dest_dir <- file.path(raw_data_dest)
+    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+    file.copy(from = dir, to = dest_dir, recursive = TRUE)
+  }
+
+  # Filter and copy mzML files
+  mzml_files <- list.files(path = mzml_output_dir,
+                           pattern = "\\.mzML$",
+                           full.names = TRUE)
+  mzml_files <- mzml_files[!grepl("COND|Blank|ISTDs", mzml_files)]
+  matched_mzml <- str_subset(mzml_files, plateID)
+  file.copy(from = matched_mzml, to = mzml_dest, recursive = FALSE)
+
+  # Update master list
+  master_list$project_details$mzml_file_paths <- mzml_files
 
   return(master_list)
 }
+
 
 #.----
 #mzR Mrm FindR Functions-----
@@ -422,7 +437,7 @@ restructure_directory <- function(master_list, plateID) {
 #'
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
-#' @param FUNC_OPTION_qc_type QC type used in the experiment (LTR, PQC, none) parsed internally.
+#' @param FUNC_OPTION_qc_type QC type used in the experiment passed internally.
 #' @return A list containing updated mrm guide and peak boundary information.
 #' @examples
 #' \dontrun{
@@ -1099,7 +1114,7 @@ save_plate_data <- function(master_list, plate_idx) {
 #' }
 archive_raw_files <- function(project_directory) {
   validate_project_directory(project_directory)
-  archive_files(project_directory, "wiff")
+  archive_files(project_directory, "raw_data")
   archive_files(project_directory, "msConvert_mzml_output")
   message("\n Skyline R is now finished running all plates :)")
 }
