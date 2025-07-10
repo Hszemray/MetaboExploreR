@@ -1,7 +1,7 @@
 
 # MetaboExploreR: Targeted Lipidomics Processing Pipeline
 
-**Authors**: Harrison John Szemray, Luke Gray Whiley **Date**: June 30,
+**Authors**: Harrison John Szemray, Luke Gray Whiley **Date**: July 10,
 2025
 
 ## Overview
@@ -12,16 +12,23 @@ functions:
 
 1.  **`SkylineR()`**: Processes raw mass spectrometry data (.wiff
     files), performs retention time optimization, and prepares data for
-    Skyline analysis, saves Skyline output to project directory.  
+    Skyline analysis, saves Skyline output to project directory.
+    (WINDOWS OS COMPATIBLE ONLY)
+
 2.  **`qcCheckeR()`**: Performs comprehensive quality control, batch
-    correction, and generates analytical reports ready for data analysis
+    correction, and generates analytical reports ready for data
+    analysis.
+
+## Installation
 
 ## Directory Structure
 
-Create this structure before execution:
+Create this proejct folder structure before execution:
 
-    project_directory/
-    ├── wiff/          # Raw .wiff files
+``` r
+project_directory/
+├── wiff/          # Raw .wiff files and associated .wiff.scan files
+```
 
 ## Functions
 
@@ -98,7 +105,8 @@ Post-execution directory of SkylineR and qcCheckR:
     - Run R as systems administrator
     - Ensure your R, Rstudio and package versions are all up to date
     - Check .wiff files for acquisition errors  
-    - Ensure sufficient disk space (\>10 GB recommended)
+    - Ensure sufficient disk space (2GB/plate recommended)
+    - Minimum of 8GB RAM required
 
 ## Support
 

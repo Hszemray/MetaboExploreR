@@ -20,15 +20,22 @@ knitr::opts_chunk$set(
 
 MetaboExploreR provides an automated pipeline for processing and quality control of targeted lipidomics data. The toolkit consists of two main functions:
 
-1. **`SkylineR()`**: Processes raw mass spectrometry data (.wiff files), performs retention time optimization, and prepares data for Skyline analysis, saves Skyline output to project directory.  
-2. **`qcCheckeR()`**: Performs comprehensive quality control, batch correction, and generates analytical reports ready for data analysis
+1. **`SkylineR()`**: Processes raw mass spectrometry data (.wiff files), performs retention time optimization, and prepares data for Skyline analysis, saves Skyline output to project directory. (WINDOWS OS COMPATIBLE ONLY)  
+
+2. **`qcCheckeR()`**: Performs comprehensive quality control, batch correction, and generates analytical reports ready for data analysis.
+
+## Installation
+```
+
+
+```
 
 ## Directory Structure
 
-Create this structure before execution:
-```
+Create this proejct folder structure before execution:
+```r
 project_directory/
-├── wiff/          # Raw .wiff files
+├── wiff/          # Raw .wiff files and associated .wiff.scan files
 ```
 
 ## Functions
@@ -108,7 +115,9 @@ User Project Directory
    - Run R as systems administrator
    - Ensure your R, Rstudio and package versions are all up to date
    - Check .wiff files for acquisition errors  
-   - Ensure sufficient disk space (>10 GB recommended)  
+   - Ensure sufficient disk space (2GB/plate recommended)
+   - Minimum of 8GB RAM required
+  
 
 ## Support
 
@@ -116,3 +125,4 @@ For technical assistance, please open an issue at:
 https://github.com/Hszemray/MetaboExploreR
 
 > **Version Information**: LipidExplorer v6.0 (2025-06-30)
+
