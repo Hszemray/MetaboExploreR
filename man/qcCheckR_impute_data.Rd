@@ -10,10 +10,11 @@ qcCheckR_impute_data(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with imputed data.
+The updated \code{master_list} with imputed peak area data.
 }
 \description{
-This function imputes missing and zero values in the \code{master_list} data using the minimum intensity of that feature in the batch divided by 2.
+This function imputes missing and zero values in the \code{master_list} data using the minimum intensity of each feature in the batch divided by 2.
+It handles infinite and NaN values, applies imputation, and merges metadata back into the result.
 }
 \examples{
 \dontrun{

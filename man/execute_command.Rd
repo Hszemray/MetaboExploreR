@@ -13,7 +13,7 @@ execute_command(command)
 None. The function executes the command.
 }
 \description{
-This function executes the command to convert wiff files to mzML format.
+This function executes the command to convert files to mzML format.
 }
 \examples{
 \dontrun{

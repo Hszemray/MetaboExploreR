@@ -10,10 +10,10 @@ qcCheckR_run_order_plots(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with run order plots.
+The updated \code{master_list} with run order plots stored in \code{master_list$pca$scoresRunOrder}.
 }
 \description{
-This function generates run order plots for the \code{master_list} data, showing PCA scores versus run order.
+Generates run order plots for the \code{master_list} data, showing PCA scores versus run order using \code{ggplot2}.
 }
 \examples{
 \dontrun{

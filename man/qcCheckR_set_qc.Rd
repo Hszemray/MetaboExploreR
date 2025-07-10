@@ -2,7 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{qcCheckR_set_qc}
 \alias{qcCheckR_set_qc}
-\title{Set QC for Filtering}
+\title{Set QC Type for Filtering}
 \usage{
 qcCheckR_set_qc(master_list)
 }
@@ -10,10 +10,11 @@ qcCheckR_set_qc(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with the QC type set for filtering.
+The updated \code{master_list} with the QC type set and filters initialized.
 }
 \description{
-This function sets the QC type for filtering based on the global QC pass status in the \code{master_list} data.
+Determines and sets the QC type for filtering based on the global QC pass status in the \code{master_list}.
+If no viable QC type is found, the function stops execution and prints a detailed error message.
 }
 \examples{
 \dontrun{

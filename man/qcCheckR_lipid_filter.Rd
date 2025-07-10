@@ -2,7 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{qcCheckR_lipid_filter}
 \alias{qcCheckR_lipid_filter}
-\title{This function filters lipids based on missing values in the \code{master_list} data.}
+\title{Lipid Filter}
 \usage{
 qcCheckR_lipid_filter(master_list)
 }
@@ -10,10 +10,11 @@ qcCheckR_lipid_filter(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with lipid filter flags.
+The updated \code{master_list} with lipid filter flags and failed lipid list.
 }
 \description{
-This function filters lipids based on missing values in the \code{master_list} data.
+Filters lipids based on missing values across plates and template versions.
+Flags lipids with more than 50\% missing values and compiles a list of failed lipids.
 }
 \examples{
 \dontrun{

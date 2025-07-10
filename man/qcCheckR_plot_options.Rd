@@ -13,7 +13,7 @@ qcCheckR_plot_options(master_list)
 The updated \code{master_list} with plot options set.
 }
 \description{
-This function sets the plot color, fill, shape, and size options for the \code{master_list} data.
+Sets the plot color, fill, shape, and size options for the \code{master_list} data based on sample types and QC type.
 }
 \examples{
 \dontrun{

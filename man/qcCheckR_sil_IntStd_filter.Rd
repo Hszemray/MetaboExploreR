@@ -13,7 +13,7 @@ qcCheckR_sil_IntStd_filter(master_list)
 The updated \code{master_list} with SIL internal standard filter flags.
 }
 \description{
-This function filters SIL internal standards based on missing values in the \code{master_list} data.
+Filters SIL internal standards based on missing values in the \code{master_list} data.
 }
 \examples{
 \dontrun{

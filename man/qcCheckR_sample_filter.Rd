@@ -10,10 +10,11 @@ qcCheckR_sample_filter(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with sample filter flags.
+The updated \code{master_list} with sample filter flags and failed sample lists.
 }
 \description{
-This function flags samples based on missing values and summed signal intensity in the \code{master_list} data.
+Flags samples based on missing values and summed signal intensity in the \code{master_list} data.
+Applies thresholds to identify low-quality samples and aggregates results across plates.
 }
 \examples{
 \dontrun{

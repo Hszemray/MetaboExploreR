@@ -128,7 +128,7 @@ print_message <- function(master_list, section_name) {
 }
 
 
-#Validate Project Directories Functions----
+#Validate Parameter Functions----
 #' Validate Project Directory
 #'
 #' This function checks if the `project_directory` parameter is a single string and if the specified directory exists.
@@ -208,40 +208,84 @@ log_error <- function(error_message) {
 }
 
 
-#' Validate mrm template list
+#' Validate qcCheckR mrm template list
 #'
 #' This function validates the mrm_template_list list by checking the column headers and ensuring there are no NA or NULL values in the SIL_guide and conc_guide files.
 #'
 #' @param mrm_template_list A list specifying the file paths for the templates.
-#' @return NULL. Stops execution if validation fails.
+#' @return TRUE if validation passes. Stops execution if validation fails.
 #' @examples
 #' \dontrun{
-#' validate_template_info(master_list)
+#' validate_qcCheckR_mrm_template_list(master_list)
 #' }
-validate_template_info <- function(mrm_template_list) {
-  required_columns <- c("Molecule List Name", "Precursor Name","Precursor Mz", "Precursor Charge", "Product Mz", "Product Charge", "Explicit Retention Time", "Explicit Retention Time Window", "Note", "control_chart" )
+validate_qcCheckR_mrm_template_list <- function(master_list) {
 
-  for (version in names(mrm_template_list)) {
-    for (guide in c("SIL_guide", "conc_guide")) {
-      file_path <- mrm_template_list[[version]][[guide]]
-      data <- read_tsv(file_path)
+    mrm_template_list <- master_list$templates$mrm_guides
 
-      # Check column headers
-      if (!all(required_columns %in% colnames(data))) {
-        stop(paste("Missing required columns in", guide, "for version", version))
-      }
-
-      # Exclude the 'note' column
-      data_to_check <- data[ , setdiff(names(data), "note")]
-
-      # Check for NA or NULL values
-      if (any(is.na(data_to_check)) || any(sapply(data_to_check, function(x) any(sapply(x, is.null))))) {
-        stop(paste("NA or NULL values found in", guide, "for version", version))
-      }
-
+    if (!is.list(mrm_template_list)) {
+      stop("mrm_template_list must be a list.")
     }
+
+    for (version in names(mrm_template_list)) {
+      version_list <- mrm_template_list[[version]]
+
+      # Check that version is a list
+      if (!is.list(version_list)) {
+        stop(paste("Each version in mrm_template_list must be a list. Problem with:", version))
+      }
+
+      for (guide in c("SIL_guide", "conc_guide")) {
+        if (!guide %in% names(version_list)) {
+          stop(paste("Missing", guide, "in version", version))
+        }
+
+        # Check required columns
+        if(guide == "SIL_guide") {
+          required_columns <- c("Molecule List Name", "Precursor Name",
+                                "Precursor Mz", "Precursor Charge", "Product Mz",
+                                "Product Charge", "Explicit Retention Time",
+                                "Explicit Retention Time Window",
+                                "Note", "control_chart")
+
+          data <- mrm_template_list[[version]][[guide]]
+
+          if (!all(required_columns %in% colnames(data))) {
+            #store missing columns
+            missing_columns <- setdiff(required_columns, colnames(data))
+            stop(paste(guide, "for version", version, "\n Missing required columns: ",
+                       paste(missing_columns, collapse = "\n")))
+          }
+
+          # Exclude 'note' column
+          data_to_check <- data[, setdiff(names(data), c("Source","Note"))]
+
+          # # Check for NA or NULL values
+          # if (any(is.na(data_to_check))) {
+          #   stop(paste("NA values found in", guide, "for version", version))
+          # }
+
+        } else if (guide == "conc_guide") {
+          required_columns <- c("concentration_factor", "SIL_name")
+
+          data <- mrm_template_list[[version]][[guide]]
+
+          if (!all(required_columns %in% colnames(data))) {
+            #store missing columns
+            missing_columns <- setdiff(required_columns, colnames(data))
+            stop(paste(guide, "for version", version, "\n Missing required columns: ",
+                       paste(missing_columns, collapse = "\n")))
+          }
+
+          # if (any(is.na(data))) {
+          #   stop(paste("NA values found in", guide, "for version", version))
+          # }
+        }
+      }
+    }
+
+    message("Validation passed: mrm_template_list structure and contents are valid.")
+    return(TRUE)
   }
-}
 
 # Validate Proteowizard and Skyline install----
 #' Validate Proteowizard and Skyline install
@@ -272,45 +316,57 @@ validate_proteowizard_skyline <- function() {
   }
 }
 
-# Validate Wiff files----
-#' Validate Wiff files
+# Validate Raw files----
+#' Validate Raw files
 #'
-#' This function checks project directorie contains wiff files and associated wiff.scan files.
+#' This function checks project directories contains wiff files and associated wiff.scan files.
 #'
 #' @return validated paths and returns message on outcome of check.
 #' @examples
 #' \dontrun{
-#' wiff_file_paths <- validate_wiff_file()
+#' all_file_paths <- validate_file_types()
 #' }
-validate_wiff_file <- function(project_directory) {
-  wiff_path <- file.path(project_directory, "wiff")
-  files <- list.files(path = wiff_path, pattern = "\\.wiff$", full.names = TRUE)
+validate_file_types <- function(project_directory) {
+  file_path <- file.path(project_directory, "raw_data")
+  files <- list.files(path = file_path, full.names = TRUE)
 
-  validated_wiff_files <- c()
-  invalid_wiff_files <- c()
+  validated_files <- c()
+  invalid_files <- c()
 
-  for (wiff in files) {
-    scan_file <- paste0(wiff, ".scan")
-    if (file.exists(scan_file)) {
-      message("Found matching .wiff.scan for: ", basename(wiff))
-      validated_wiff_files <- c(validated_wiff_files, wiff)
-    } else {
-      message("Missing .wiff.scan for: ", basename(wiff))
-      invalid_wiff_files <- c(invalid_wiff_files, wiff)
+  for (file in files) {
+    if (grepl("\\.wiff$", file)) {
+      scan_file <- paste0(file, ".scan")
+      if (file.exists(scan_file)) {
+        validated_files <- c(validated_files, file)
+      } else {
+        message("Missing .wiff.scan for: ", basename(file))
+        invalid_files <- c(invalid_wiff_files, file)
+      }
+    } else if (grepl("\\.raw$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.d$", file) && dir.exists(file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.RAW$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.yep$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.td2$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (!grepl("\\.wiff\\.scan$", file)) {
+      message("Unsupported file type found: ", basename(file))
+      invalid_files <- c(invalid_files, file)
     }
   }
 
-  if (length(validated_wiff_files) > 0) {
-    message("Returning validated wiff files:\n", paste(validated_wiff_files, collapse = "\n"))
-    return(validated_wiff_files)
+  if (length(validated_files) > 0) {
+    message("Returning validated files for processing:\n", paste(basename(validated_files), collapse = "\n"))
+    return(validated_files)
   }
 
-  if (length(invalid_wiff_files) > 0) {
-    message("Invalid wiff files:\n", paste(invalid_wiff_files, collapse = "\n"))
+  if (length(invalid_files) > 0) {
+    message("Removed following unsupported files:\n", paste(invalid_wiff_files, collapse = "\n"))
   }
 
-  if (length(invalid_wiff_files) > 0 && length(validated_wiff_files) == 0) {
-    stop("No valid wiff files for processing.\nPlease ensure you have .wiff and associated .wiff.scan files in the 'wiff' folder of your project directory.")
-  }
 }
+
 

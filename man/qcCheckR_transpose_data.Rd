@@ -2,18 +2,19 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{qcCheckR_transpose_data}
 \alias{qcCheckR_transpose_data}
-\title{qcCheckeR Transpose Data}
+\title{Transpose Skyline Report Data}
 \usage{
 qcCheckR_transpose_data(master_list)
 }
 \arguments{
-\item{master_list}{Master list containing peak area data.}
+\item{master_list}{A list containing project details and data.}
 }
 \value{
 The updated \code{master_list} object with transposed peak area data.
 }
 \description{
-This function transposes peak area data for each plate in the master list, converting it to a wide format and storing the result.
+This function transposes Skyline report data for each plate in the master list.
+It reshapes the data, cleans sample names, converts values to numeric, and stores the result.
 }
 \examples{
 \dontrun{

@@ -2,21 +2,20 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{lgw_impute}
 \alias{lgw_impute}
-\title{LGW Impute}
+\title{LGW Impute
+This function performs imputation on a tibble by replacing zero values with half the minimum non-zero value in each column.
+It calculates the minimum non-zero value for each column, divides it by 2, and replaces zero values with this calculated value.}
 \usage{
 lgw_impute(x)
 }
 \arguments{
-\item{x}{A tibble of peak area concentrations.}
+\item{x}{A tibble containing numeric data.}
 }
 \value{
-A tibble with imputed values.
+A tibble with zero values replaced by half the minimum non-zero value in each column.
 }
 \description{
-This function imputes missing values in a tibble of peak area concentrations by replacing NAs with half the minimum non-zero value.
-}
-\examples{
-\dontrun{
-lgw_impute(tibble(a = c(0, 1, 2, NA), b = c(3, 0, NA, 4)))
-}
+LGW Impute
+This function performs imputation on a tibble by replacing zero values with half the minimum non-zero value in each column.
+It calculates the minimum non-zero value for each column, divides it by 2, and replaces zero values with this calculated value.
 }

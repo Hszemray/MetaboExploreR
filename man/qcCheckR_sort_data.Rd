@@ -13,7 +13,8 @@ qcCheckR_sort_data(master_list)
 The updated \code{master_list} with sorted data and QC check results.
 }
 \description{
-This function sorts the data in \code{master_list} by run order and performs QC checks.
+This function sorts the transposed peak area data by run order and performs QC checks.
+It assigns sample types, validates QC coverage, and sets the appropriate QC type for the project.
 }
 \examples{
 \dontrun{

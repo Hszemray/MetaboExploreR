@@ -7,13 +7,14 @@
 qcCheckR_calculate_response_concentration(master_list)
 }
 \arguments{
-\item{master_list}{A list containing project details and data.}
+\item{master_list}{A list containing project details, peak area data, and SIL templates.}
 }
 \value{
 The updated \code{master_list} with calculated response and concentration data.
 }
 \description{
 This function calculates the response ratio and concentration for each sample in the \code{master_list} data.
+It uses SIL internal standards and template guides to compute values for both sorted and imputed data.
 }
 \examples{
 \dontrun{

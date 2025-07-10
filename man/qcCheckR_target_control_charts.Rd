@@ -10,10 +10,10 @@ qcCheckR_target_control_charts(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with control charts.
+The updated \code{master_list} with control charts stored in \code{master_list$control_charts}.
 }
 \description{
-This function generates control charts for the \code{master_list} data, showing the values of target metabolites and SIL internal standards across different sample types and data sources.
+Generates control charts for the \code{master_list} data, showing the values of target metabolites and SIL internal standards across different sample types and data sources.
 }
 \examples{
 \dontrun{

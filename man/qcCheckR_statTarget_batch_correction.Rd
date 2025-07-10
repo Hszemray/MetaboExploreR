@@ -7,13 +7,14 @@
 qcCheckR_statTarget_batch_correction(master_list)
 }
 \arguments{
-\item{master_list}{A list containing project details and data.}
+\item{master_list}{A list containing project details, concentration data, and metadata.}
 }
 \value{
-The updated \code{master_list} with corrected data.
+The updated \code{master_list} with corrected concentration and peak area data.
 }
 \description{
-This function performs batch correction and signal drift adjustment on the data in \code{master_list} using the \code{statTarget} package.
+This function performs batch correction and signal drift adjustment on the concentration data in \code{master_list} using the \code{statTarget} package.
+It prepares phenotype and profile files, runs \code{statTarget::shiftCor}, and integrates corrected data back into the master list.
 }
 \examples{
 \dontrun{

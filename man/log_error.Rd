@@ -16,5 +16,7 @@ None. The function writes the error message to the log file.
 This function logs error messages to a file named \code{error_log.txt}.
 }
 \examples{
+\dontrun{
 log_error("An error occurred while processing the data.")
+}
 }

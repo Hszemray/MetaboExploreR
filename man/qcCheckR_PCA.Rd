@@ -10,10 +10,10 @@ qcCheckR_PCA(master_list)
 \item{master_list}{A list containing project details and data.}
 }
 \value{
-The updated \code{master_list} with PCA models, scores, and plots.
+The updated \code{master_list} with PCA models, scores, and ggplot objects.
 }
 \description{
-This function performs PCA analysis on the \code{master_list} data and generates PCA plots using \code{plotly}.
+Performs PCA analysis on the \code{master_list} data and generates PCA plots using \code{ggplot2}.
 }
 \examples{
 \dontrun{

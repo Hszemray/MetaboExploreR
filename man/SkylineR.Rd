@@ -16,10 +16,10 @@ E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
 QC_sample_label = "LTR" to target files containing LTR for QC.}
 }
 \value{
-Curated project directory containing .wiff and .mzml files, and Skyline exports.
+Curated project directory containing raw data files and .mzml files, and Skyline exports.
 }
 \description{
-This function processes \code{.wiff} files in a specified project directory and converts them to \code{.mzml} files, followed by targeted analysis using Skyline.
+This function converts raw data files from mass spec vendors to \code{.mzml} files, followed by targeted analysis using Skyline.
 }
 \details{
 \itemize{

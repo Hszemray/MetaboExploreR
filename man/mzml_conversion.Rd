@@ -15,7 +15,7 @@ mzml_conversion(plateID, master_list)
 The updated \code{master_list} object with the mzML conversion details.
 }
 \description{
-This function converts wiff files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
+This function converts raw files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
 }
 \examples{
 \dontrun{

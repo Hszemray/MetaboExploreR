@@ -11,7 +11,7 @@ mzR_mrm_findR(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type)
 
 \item{FUNC_mrm_guide}{Tibble of mrm details parsed internally. See run mrm_template_guide for example.}
 
-\item{FUNC_OPTION_qc_type}{QC type used in the experiment (LTR, PQC, none) parsed internally.}
+\item{FUNC_OPTION_qc_type}{QC type used in the experiment passed internally.}
 }
 \value{
 A list containing updated mrm guide and peak boundary information.

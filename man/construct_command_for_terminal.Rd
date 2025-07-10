@@ -4,10 +4,10 @@
 \alias{construct_command_for_terminal}
 \title{construct_command_for_terminal}
 \usage{
-construct_command_for_terminal(wiff_file_paths, project_directory)
+construct_command_for_terminal(all_file_paths, project_directory)
 }
 \arguments{
-\item{wiff_file_paths}{Vector of wiff file paths.}
+\item{all_file_paths}{Vector of file paths.}
 
 \item{project_directory}{Directory path for the project folder.}
 }
@@ -15,10 +15,10 @@ construct_command_for_terminal(wiff_file_paths, project_directory)
 The constructed command string.
 }
 \description{
-This function constructs the command for terminal to convert wiff files to mzML format.
+This function constructs the command for terminal to convert files to mzML format.
 }
 \examples{
 \dontrun{
-command <- construct_command_for_terminal(wiff_file_paths, "path/to/project_directory")
+command <- construct_command_for_terminal(all_file_paths, "path/to/project_directory")
 }
 }

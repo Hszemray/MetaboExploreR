@@ -2,21 +2,34 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{qcCheckR_setup_project}
 \alias{qcCheckR_setup_project}
-\title{qcCheckR Setup Project}
+\title{qcCheckR_setup_project}
 \usage{
-qcCheckR_setup_project(project_directory)
+qcCheckR_setup_project(
+  user_name,
+  project_directory,
+  mrm_template_list,
+  QC_sample_label,
+  sample_tags,
+  mv_sample_threshold
+)
 }
 \arguments{
-\item{project_directory}{project directory inherited from qcCheckR.R}
+\item{user_name}{Character string representing the user name for the project.}
+
+\item{project_directory}{Directory path for the project folder containing the wiff folder and .wiff and .wiff.scan files for each plate.}
+
+\item{mrm_template_list}{List of lists for mrm_guides.}
+
+\item{QC_sample_label}{Key for filtering QC samples from sample list.}
 }
 \value{
 The updated \code{master_list} object with the project setup details.
 }
 \description{
-This function sets up the project for QC by loading necessary packages, setting up the project directory, and loading and combining plate RDA files from SkylineR.
+This function sets up the project by initialising the master list, setting up project directories, and updating the script log.
 }
 \examples{
 \dontrun{
-qcCheckR_setup_project()
+qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
 }
 }

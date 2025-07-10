@@ -15,7 +15,7 @@ restructure_directory(master_list, plateID)
 The updated master list object with mzML file paths.
 }
 \description{
-This function restructures the directory by moving wiff and mzML files to correct locations.
+This function restructures the directory by moving raw_data and mzML files to correct locations.
 }
 \examples{
 \dontrun{
