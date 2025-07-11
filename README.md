@@ -2,8 +2,6 @@
 # MetaboExploreR: Targeted Lipidomics Processing Pipeline
 
 **Authors**: Harrison John Szemray, Luke Gray Whiley 
-**Date**: July 10,
-2025
 
 ## Overview
 
