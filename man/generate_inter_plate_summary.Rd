@@ -4,10 +4,14 @@
 \alias{generate_inter_plate_summary}
 \title{Generate Inter-Plate Summary}
 \usage{
-generate_inter_plate_summary(master_list)
+generate_inter_plate_summary(master_list, metrics, sample_tags)
 }
 \arguments{
 \item{master_list}{A list containing project details and data.}
+
+\item{metrics}{tibble of the metrics to be included in the summary.}
+
+\item{sample_tags}{A vector of sample type tags to be included in the summary.}
 }
 \value{
 A tibble containing the inter-plate summary metrics.

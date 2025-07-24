@@ -151,7 +151,7 @@ validate_project_directory <- function(project_directory) {
   }
 
   # Return TRUE if validation is successful
-  return(paste("Accessing project directory ", project_directory))
+  message(paste("Accessing project directory ", project_directory))
 }
 
 #' validate_master_list_project_directory

@@ -4,15 +4,16 @@
 \alias{determine_qc_type}
 \title{Determine QC Type}
 \usage{
-determine_qc_type(global_qc_pass)
+determine_qc_type(master_list)
 }
 \arguments{
-\item{global_qc_pass}{A list containing the global QC pass status.}
+\item{master_list}{A list containing project details and data.}
 }
 \value{
 A string indicating the QC type ("pqc", "ltr", or "unknown").
 }
 \description{
 This function determines the QC type based on the global QC pass status.
-It checks if the pqc or ltr QC types have passed and returns the appropriate type.
+It checks if there are multiple QC types that have passed.
+Assesses if a secondary QC sample is available such as a pooled Quality controls.
 }

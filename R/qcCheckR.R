@@ -3,7 +3,6 @@
 #' This function performs a series of quality control checks on the data within a specified project directory.
 #' If you have not used the SkylineR function to generate reports please ensure your report file names contain "_skylineR_1_" to ensure the function can correctly identify the files in your project directory.
 #'
-#'
 #' @param project_directory A character string specifying the path to the project directory.
 #' @param mrm_template_list A list of MRM templates and associated concentration guide. Must have specific column names. See examples for structure of mrm_template_list. Must include mrm_guide labelled as "SIL_guide" and associated concentration guide labelled as "conc_guide". Can contain multiple combinations stored as separate lists, see examples.
 #' @param QC_sample_label A character string containing the key tags to filter QC samples from file names.  E.g. "qc".
@@ -48,14 +47,16 @@ qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_
 
   #validate user_name
   if(missing(user_name)){
-    stop("user_name parameter is required.")
+    stop("user_name parameter is required. Please see documentation for details.")
+  }else{
+    message(paste0("Welcome ", user_name,"!"))
   }
 
   # validate project_directory
   validate_project_directory(project_directory)
 
   # validate templates
-  if (missing(mrm_template_list)) {
+  if (missing(mrm_template_list) || is.null(mrm_template_list) && user_name!= "ANPC"){
     stop("mrm_template_list parameter is required.")
   }
 
@@ -98,9 +99,7 @@ qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_
       master_list <- qcCheckR_run_order_plots(master_list)
       master_list <- qcCheckR_target_control_charts(master_list)
       #exports
-      master_list <- qcCheckR_export_xlsx_file(master_list)
-      master_list <-qcCheckR_export_html_report(master_list)
-      master_list <- qcCheckR_export_master_list_rda(master_list)
+      master_list <- qcCheckR_export_all(master_list)
     }, error = function(e) {
       message(paste("Error processing plate", plateID, ":", e$message))
       log_error(paste("Error processing plate", plateID, ":", e$message))

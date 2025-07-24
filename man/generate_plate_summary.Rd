@@ -4,12 +4,16 @@
 \alias{generate_plate_summary}
 \title{Generate Plate Summary}
 \usage{
-generate_plate_summary(master_list, idx_batch)
+generate_plate_summary(master_list, idx_batch, metrics, sample_tags)
 }
 \arguments{
 \item{master_list}{A list containing project details and data.}
 
 \item{idx_batch}{The index of the batch (plate) to process.}
+
+\item{metrics}{tibble of the metrics to be included in the summary.}
+
+\item{sample_tags}{A vector of sample type tags to be included in the summary.}
 }
 \value{
 A tibble containing the summary metrics for the specified plate.

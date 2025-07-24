@@ -5,21 +5,14 @@
 \title{Get Plate Boundaries}
 \usage{
 get_plate_boundaries(master_list)
-
-get_plate_boundaries(master_list)
 }
 \arguments{
 \item{master_list}{A list containing project details and PCA scores.}
 }
 \value{
-A list containing the boundaries and labels for each plate.
-
 A vector of unique boundaries for the plates.
 }
 \description{
-This function retrieves the boundaries for each plate in the \code{master_list} data.
-It calculates the minimum and maximum run indices for each plate and creates a list of boundaries and labels for plotting.
-
 This function retrieves the boundaries for each plate in the \code{master_list} data.
 It calculates the minimum and maximum run indices for each plate and creates a list of boundaries and labels for plotting.
 }

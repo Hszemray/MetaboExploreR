@@ -68,32 +68,16 @@ master_list$pca$scoresRunOrder$PC2
 master_list$pca$scoresRunOrder$PC3
 #'
 #' ***
-#'
 #' ### Target lipid control charts {.tabset}
 #'
-#'#### Control Chart 1
-#+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=9
-master_list$control_chart[[1]]
-#'
-#' ***
-#'#### Control Chart 2
-#+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=9
-master_list$control_chart[[2]]
-#'
-#' ***
-#'#### Control Chart 3
-#+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=9
-master_list$control_chart[[3]]
-#'
-#' ***
-#'#### Control Chart 4
-#+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=9
-master_list$control_chart[[4]]
-#'
-#' ***
-#'#### Control Chart 5
-#+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=9
-master_list$control_chart[[5]]
+```{r,control, results='asis'}
+for (i in names(master_list$control_chart)) {
+  cat("#### ", i,"\n")
+  cat("#+ echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9\n")
+  cat("master_list$control_chart[[", i, "]]", sep = "")
+  cat("#' ***\n\n")
+}
+```
 #'
 #' ***
 #' ### Environment summary
@@ -107,4 +91,3 @@ print(master_list$environment$base_packages)
 #+ echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7
 print(master_list$environment$user_packages)
 #' ***
-

@@ -16,6 +16,7 @@ Imports:
     janitor,
     magrittr,
     mzR,
+    openxlsx,
     plotly,
     purrr,
     readr,
