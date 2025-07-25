@@ -62,7 +62,9 @@ msConvertR <- function (input_directory,  output_directory){
     stop("All plates failed. Halting script.")
   }
 
-  message("\n Converted mzml files are located in ",paste(output_directory))
+  message("\n Converted mzml files are located in ",
+          paste(output_directory,
+                "plate_id/data/mzml"))
 }
 
 
