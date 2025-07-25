@@ -113,7 +113,6 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   for (plateID in plateIDs) {
     tryCatch({
       master_list <- skyline_setup_project(project_directory, plateID, mrm_template_list, QC_sample_label)
-      master_list <- mzml_conversion(plateID, master_list)
       master_list <- import_mzml(plateID, master_list)
       master_list <- peak_picking(plateID, master_list)
       successful_plates <- c(successful_plates, plateID)
