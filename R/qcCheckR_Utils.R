@@ -1,7 +1,7 @@
 #qcCheckR internal functions ----
 
 #' Import specific functions from packages
-#' @name import_external_functions
+#' @name qcCheckR_import_external_functions
 #' @importFrom utils installed.packages sessionInfo browseURL capture.output install.packages data str read.csv
 #' @importFrom readr read_tsv write_csv read_tsv write_tsv read_csv write_csv read_delim write_delim
 #' @importFrom dplyr slice vars arrange_at mutate_all mutate bind_rows bind_cols filter select rename relocate arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup group_by case_when everything row_number summarise

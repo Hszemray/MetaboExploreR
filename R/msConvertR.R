@@ -1,5 +1,10 @@
 #' msConvertR
 #'
+#' #' Import specific functions from packages
+#' @name import_external_functions
+#' @importFrom stringr str_remove str_extract
+NULL
+
 #' This function is used to convert vendor files to `.mzml` files
 #' using the `msconvert` tool from ProteoWizard.
 #' @param input_directory The directory where the vendor files are located.
@@ -65,6 +70,18 @@ msConvertR <- function (input_directory,  output_directory){
   message("\n Converted mzml files are located in ",
           paste(output_directory,
                 "plate_id/data/mzml"))
+
+  if (input_directory == output_directory) {
+    message("\nNote: Input and output directories are the same.\n",
+            paste0("Vendor files have been relocated to ",
+            output_directory, "/plateID/data/raw_data."))
+  }
+
+  if (input_directory != output_directory) {
+    message(paste0("\nNote: Input and output directories are different.\n",
+      "The project structure has been created in ", output_directory,".\n",
+      "Vendor files are located in", input_directory,"/plateID/data/raw_data."))
+  }
 }
 
 

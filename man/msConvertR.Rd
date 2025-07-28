@@ -2,7 +2,8 @@
 % Please edit documentation in R/msConvertR.R
 \name{msConvertR}
 \alias{msConvertR}
-\title{msConvertR}
+\title{This function is used to convert vendor files to \code{.mzml} files
+using the \code{msconvert} tool from ProteoWizard.}
 \usage{
 msConvertR(input_directory, output_directory)
 }

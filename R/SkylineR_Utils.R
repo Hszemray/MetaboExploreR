@@ -1,7 +1,7 @@
 #' Utils_Global.R
 
 #' Import specific functions from packages
-#' @name import_external_functions
+#' @name SkylineR_import_external_functions
 #' @importFrom utils installed.packages sessionInfo browseURL capture.output install.packages data str read.csv
 #' @importFrom readr read_tsv write_csv read_tsv write_tsv
 #' @importFrom dplyr slice arrange_at mutate_all mutate bind_rows bind_cols filter select rename arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup

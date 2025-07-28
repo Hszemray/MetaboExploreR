@@ -1,4 +1,14 @@
+#' msConvertR_Utils
+#'
+#' sub functions for msConvertR function
+#'
+#' Import specific functions from packages
+#' @name msConvertR_import_external_functions
+#' @importFrom stringr str_subset
 
+
+NULL
+#'
 #mzML File Conversion Functions ----
 #' Validate input Directory
 #'
