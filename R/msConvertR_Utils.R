@@ -76,14 +76,14 @@ msConvertR_mzml_conversion <- function(input_directory,
 msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
   for (plateID in plateIDs){
   base_path <- file.path(output_directory, plateID)
-    dir.create(base_path, showWarnings = FALSE)
-    dir.create(file.path(base_path,"data"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"data","mzml"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"data","rda"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"data","skyline"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"data","raw_data"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"data","batch_correction"), showWarnings = FALSE)
-    dir.create(file.path(base_path,"html_report"), showWarnings = FALSE)
+    dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path,"data"), showWarnings = FALSE,recursive = TRUE)
+    dir.create(file.path(base_path,"data","mzml"), showWarnings = FALSE,recursive = TRUE)
+    dir.create(file.path(base_path,"data","rda"), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path,"data","skyline"), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path,"data","raw_data"), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path,"data","batch_correction"), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path,"html_report"), showWarnings = FALSE, recursive = TRUE)
   }
 }
 
