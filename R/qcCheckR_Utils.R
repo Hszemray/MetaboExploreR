@@ -32,12 +32,14 @@ NULL
 #' @param project_directory Directory path for the project folder containing the wiff folder and .wiff and .wiff.scan files for each plate.
 #' @param mrm_template_list List of lists for mrm_guides.
 #' @param QC_sample_label Key for filtering QC samples from sample list.
+#' @param sample_tags Vector of character strings to pull sample types for names
+#' @param mv_threshold threshold for missing value filter. default is 50%.
 #' @return The updated `master_list` object with the project setup details.
 #' @examples
 #' \dontrun{
-#' qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
+#' qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
 #' }
-qcCheckR_setup_project <- function(user_name, project_directory, mrm_template_list, QC_sample_label, sample_tags, mv_sample_threshold) {
+qcCheckR_setup_project <- function(user_name, project_directory, mrm_template_list, QC_sample_label, sample_tags, mv_threshold) {
   validate_project_directory(project_directory)
   master_list <- initialise_master_list()
   master_list <- store_environment_details(master_list)
@@ -54,26 +56,26 @@ qcCheckR_setup_project <- function(user_name, project_directory, mrm_template_li
 #' qcCheckR_set_project_details
 #'
 #' This function sets project details in the master list.
-#'
+#' @keywords internal
 #' @param master_list The master list object.
 #' @param user_name Character string representing the user name for the project.
 #' @param project_directory Directory path for the project folder.
 #' @param QC_sample_label Key for filtering QC samples from sample list.
 #' @param sample_tags Character vector of sample tags to filter sample types from file_names.
-#' @param mv_sample_threshold Numeric value for the missing value sample threshold.
+#' @param mv_threshold Numeric value for the missing value sample threshold.
 #' @return The updated master list object with project details.
 #' @examples
 #' \dontrun{
-#' master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
+#' master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
 #' }
-qcCheckR_set_project_details <- function(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold) {
+qcCheckR_set_project_details <- function(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_threshold) {
   master_list$project_details$project_dir <- project_directory
   master_list$project_details$user_name <- user_name
   master_list$project_details$project_name <- str_extract(master_list$project_details$project_dir, "[^/]*$")
-  master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$plateIDs <- c()
+  master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$script_log$timestamps$start_time <- Sys.time()
-  master_list$project_details$mv_sample_threshold <- mv_sample_threshold
+  master_list$project_details$mv_sample_threshold <- mv_threshold
   #Set sample tags for ANPC
   if (is.null(master_list$project_details$sample_tags) &&
       master_list$project_details$user_name == "ANPC") {
@@ -88,7 +90,7 @@ qcCheckR_set_project_details <- function(master_list, user_name, project_directo
 #' qcCheckR_read_mrm_guides
 #'
 #' This function reads MRM guides from user-supplied paths in the mrm_template_list.
-#'
+#' @keywords internal
 #' @param master_list The master list object.
 #' @param mrm_template_list List of MRM guide file paths for tsv.
 #' @return The updated master list object with MRM guides.
@@ -98,7 +100,7 @@ qcCheckR_set_project_details <- function(master_list, user_name, project_directo
 #' }
 qcCheckR_read_mrm_guides <- function(master_list, mrm_template_list) {
 
-  if (master_list$project_details$user_name == "ANPC") {
+  if (master_list$project_details$user_name == "ANPC" && is.null(mrm_template_list)) {
     master_list$templates$mrm_guides <- list(
       v1 = list(
         SIL_guide = read_tsv(system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")),
@@ -128,9 +130,10 @@ qcCheckR_read_mrm_guides <- function(master_list, mrm_template_list) {
 #' qcCheckR_setup_project_directories
 #'
 #' This function sets up the project directories for the master list.
-#' #' @param master_list The master list object.
-#' #' @return The updated master list object with project directories set up.
-#' #' @examples
+#' @keywords internal
+#' @param master_list The master list object.
+#' @return The updated master list object with project directories set up.
+#' @examples
 #' \dontrun{
 #' master_list <- qcCheckR_setup_project_directories(master_list)
 #' }
@@ -162,6 +165,7 @@ qcCheckR_setup_project_directories <- function(master_list) {
 #' qcCheckR_import_skyline_reports
 #'
 #' This function imports Skyline reports from the project directory and stores them in the master list.
+#' @keywords internal
 #' @param master_list The master list object.
 #' @return The updated master list object with Skyline reports imported.
 #' @examples
@@ -197,6 +201,7 @@ qcCheckR_import_skyline_reports <- function(master_list) {
 #'
 #' This function finds the method versions for each plate in the master list.
 #' It matches internal standards to the SIL guide and stores the matching SIL_guide.
+#' @keywords internal
 #' @param master_list A list containing porject details and data.
 #' @return The updated `master_list` with method versions found for each plate.
 find_method_version <- function(master_list) {
@@ -292,6 +297,7 @@ qcCheckR_transpose_data <- function(master_list) {
 #' Validate Master List Structure
 #'
 #' This function checks if the master list has the required structure and data.
+#' @keywords internal
 #' @param master_list The master list object to validate.
 #' @return NULL if the structure is valid, otherwise throws an error.
 validate_master_list <- function(master_list) {
@@ -303,6 +309,7 @@ validate_master_list <- function(master_list) {
 #' Find Matching Skyline Report Name
 #'
 #' This function finds the matching Skyline report name based on the plate ID.
+#' @keywords internal
 #' @param report_list A list of Skyline reports.
 #' @param plate_id The ID of the plate to match.
 #' @return The name of the matching report, or NULL if not found.
@@ -314,6 +321,7 @@ find_matching_report <- function(report_list, plate_id) {
 #'
 #' This function transposes the plate data from the Skyline report, reshaping it into a wide format.
 #' It cleans the sample names by removing the file extension and converts area values to numeric.
+#' @keywords internal
 #' @param data The Skyline report data frame for a specific plate.
 #' @return A transposed tibble with sample names as rows and molecule names as columns.
 transpose_plate_data <- function(data) {
@@ -371,9 +379,10 @@ qcCheckR_sort_data <- function(master_list) {
 #' Extract Run Order from Skyline Report
 #'
 #' This function extracts the run order data from a Skyline report, filtering by plate ID.
-#' #' @param report The Skyline report data frame.
-#' #' @param plate_id The ID of the plate to filter by.
-#' #' @return A data frame containing the sample names, timestamps, and other relevant information.
+#' @keywords internal
+#' @param report The Skyline report data frame.
+#' @param plate_id The ID of the plate to filter by.
+#' @return A data frame containing the sample names, timestamps, and other relevant information.
 extract_run_order <- function(report, plate_id) {
   extracted_data <- report %>%
     select(contains(c("FileName", "AcquiredTime"))) %>%
@@ -398,6 +407,7 @@ extract_run_order <- function(report, plate_id) {
 #' Assign Sample Type
 #'
 #' This function assigns sample types based on the sample names and user-defined QC types.
+#' @keywords internal
 #' @param sample_tags A character vector passed from master_list$project_details$sample_tags, containing QC types.
 #' @param run_order A data frame containing the run order information.
 assign_sample_type <- function(sample_tags, run_order) {
@@ -2617,7 +2627,7 @@ format_rsd_table <- function(master_list) {
 #' This function filters the concentration data from the `master_list` based on the specified source.
 #' It removes failed samples and lipids, and applies RSD filters based on the specified source.
 #' @param master_list A list containing project details and data.
-#' @param source The data source to filter (e.g., "concentration", "concentration[statTarget]").
+#' @param source The data source to filter (e.g., "concentration").
 #' @return A tibble containing the filtered concentration data.
 filter_concentration <- function(master_list, source) {
   data <- bind_rows(master_list$data$concentration[[if (source == "concentration") "imputed" else "statTargetProcessed"]])

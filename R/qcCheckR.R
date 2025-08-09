@@ -43,7 +43,9 @@
 #'          mv_threshold = 0.5) #default is 50% missing values
 #' }
 #' @export
-qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_label, sample_tags, mv_threshold = 50) {
+qcCheckR <- function(user_name, project_directory, mrm_template_list = NULL,
+                     QC_sample_label = "LTR", sample_tags = NULL,
+                     mv_threshold = 50) {
 
   #validate user_name
   if(missing(user_name)){
@@ -56,12 +58,12 @@ qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_
   validate_project_directory(project_directory)
 
   # validate templates
-  if (missing(mrm_template_list) || is.null(mrm_template_list) && user_name!= "ANPC"){
+  if (user_name!= "ANPC" && missing(mrm_template_list)){
     stop("mrm_template_list parameter is required.")
   }
 
   # validate QC_sample_label
-  if(missing(QC_sample_label)){
+  if(user_name !=  "ANPC" && missing(QC_sample_label)){
     stop("QC_sample_label parameter is required.")
   }
 
@@ -76,7 +78,7 @@ qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_
   }
 
   # process data
-    tryCatch({
+    #tryCatch({
       ##project setup
       master_list <- qcCheckR_setup_project(user_name, project_directory, mrm_template_list, QC_sample_label, sample_tags, mv_threshold)
       ##data preparation
@@ -100,8 +102,8 @@ qcCheckR <- function(user_name, project_directory, mrm_template_list, QC_sample_
       master_list <- qcCheckR_target_control_charts(master_list)
       #exports
       master_list <- qcCheckR_export_all(master_list)
-    }, error = function(e) {
-      message(paste("Error processing plate", plateID, ":", e$message))
-      log_error(paste("Error processing plate", plateID, ":", e$message))
-    })
+    # }, error = function(e) {
+    #   message(paste("Error during project QC",  ":", e$message))
+    #   log_error(paste("Error during project QC", ":", e$message))
+    # })
   }#close of function

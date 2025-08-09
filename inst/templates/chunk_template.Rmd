@@ -1,6 +1,0 @@
-
-#### {{name}}
-
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
-master_list$control_chart[["{{name}}"]]
-```
