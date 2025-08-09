@@ -16,3 +16,4 @@ The updated \code{master_list} with method versions found for each plate.
 This function finds the method versions for each plate in the master list.
 It matches internal standards to the SIL guide and stores the matching SIL_guide.
 }
+\keyword{internal}

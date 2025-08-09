@@ -6,12 +6,18 @@
 \usage{
 qcCheckR_setup_project_directories(master_list)
 }
+\arguments{
+\item{master_list}{The master list object.}
+}
+\value{
+The updated master list object with project directories set up.
+}
 \description{
 This function sets up the project directories for the master list.
-#' @param master_list The master list object.
-#' @return The updated master list object with project directories set up.
-#' @examples
+}
+\examples{
 \dontrun{
 master_list <- qcCheckR_setup_project_directories(master_list)
 }
 }
+\keyword{internal}

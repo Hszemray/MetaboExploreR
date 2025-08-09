@@ -16,3 +16,4 @@ A transposed tibble with sample names as rows and molecule names as columns.
 This function transposes the plate data from the Skyline report, reshaping it into a wide format.
 It cleans the sample names by removing the file extension and converts area values to numeric.
 }
+\keyword{internal}

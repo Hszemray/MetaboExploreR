@@ -26,3 +26,4 @@ This function calculates baseline for a single transition.
 calculate_baseline(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 }
 }
+\keyword{internal}

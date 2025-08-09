@@ -43,3 +43,4 @@ This function finds and matches lipids to mrm data.
 find_lipid_info(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_apex, FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 }
 }
+\keyword{internal}

@@ -26,3 +26,4 @@ This function processes mrm_transition for each sample on a plate.
 process_mrm_transitions(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzML)
 }
 }
+\keyword{internal}

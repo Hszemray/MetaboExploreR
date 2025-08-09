@@ -16,9 +16,11 @@ The updated master list object with MRM guides.
 }
 \description{
 This function reads MRM guides from user-supplied paths in the mrm_template_list.
+Capable of reading .tsv or .csv files
 }
 \examples{
 \dontrun{
 master_list <- read_mrm_guides(master_list, mrm_template_list)
 }
 }
+\keyword{internal}

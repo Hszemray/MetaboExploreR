@@ -4,10 +4,10 @@
 \alias{msConvertR_construct_command_for_terminal}
 \title{msConvertR_construct_command_for_terminal}
 \usage{
-msConvertR_construct_command_for_terminal(file_path, output_directory)
+msConvertR_construct_command_for_terminal(input_directory, output_directory)
 }
 \arguments{
-\item{file_path}{path to vendor file to be converted.}
+\item{input_directory}{path to input directory containing vendor files}
 
 \item{output_directory}{path to output directory.}
 }
@@ -19,6 +19,7 @@ This function constructs the command for terminal to convert files to mzML forma
 }
 \examples{
 \dontrun{
-command <- msConvertR_construct_command_for_terminal(file_path, "path/to/output_directory")
+command <- msConvertR_construct_command_for_terminal(path/to/input/directory, "path/to/output_directory")
 }
 }
+\keyword{internal}

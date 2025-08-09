@@ -7,9 +7,9 @@
 qcCheckR(
   user_name,
   project_directory,
-  mrm_template_list,
-  QC_sample_label,
-  sample_tags,
+  mrm_template_list = NULL,
+  QC_sample_label = NULL,
+  sample_tags = NULL,
   mv_threshold = 50
 )
 }

@@ -24,3 +24,4 @@ This function validates the existence of the source directory and creates the de
 validate_directories(source_dir = "path/to/source", dest_dir = "path/to/destination")
 }
 }
+\keyword{internal}

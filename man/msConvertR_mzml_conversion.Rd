@@ -7,18 +7,19 @@
 msConvertR_mzml_conversion(
   input_directory,
   output_directory,
-  file_path,
-  plateID
+  plateIDs,
+  vendor_extension_patterns
 )
 }
 \arguments{
-\item{input_directory}{Directory path for vendor files.}
+\item{input_directory}{Directory path for project folder}
 
-\item{output_directory}{Directory path for the mzml output.}
+\item{output_directory}{Directory path for project folder if different from
+input directory.}
 
-\item{file_path}{Path to the vendor file to be converted.}
+\item{plateIDs}{vector of vendor files names to be converted}
 
-\item{plateID}{Plate ID for the current plate.}
+\item{vendor_extension_patterns}{character string of vendor file extensions.}
 }
 \value{
 Converted mzml files.
@@ -28,6 +29,6 @@ This function converts raw vendor files to mzML format using ProteoWizard's msco
 }
 \examples{
 \dontrun{
-msConvertR_mzml_conversion(input_directory, output_directory, file_path, plateID)
+msConvertR_mzml_conversion(input_directory, output_directory, plateIDs)
 }
 }

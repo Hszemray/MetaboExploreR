@@ -26,3 +26,4 @@ This function sets project details in the master list.
 master_list <- set_project_details(master_list, "path/to/project_directory", "plateID", "QC_sample_label")
 }
 }
+\keyword{internal}

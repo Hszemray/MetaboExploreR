@@ -20,3 +20,4 @@ This function extracts the year from a timestamp string and converts it to a num
 extract_timestamp("2025-06-17T13:31:58Z")
 }
 }
+\keyword{internal}

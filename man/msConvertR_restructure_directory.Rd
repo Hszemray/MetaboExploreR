@@ -4,12 +4,18 @@
 \alias{msConvertR_restructure_directory}
 \title{msConvertR_restructure_directory}
 \usage{
-msConvertR_restructure_directory(output_directory, plateID)
+msConvertR_restructure_directory(
+  output_directory,
+  plateIDs,
+  vendor_extension_patterns
+)
 }
 \arguments{
 \item{output_directory}{Output directory where the mzML files will be stored.}
 
-\item{plateID}{Plate ID for the current plate.}
+\item{plateIDs}{filenames for plates being converted with no extension.}
+
+\item{vendor_extension_patterns}{vector of file extensions for vendor files}
 }
 \value{
 The updated master list object with mzML file paths.
@@ -19,6 +25,7 @@ This function restructures the directory by moving raw_data and mzML files to co
 }
 \examples{
 \dontrun{
-master_list <- msConvertR_restructure_directory(output_directory, "plateID")
+master_list <- msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
 }
 }
+\keyword{internal}

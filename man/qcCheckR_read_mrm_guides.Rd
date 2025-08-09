@@ -22,3 +22,4 @@ This function reads MRM guides from user-supplied paths in the mrm_template_list
 master_list <- qcCheckR_read_mrm_guides(master_list, mrm_template_list)
 }
 }
+\keyword{internal}

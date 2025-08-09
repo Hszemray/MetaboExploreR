@@ -20,3 +20,4 @@ This function checks if the \code{input_directory} parameter is a single string 
 validate_project_directory("input_directory")
 }
 }
+\keyword{internal}

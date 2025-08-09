@@ -37,3 +37,4 @@ This function finds peak start for a single transition.
 find_peak_start_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value)
 }
 }
+\keyword{internal}

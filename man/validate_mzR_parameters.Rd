@@ -21,3 +21,4 @@ This function validates parameters mzR_mrmfindR. If parameters fail validation s
 validate_mzR_parameters(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type)
 }
 }
+\keyword{internal}

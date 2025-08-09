@@ -15,3 +15,4 @@ NULL if the structure is valid, otherwise throws an error.
 \description{
 This function checks if the master list has the required structure and data.
 }
+\keyword{internal}

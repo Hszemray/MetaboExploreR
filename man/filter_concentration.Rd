@@ -9,7 +9,7 @@ filter_concentration(master_list, source)
 \arguments{
 \item{master_list}{A list containing project details and data.}
 
-\item{source}{The data source to filter (e.g., "concentration", "concentration\link{statTarget}").}
+\item{source}{The data source to filter (e.g., "concentration").}
 }
 \value{
 A tibble containing the filtered concentration data.

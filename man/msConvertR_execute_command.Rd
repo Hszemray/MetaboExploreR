@@ -20,3 +20,4 @@ This function executes the command to convert files to mzML format.
 msConvertR_execute_command(command)
 }
 }
+\keyword{internal}

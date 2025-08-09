@@ -14,3 +14,4 @@ assign_sample_type(sample_tags, run_order)
 \description{
 This function assigns sample types based on the sample names and user-defined QC types.
 }
+\keyword{internal}

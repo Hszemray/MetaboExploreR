@@ -24,3 +24,4 @@ This function copies files from the source directory to the destination director
 copy_files(source_dir = "path/to/source", dest_dir = "path/to/destination")
 }
 }
+\keyword{internal}

@@ -22,3 +22,4 @@ This function deletes the source directory after files have been moved.
 delete_source_directory(source_dir = "path/to/source")
 }
 }
+\keyword{internal}

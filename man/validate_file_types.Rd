@@ -4,7 +4,10 @@
 \alias{validate_file_types}
 \title{Validate Raw files}
 \usage{
-validate_file_types(project_directory)
+validate_file_types(input_directory)
+}
+\arguments{
+\item{input_directory}{directory path for vendor file locations}
 }
 \value{
 validated paths and returns message on outcome of check.
@@ -14,6 +17,6 @@ This function checks project directories contains wiff files and associated wiff
 }
 \examples{
 \dontrun{
-all_file_paths <- validate_file_types()
+all_file_paths <- validate_file_types(input_directory)
 }
 }

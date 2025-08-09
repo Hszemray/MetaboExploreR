@@ -26,3 +26,4 @@ This function finds peak apex for a single transition.
 find_peak_apex_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 }
 }
+\keyword{internal}

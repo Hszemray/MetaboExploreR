@@ -6,9 +6,15 @@
 \usage{
 extract_run_order(report, plate_id)
 }
+\arguments{
+\item{report}{The Skyline report data frame.}
+
+\item{plate_id}{The ID of the plate to filter by.}
+}
+\value{
+A data frame containing the sample names, timestamps, and other relevant information.
+}
 \description{
 This function extracts the run order data from a Skyline report, filtering by plate ID.
-#' @param report The Skyline report data frame.
-#' @param plate_id The ID of the plate to filter by.
-#' @return A data frame containing the sample names, timestamps, and other relevant information.
 }
+\keyword{internal}

@@ -4,12 +4,12 @@
 \alias{msConvertR_setup_project_directories}
 \title{msConvertR_setup_project_directories}
 \usage{
-msConvertR_setup_project_directories(output_directory, plateID)
+msConvertR_setup_project_directories(output_directory, plateIDs)
 }
 \arguments{
 \item{output_directory}{Output directory for mzml files.}
 
-\item{plateID}{Plate ID for the current plate.}
+\item{plateIDs}{vector of vendor files names being converted}
 }
 \value{
 None. The function sets up directories.
@@ -19,6 +19,7 @@ This function sets up project directories for each plate ID.
 }
 \examples{
 \dontrun{
-msConvertR_setup_project_directories(output_directory, plateID)
+msConvertR_setup_project_directories(output_directory, plateIDs)
 }
 }
+\keyword{internal}

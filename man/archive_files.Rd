@@ -22,3 +22,4 @@ This function moves a specified folder to the archive directory within the proje
 archive_files(project_directory, folder_name)
 }
 }
+\keyword{internal}

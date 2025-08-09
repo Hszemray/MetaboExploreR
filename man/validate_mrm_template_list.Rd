@@ -4,7 +4,7 @@
 \alias{validate_mrm_template_list}
 \title{Validate MRM Template List}
 \usage{
-validate_mrm_template_list(mrm_template_list)
+validate_mrm_template_list(mrm_template_list, user_name)
 }
 \arguments{
 \item{mrm_template_list}{A list of character strings representing the paths to MRM templates.}

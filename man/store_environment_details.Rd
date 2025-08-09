@@ -20,3 +20,4 @@ This function stores environment details in the master list.
 master_list <- store_environment_details(master_list)
 }
 }
+\keyword{internal}

@@ -26,3 +26,4 @@ This function waits until files are not in use by attempting to rename them.
 wait_until_files_free(files_to_copy, max_wait = 60, max_retries = 30)
 }
 }
+\keyword{internal}

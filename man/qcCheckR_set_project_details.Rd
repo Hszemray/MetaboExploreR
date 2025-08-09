@@ -37,3 +37,4 @@ This function sets project details in the master list.
 master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
 }
 }
+\keyword{internal}

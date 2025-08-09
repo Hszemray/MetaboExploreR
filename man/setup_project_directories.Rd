@@ -20,3 +20,4 @@ This function sets up project directories for each plate ID.
 setup_project_directories(master_list)
 }
 }
+\keyword{internal}

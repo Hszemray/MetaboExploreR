@@ -20,3 +20,4 @@ This function sets the working directory to the project directory.
 msConvertR_set_working_directory("path/to/output_directory")
 }
 }
+\keyword{internal}

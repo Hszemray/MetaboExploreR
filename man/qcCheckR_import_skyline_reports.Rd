@@ -20,3 +20,4 @@ This function imports Skyline reports from the project directory and stores them
 master_list <- qcCheckR_import_skyline_reports(master_list)
 }
 }
+\keyword{internal}
