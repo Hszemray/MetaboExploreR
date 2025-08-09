@@ -112,7 +112,7 @@ test_that("msConvertR_construct_command_for_terminal builds correct Docker comma
   }
 
   expected_input_mount <- sprintf('"%s:/data"', escape_for_regex(normalizePath(file.path(input_dir, "raw_data"), mustWork = FALSE)))
-  expect_true(grepl(expected_mount, command))
+  expect_true(grepl(expected_input_mount, command))
 
   expected_output_mount <- sprintf('"%s:/output"', escape_for_regex(normalizePath(file.path(output_dir, "msConvert_mzml_output"), mustWork = FALSE)))
   expect_true(grepl(expected_output_mount, command))
