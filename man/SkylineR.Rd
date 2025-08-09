@@ -4,22 +4,58 @@
 \alias{SkylineR}
 \title{SkylineR}
 \usage{
-SkylineR(project_directory, mrm_template_list, QC_sample_label)
+SkylineR(
+  user_name,
+  project_directory,
+  mrm_template_list = NULL,
+  QC_sample_label = "LTR",
+  plateID_outputs = NULL
+)
 }
 \arguments{
-\item{project_directory}{Path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.}
+\item{user_name}{A character string to identify user.}
 
-\item{mrm_template_list}{Path to Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list("path/to/mrm_guide_v1", "path/to/mrm_guide_v2")}
+\item{project_directory}{A path to project directory}
+
+\item{mrm_template_list}{Path to Multiple reaction monitoring MRM guides,
+must be in specified format. See examples and run load example
+mrm_guide for structure. May contain more than one template for
+multi-method projects.}
 
 \item{QC_sample_label}{User specified tag to filter QC samples.
-E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+Character case is not sensitive
+
+E.g. "JANE_C5_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+
 QC_sample_label = "LTR" to target files containing LTR for QC.}
+
+\item{plateID_outputs}{A vector of character strings specifying plateIDs for
+project. This parameter must only be specified by users who have not used
+MetaboExploreR::msConvertR..... Default is NULL
+
+These must match mzml files.
+e.g. If you have two plates:
+\itemize{
+\item JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1-PLASMA_sample_1.mzML
+\item JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2-PLASMA_sample_1.mzML
+}
+
+An appropriate input would be:
+\itemize{
+\item plateID_outputs = c("JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1",
+"JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2")
+}}
 }
 \value{
-Curated project directory containing raw data files and .mzml files, and Skyline exports.
+Curated project directory containing Skyline exports.
 }
 \description{
-This function converts raw data files from mass spec vendors to \code{.mzml} files, followed by targeted analysis using Skyline.
+This function performs peak picking and integration via Skyline
+in a Docker container. Allowing for usage across all major OS systems.
+
+If the user has not used MetaboExploreR::msConvertR to convert vendor files
+please ensure you create a project folder containing sub folder
+"msConvert_mzml_output" with mzml files for project.
 }
 \details{
 \itemize{
@@ -30,23 +66,17 @@ This function converts raw data files from mass spec vendors to \code{.mzml} fil
 }
 \item \strong{File Handling:}
 \itemize{
-\item Set wiff file paths from project file wiff
-\item Check if wiff files are found
-\item Set plateIDs
+\item Set plateIDs from either plate MetaboExploreR::msConvertR or
+user specified plateID_outputs
 }
 \item \strong{Processing Plates:}
 \itemize{
 \item For each plateID:
 \itemize{
 \item Setup project
-\item mzml conversion with MSConvert
-\item Import mzml
-\item Peak picking/intergration with Skyline MS
+\item Import mzml files
+\item Peak picking/integration with Skyline MS through docker
 }
-}
-\item \strong{Error Handling:}
-\itemize{
-\item Catch and log errors during plate processing
 }
 \item \strong{Final Cleanup:}
 \itemize{
@@ -56,41 +86,18 @@ This function converts raw data files from mass spec vendors to \code{.mzml} fil
 }
 }
 \examples{
-#mrm_guide structure
-str(mrm_guide)
-spc_tbl_[1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
-$ Molecule List Name            : chr [1:1243] "CE" "CE" "CE" "CE" ... # Molecule Class
-$ Precursor Name                : chr [1:1243] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ... #Molecule Species
-$ Precursor Mz                  : num [1:1243] 615 643 641 671 669 ...
-$ Precursor Charge              : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
-$ Product Mz                    : num [1:1243] 369 369 369 369 369 ...
-$ Product Charge                : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
-$ Explicit Retention Time       : num [1:1243] 11.6 12.3 11.6 12.8 12.3 ...
-$ Explicit Retention Time Window: num [1:1243] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
-$ Note                          : chr [1:1243] "SIL_20:3 cholesteryl-d7 ester" "SIL_20:3 cholesteryl-d7 ester"... #Internal Standard
-$ Source                        : chr [1:1243] NA NA NA NA ...
-$ control_chart                 : logi [1:1243] FALSE FALSE FALSE FALSE FALSE FALSE ... # TRUE = plot for control charts in qcCheckeR
-- attr(*, "spec")=
-  .. cols(
-    ..   `Molecule List Name` = col_character(),
-    ..   `Precursor Name` = col_character(),
-    ..   `Precursor Mz` = col_double(),
-    ..   `Precursor Charge` = col_double(),
-    ..   `Product Mz` = col_double(),
-    ..   `Product Charge` = col_double(),
-    ..   `Explicit Retention Time` = col_double(),
-    ..   `Explicit Retention Time Window` = col_double(),
-    ..   Note = col_character(),
-    ..   Source = col_character(),
-    ..   control_chart = col_logical()
-    .. )
-- attr(*, "problems")=<externalptr>
 
 #Load example mrm_guide
   file_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
   example_mrm_template <- read_tsv(file_path)
 
 #Run SkylineR function
-SkylineR(project_directory = "USER/PATH/TO/PROJECT/DIRECTORY", mrm_template_list = list("user_mrm_guide_v1.tsv", "user_mrm_guide_v2.tsv"))
+SkylineR(user_name = "Mad_max"
+         project_directory = "USER/PATH/TO/PROJECT/DIRECTORY",
+         mrm_template_list = list("User/path/to/user_mrm_guide_v1.tsv",
+                                  "user/path/to/user_mrm_guide_v2.tsv"),
+         QC_sample_label = "LTR",
+         plateID_outputs = NULL
+         )
 
 }

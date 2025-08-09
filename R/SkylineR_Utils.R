@@ -4,7 +4,7 @@
 #' @name SkylineR_import_external_functions
 #' @importFrom utils installed.packages sessionInfo browseURL capture.output install.packages data str read.csv
 #' @importFrom readr read_tsv write_csv read_tsv write_tsv
-#' @importFrom dplyr slice arrange_at mutate_all mutate bind_rows bind_cols filter select rename arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup
+#' @importFrom dplyr slice arrange_at mutate_all mutate bind_rows bind_cols filter select setequal rename arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup
 #' @importFrom purrr map
 #' @importFrom plotly ggplotly layout
 #' @importFrom ggplot2 ggplot aes geom_vline geom_hline geom_point theme_bw scale_shape_manual scale_color_manual scale_size_manual guides guide_legend facet_wrap scale_fill_manual ylab geom_text
@@ -23,115 +23,7 @@ NULL
 #SkylineR internal functions----
 #.----
 
-#Move Folder Functions----
 
-###Primary Function----
-#' move_folder
-#' This function moves a folder from the source directory to the destination directory, waits until files are not in use, and then deletes the source directory.
-#' @param source_dir Directory path for the folder to copy.
-#' @param dest_dir Directory path for the folder to be copied to.
-#' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder.
-#' @param max_retries Maximum number of attempts to try move/delete prior to error. Default 30
-#' @return None. The function performs the move operation and prints a message upon successful completion.
-#' @examples
-#' \dontrun{
-#' move_folder(source_dir = "path/to/source", dest_dir = "path/to/destination", max_wait = 60, max_retries = 30)
-#' }
-move_folder <- function(source_dir, dest_dir, max_wait = 60, max_retries = 30) {
-  validate_directories(source_dir, dest_dir)
-  files_to_copy <- copy_files(source_dir, dest_dir)
-  wait_until_files_free(files_to_copy, max_wait, max_retries)
-  delete_source_directory(source_dir)
-  return(TRUE)
-}
-
-###Sub Functions----
-
-#' validate_directories
-#' This function validates the existence of the source directory and creates the destination directory if it does not exist.
-#' @param source_dir Directory path for the folder to copy.
-#' @param dest_dir Directory path for the folder to be copied to.
-#' @return None. The function performs directory validation.
-#' @examples
-#' \dontrun{
-#' validate_directories(source_dir = "path/to/source", dest_dir = "path/to/destination")
-#' }
-validate_directories <- function(source_dir, dest_dir) {
-  if (!dir.exists(source_dir)) {
-    stop(paste("Source directory does not exist:", source_dir))
-  }
-  if (!dir.exists(dest_dir)) {
-    dir.create(dest_dir, recursive = TRUE)
-  }
-}
-
-#' copy_files
-#' This function copies files from the source directory to the destination directory.
-#' @param source_dir Directory path for the folder to copy.
-#' @param dest_dir Directory path for the folder to be copied to.
-#' @return A vector of file paths that were copied.
-#' @examples
-#' \dontrun{
-#' copy_files(source_dir = "path/to/source", dest_dir = "path/to/destination")
-#' }
-copy_files <- function(source_dir, dest_dir) {
-  files_to_copy <- list.files(source_dir, full.names = TRUE)
-  success <- file.copy(files_to_copy, dest_dir, recursive = TRUE)
-  if (!all(success)) {
-    stop("Some files failed to copy.")
-  }
-  return(files_to_copy)
-}
-
-#' wait_until_files_free
-#' This function waits until files are not in use by attempting to rename them.
-#' @param files_to_copy A vector of file paths to check.
-#' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder. Default is 60
-#' @param max_retries Maximum number of attempts to try move/delete prior to error. Default is 30.
-#' @return None. The function waits until files are free.
-#' @examples
-#' \dontrun{
-#' wait_until_files_free(files_to_copy, max_wait = 60, max_retries = 30)
-#' }
-wait_until_files_free <- function(files_to_copy, max_wait = 60, max_retries = 30) {
-  for (test_file in files_to_copy) {
-    retries <- 0
-    start_time <- Sys.time()
-    while (TRUE) {
-      if (!file.exists(test_file)) break
-
-      test_rename <- try(file.rename(test_file, paste0(test_file, ".tmp")), silent = TRUE)
-      if (!inherits(test_rename, "try-error") && test_rename) {
-        file.rename(paste0(test_file, ".tmp"), test_file)
-        break
-      }
-
-      if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait || retries >= max_retries) {
-        stop(paste("File still in use after waiting:", test_file))
-      }
-
-      Sys.sleep(2)
-      retries <- retries + 1
-    }
-  }
-}
-
-#' delete_source_directory
-#' This function deletes the source directory after files have been moved.
-#' @param source_dir Directory path for the folder to delete.
-#' @return None. The function deletes the source directory.
-#' @examples
-#' \dontrun{
-#' delete_source_directory(source_dir = "path/to/source")
-#' }
-delete_source_directory <- function(source_dir) {
-  unlink(source_dir, recursive = TRUE, force = TRUE)
-  if (dir.exists(source_dir)) {
-    stop(paste("Failed to delete directory:", source_dir))
-  } else {
-    message(paste("Successfully moved and deleted:", source_dir))
-  }
-}
 
 #.----
 #Setup Project Functions----
@@ -164,7 +56,7 @@ skyline_setup_project <- function(project_directory, plateID, mrm_template_list,
 #' initialise_master_list
 #'
 #' This function initialises the master list with default values.
-#'
+#' @keywords internal
 #' @return A list representing the initialised master list.
 #' @examples
 #' \dontrun{
@@ -186,7 +78,7 @@ initialise_master_list <- function() {
 #' store_environment_details
 #'
 #' This function stores environment details in the master list.
-#'
+#' @keywords internal
 #' @param master_list The master list object.
 #' @return The updated master list object with environment details.
 #' @examples
@@ -203,7 +95,7 @@ store_environment_details <- function(master_list) {
 #' set_project_details
 #'
 #' This function sets project details in the master list.
-#'
+#' @keywords internal
 #' @param master_list The master list object.
 #' @param project_directory Directory path for the project folder.
 #' @param plateID Plate ID for the current plate.
@@ -218,10 +110,6 @@ set_project_details <- function(master_list, project_directory, plateID, QC_samp
   master_list$project_details$lipidExploreR_version <- "Automated"
   master_list$project_details$user_name <- "Australian National Phenome Centre"
   master_list$project_details$project_name <- str_extract(master_list$project_details$project_dir, "[^/]*$")
-  master_list$project_details$all_file_paths <- list.files(path = paste0(master_list$project_details$project_dir, "/raw_data"),
-                                                       pattern = paste0(plateID, "\\.(wiff|d|raw)$"),
-                                                       all.files = FALSE, full.names = TRUE, recursive = FALSE,
-                                                       ignore.case = TRUE, include.dirs = FALSE, no.. = FALSE)
   master_list$project_details$plateID <- plateID
   master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$script_log$timestamps$start_time <- Sys.time()
@@ -231,7 +119,8 @@ set_project_details <- function(master_list, project_directory, plateID, QC_samp
 #' read_mrm_guides
 #'
 #' This function reads MRM guides from user-supplied paths in the mrm_template_list.
-#'
+#' Capable of reading .tsv or .csv files
+#' @keywords internal
 #' @param master_list The master list object.
 #' @param mrm_template_list List of MRM guide file paths.
 #' @return The updated master list object with MRM guides.
@@ -239,20 +128,76 @@ set_project_details <- function(master_list, project_directory, plateID, QC_samp
 #' \dontrun{
 #' master_list <- read_mrm_guides(master_list, mrm_template_list)
 #' }
+
 read_mrm_guides <- function(master_list, mrm_template_list) {
-  names(mrm_template_list) <- sapply(mrm_template_list, function(path) {
-    basename(path)
-  })
+  names(mrm_template_list) <- sapply(mrm_template_list, basename)
+
   for (version in names(mrm_template_list)) {
-    master_list$templates$mrm_guides[[version]]$mrm_guide <- read_tsv(mrm_template_list[[version]])
+    file_path <- mrm_template_list[[version]]
+
+    # Determine file extension and read accordingly
+    if (grepl("\\.csv$", file_path, ignore.case = TRUE)) {
+      guide_data <- readr::read_csv(file_path, show_col_types = FALSE)
+    } else if (grepl("\\.tsv$", file_path, ignore.case = TRUE)) {
+      guide_data <- readr::read_tsv(file_path,show_col_types = FALSE)
+    } else {
+      stop(paste("Unsupported file format for:", file_path,
+                 ". \n Please ensure mrm_templates are .csv or .tsv"))
+    }
+
+
+    # validate mrm_template_list
+    ##Check column  names and length
+      mandatory_cols <- c(
+        "Molecule List Name", "Precursor Name", "Precursor Mz",
+        "Precursor Charge", "Product Mz", "Product Charge",
+        "Explicit Retention Time", "Explicit Retention Time Window", "Note",
+        "control_chart"
+      )
+      guide_cols <- colnames(guide_data)
+      matching_cols  <- intersect(mandatory_cols, guide_cols)
+
+      # report if all cols are matching
+      if (length(matching_cols) == length(mandatory_cols)) {
+        message(paste(version,": All mandatory columns are present."))
+      } else {
+        missing_cols <- setdiff(mandatory_cols, guide_cols)
+        stop(paste(version,": Missing mandatory columns: ",
+                   paste(missing_cols, collapse = ", ")))
+      }
+
+    ## Check there are no NA in all columns
+    ## Except "Note" if "Precursor Name" contains "SIL" then expect an NA
+      sil_rows <- grepl("SIL", guide_data[["Precursor Name"]],
+                        ignore.case = TRUE)
+      cols_to_check <- setdiff(mandatory_cols, "Note")
+      for (col in cols_to_check) {
+        if (any(is.na(guide_data[[col]]))) {
+          stop(paste(version,": Column", col,
+                     "contains NA values, which are not allowed."))
+        }
+      }
+      note_na <- is.na(guide_data[["Note"]])
+      invalid_note_na <- note_na & !sil_rows
+      if (any(invalid_note_na)) {
+        stop(paste(version, ": NA values in 'Note' column
+        are only allowed for rows where 'Precursor Name' contains 'SIL'."))
+      }
+
+      message(paste(version, ": All required columns are validated and contain no unexpected NA values."))
+
+    #Store valdiated mrm_template in master_list
+    master_list$templates$mrm_guides[[version]]$mrm_guide <- guide_data
   }
+
   return(master_list)
 }
+
 
 #' setup_project_directories
 #'
 #' This function sets up project directories for each plate ID.
-#'
+#' @keywords internal
 #' @param master_list The master list object.
 #' @return None. The function sets up directories.
 #' @examples
@@ -260,15 +205,17 @@ read_mrm_guides <- function(master_list, mrm_template_list) {
 #' setup_project_directories(master_list)
 #' }
 setup_project_directories <- function(master_list) {
+
   for (plate_ID in master_list$project_details$plateID) {
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/mzml"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/rda"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/skyline"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/raw_data"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/data/batch_correction"), showWarnings = FALSE)
-    dir.create(paste0(master_list$project_details$project_dir, "/", plate_ID, "/html_report"), showWarnings = FALSE)
+    base_path <- file.path(master_list$project_details$project_dir, plate_ID)
+    dir.create(base_path, showWarnings = FALSE)
+    dir.create(file.path(base_path, "data"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "data", "mzml"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "data", "rda"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "data", "skyline"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "data", "raw_data"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "data", "batch_correction"), showWarnings = FALSE)
+    dir.create(file.path(base_path, "html_report"), showWarnings = FALSE)
   }
 }
 
@@ -303,7 +250,7 @@ mzR_mrm_findR <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type) {
 #' validate_mzR_parameters
 #'
 #' This function validates parameters mzR_mrmfindR. If parameters fail validation script stops
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
 #' @param FUNC_OPTION_qc_type QC type used in the experiment (LTR, PQC, none) parsed internally.
@@ -321,7 +268,7 @@ validate_mzR_parameters <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_typ
 #' get_mzML_filelist
 #'
 #' This function generates the mzML_filelist from FUNC_mzR
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @return A list containing mzML file information from plate.
 #' @examples
@@ -339,7 +286,7 @@ get_mzML_filelist <- function(FUNC_mzR) {
 #' filter_mzML_filelist_qc
 #'
 #' This function filters the mzML_filelist for user selected quality control samples
-#'
+#' @keywords internal
 #' @param mzML_filelist A list containing mzML file information from plate.
 #' @param FUNC_OPTION_qc_type QC type used in the experiment parsed internally.
 #' @return A list containing quality control sample data.
@@ -355,7 +302,7 @@ filter_mzML_filelist_qc <- function(mzML_filelist, FUNC_OPTION_qc_type) {
 #' process_files
 #'
 #' This function process each mzml to produce a tibble of mrm data for all samples on plate.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
 #' @param mzML_filelist_qc A list containing mzML file information from plate for only quality control samples.
@@ -384,7 +331,7 @@ process_files <- function(FUNC_mzR, FUNC_mrm_guide, mzML_filelist_qc) {
 #' process_mrm_transitions
 #'
 #' This function processes mrm_transition for each sample on a plate.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
 #' @param idx_plate A string naming the current plate ID being processed. Passed from process_files function.
@@ -424,7 +371,7 @@ process_mrm_transitions <- function(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzM
 #' calculate_baseline
 #'
 #' This function calculates baseline for a single transition.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param idx_plate A string naming the current plate ID being processed. Passed from process_files function.
 #' @param idx_mzML A string naming the current mzML file being processed. Passed from process_files function.
@@ -445,7 +392,7 @@ calculate_baseline <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
 #' find_peak_apex_idx
 #'
 #' This function finds peak apex for a single transition.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param idx_plate A string naming the current plate ID being processed. Passed from process_files function.
 #' @param idx_mzML A string naming the current mzML file being processed. Passed from process_files function.
@@ -466,7 +413,7 @@ find_peak_apex_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
 #' find_peak_start_idx
 #'
 #' This function finds peak start for a single transition.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param idx_plate A string naming the current plate ID being processed. Passed from process_files function.
 #' @param idx_mzML A string naming the current mzML file being processed. Passed from process_files function.
@@ -490,7 +437,7 @@ find_peak_start_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_ape
 #' find_peak_end_idx
 #'
 #' This function finds peak end for a single transition.
-#'
+#' @keywords internal
 #' @param FUNC_mzR List from master_list containing mzR object for each sample, mzR_header, mzR_chromatogram parsed internally.
 #' @param idx_plate A string naming the current plate ID being processed. Passed from process_files function.
 #' @param idx_mzML A string naming the current mzML file being processed. Passed from process_files function.
@@ -515,7 +462,7 @@ find_peak_end_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_
 #' find_lipid_info
 #'
 #' This function finds and matches lipids to mrm data.
-#'
+#' @keywords internal
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
 #' @param precursor_mz A numeric value for precursor mass to charge ratio.
 #' @param product_mz A numeric value for product mass to charge ratio.
@@ -556,7 +503,7 @@ find_lipid_info <- function(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_ap
 #' create_output
 #'
 #' This function updated mrm_guide and peak_boundary_update for later use in Skyline.
-#'
+#' @keywords internal
 #' @param FUNC_tibble A tibble of mrm details per sample per lipid species.
 #' @param FUNC_mrm_guide Tibble of mrm details parsed internally. See run mrm_template_guide for example.
 #' @param mzML_filelist A list containing mzML file information from plate.
@@ -612,7 +559,7 @@ import_mzml <- function(plateID, master_list) {
   validate_master_list_project_directory(master_list)
   mzml_filelist <- initialise_mzml_filelist(master_list)
   master_list <- process_plates(master_list, mzml_filelist)
-  master_list <- update_script_log(master_list, "mzR_mzml_import", "ms_convert", "mzml_file_processing")
+  master_list <- update_script_log(master_list, "mzR_mzml_import", "project_setup", "mzml_file_processing")
   return(master_list)
 }
 
@@ -621,7 +568,7 @@ import_mzml <- function(plateID, master_list) {
 #' initialise_mzml_filelist
 #'
 #' This function initializes a list of mzML files for each plate in the master list, excluding files with specific patterns.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details, including plate IDs and project directory.
 #' @return A list of mzML files for each plate, excluding files with "COND", "Blank", or "ISTDs" in their names.
 #' @examples
@@ -631,7 +578,7 @@ import_mzml <- function(plateID, master_list) {
 initialise_mzml_filelist <- function(master_list) {
   mzml_filelist <- list()
   for (idx_plate in master_list$project_details$plateID) {
-    mzml_filelist[[idx_plate]] <- list.files(file.path(master_list$project_details$project_dir, idx_plate, "data/mzml"), pattern = ".mzML", full.names = FALSE)
+    mzml_filelist[[idx_plate]] <- list.files(file.path(master_list$project_details$project_dir, idx_plate, "data","mzml"), pattern = ".mzML", full.names = FALSE)
     mzml_filelist[[idx_plate]] <- mzml_filelist[[idx_plate]][!grepl("COND|Blank|ISTDs", mzml_filelist[[idx_plate]])]
   }
   return(mzml_filelist)
@@ -641,7 +588,7 @@ initialise_mzml_filelist <- function(master_list) {
 #' process_plates
 #'
 #' This function processes mzML files for each plate in the master list, extracting relevant information and updating the master list.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param mzml_filelist A list of mzML files for each plate.
 #' @return The updated `master_list` object with processed mzML data.
@@ -669,7 +616,7 @@ process_plates <- function(master_list, mzml_filelist) {
 #' extract_timestamp
 #'
 #' This function extracts the year from a timestamp string and converts it to a numeric value.
-#'
+#' @keywords internal
 #' @param timestamp A string representing the timestamp.
 #' @return A numeric value representing the year extracted from the timestamp.
 #' @examples
@@ -684,7 +631,7 @@ extract_timestamp <- function(timestamp) {
 #' update_sample_list
 #'
 #' This function updates the sample list for a given plate in the master list.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param idx_plate The index of the plate to update the sample list for.
 #' @return The updated sample list for the specified plate.
@@ -716,13 +663,13 @@ update_sample_list <- function(master_list, idx_plate) {
 #' }
 peak_picking <- function(plateID, master_list) {
   validate_master_list_project_directory(master_list)
-  plate_idx <- master_list$project_details$plateID
-  print(paste("Processing plate:", plate_idx))
+  plate_idx <- plateID
+  message(paste("Processing plate:", plateID))
   sil_found <- FALSE
 
   for (version in names(master_list$templates$mrm_guides)) {
     if (sil_found == TRUE ) break
-    print(paste("Trying mrm_guide version:", version))
+    message(paste("Trying mrm_guide version:", version))
     master_list$project_details$is_ver <- version
     master_list$summary_tables$project_summary <- create_summary_table(master_list, plate_idx)
     master_list$templates$mrm_guides$by_plate[[plate_idx]] <- optimise_retention_times(master_list, plate_idx)
@@ -732,13 +679,15 @@ peak_picking <- function(plateID, master_list) {
     sil_found <- check_sil_standards(master_list, plate_idx, version)
     if (sil_found == TRUE) {
       save_plate_data(master_list, plate_idx)
+      message(paste(plate_idx,"SIL matched to", version))
+      message(paste(plate_idx,": Skyline data has been saved!"))
     } else {
-      print(paste("No SIL standards detected with version", version, "- trying next version"))
+      message(paste("No SIL standards detected with version", version, "- trying next version"))
     }
   }
 
   if (sil_found == FALSE) {
-    stop(print(paste("No SIL internal standards detected in plate", plate_idx, "after trying all method versions. Please ensure your mrm_guide is the transitions used in the project!")))
+    stop(message(paste("No SIL internal standards detected in plate", plate_idx, "after trying all method versions. Please ensure your mrm_guide is the transitions used in the project!")))
   }
 
 
@@ -752,7 +701,7 @@ peak_picking <- function(plateID, master_list) {
 #' create_summary_table
 #'
 #' This function creates a summary table for a given plate in the master list, including various project details.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to create the summary table for.
 #' @return A tibble containing the summary table with project details and their values.
@@ -773,7 +722,7 @@ create_summary_table <- function(master_list, plate_idx) {
 #' optimise_retention_times
 #'
 #' This function optimises retention times for each plate in the master list using the mzR_mrm_findR function and updates the MRM guide.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx A vector of plate indices to optimise retention times for.
 #' @return A list containing the optimised retention times and updated MRM guide for each plate.
@@ -792,6 +741,7 @@ optimise_retention_times <- function(master_list, plate_idx) {
     by_plate[[plate_idx]] <- result
   }
   by_plate[[plate_idx]]$mrm_guide_updated <- setNames(by_plate[[plate_idx]]$mrm_guide_updated, names(by_plate[[plate_idx]]$mrm_guide))
+  message("Successfully optimised retention times!")
   return(by_plate)
 }
 
@@ -799,7 +749,7 @@ optimise_retention_times <- function(master_list, plate_idx) {
 #' export_files
 #'
 #' This function exports various files related to the project for a given plate, including updated MRM guides, peak boundaries, and default templates.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to export files for.
 #' @return Exports CSV, SKY, and TSV files to the specified project directory.
@@ -808,33 +758,44 @@ optimise_retention_times <- function(master_list, plate_idx) {
 #' export_files(master_list, plate_idx)
 #' }
 export_files <- function(master_list, plate_idx) {
+
+  project_name <- master_list$project_details$project_name
+  skyline_path <- file.path(master_list$project_details$project_dir, plate_idx, "data" ,"skyline")
+
   write_csv(x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$mrm_guide_update,
-            file = paste0(master_list$project_details$project_dir, "/", plate_idx, "/data/skyline/", Sys.Date(), "_RT_update_",
-                          master_list$project_details$project_name, "_", plate_idx, ".csv"))
+            file = file.path(skyline_path, paste0(Sys.Date(), "_RT_update_",
+                                                  project_name, "_", plate_idx, ".csv")))
+
   write_csv(x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$peak_boundary_update,
-            file = paste0(master_list$project_details$project_dir, "/", plate_idx, "/data/skyline/", Sys.Date(), "_peak_boundary_update_",
-                          master_list$project_details$project_name, "_", plate_idx, ".csv"))
+            file = file.path(skyline_path, paste0(Sys.Date(), "_peak_boundary_update_", project_name, "_", plate_idx, ".csv")))
+
   file.copy(from = system.file("templates", "default_skyline_file.sky", package = "MetaboExploreR"),
-            to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline"))
-  file.rename(from = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/default_skyline_file.sky"),
-              to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/",Sys.Date(),"_",master_list$project_details$project_name,"_",plate_idx,".sky"))
+            to = paste0(skyline_path))
+
+  file.rename(from = file.path(skyline_path,"default_skyline_file.sky"),
+              to = file.path(skyline_path, paste0(Sys.Date(),"_",project_name,"_",plate_idx,".sky")))
   file.copy(from = system.file("templates", "default_csv.csv", package = "MetaboExploreR"),
-            to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline"))
-  file.rename(from = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/default_csv.csv"),
-              to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/",Sys.Date(),"_xskylineR_1_",master_list$project_details$project_name,"_",plate_idx,".csv"))
+            to = file.path(skyline_path))
+
+  file.rename(from = file.path(skyline_path,"default_csv.csv"),
+              to = file.path(skyline_path, paste0(Sys.Date(),"_xskylineR_1_",project_name,"_",plate_idx,".csv")))
   file.copy(from = system.file("templates", "default_tsv.tsv", package = "MetaboExploreR"),
-            to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline" ))
-  file.rename(from = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/default_tsv.tsv"),
-              to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline/",Sys.Date(),"_",master_list$project_details$project_name,"_",plate_idx,"_chromatograms.tsv"))
+            to = file.path(skyline_path))
+
+  file.rename(from = file.path(skyline_path ,"default_tsv.tsv"),
+              to = file.path(skyline_path, paste0(Sys.Date(),"_",project_name,"_",plate_idx,"_chromatograms.tsv")))
   file.copy(from = system.file("templates", "YYYY-MM-DD_xskylineR_1_project_name.skyr", package = "MetaboExploreR"),
-            to = paste0(master_list$project_details$project_dir,"/",plate_idx, "/data/skyline" ))
+            to = file.path(skyline_path))
+
+  Sys.sleep(10)
+  message("Skyline Template Files Rendered in directory")
 }
 
 
 #' execute_skyline_command
 #'
 #' This function executes a Skyline system command to process mzML files and generate various reports for a given plate.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to execute the Skyline command for.
 #' @return Executes the Skyline command and generates reports and chromatogram files saving to project directory.
@@ -843,48 +804,67 @@ export_files <- function(master_list, plate_idx) {
 #' execute_skyline_command(master_list, plate_idx)
 #' }
 execute_skyline_command <- function(master_list, plate_idx) {
-  exe_path <- shQuote("C:/Program Files/Skyline/SkylineCmd.exe")
-  in_file <- shQuote(paste0("skyline/", Sys.Date(), "_", master_list$project_details$project_name, "_", plate_idx, ".sky"))
-  import_transition_list <- shQuote(paste0("skyline/", Sys.Date(), "_RT_update_", master_list$project_details$project_name, "_", plate_idx, ".csv"))
-  import_peak_boundaries <- shQuote(paste0("skyline/", Sys.Date(), "_peak_boundary_update_", master_list$project_details$project_name, "_", plate_idx, ".csv"))
-  out_file <- shQuote(paste0("skyline/", Sys.Date(), "_", master_list$project_details$project_name, "_", plate_idx, ".sky"))
-  report_file <- shQuote(paste0("skyline/", Sys.Date(), "_xskylineR_1_", master_list$project_details$project_name, "_", plate_idx, ".csv"))
-  chromatogram_file <- shQuote(paste0("skyline/", Sys.Date(), "_", master_list$project_details$project_name, "_", plate_idx, "_chromatograms.tsv"))
-  report_template <- shQuote("skyline/YYYY-MM-DD_xskylineR_1_project_name.skyr")
-  mzml_path <- shQuote("mzml")
 
-  setwd(paste0(master_list$project_details$project_dir,"/",plate_idx,"/data"))
-  cmd <- paste(
-    exe_path,
-    paste0('--in=', in_file),
-    paste0('--import-transition-list=', import_transition_list),
-    paste0('--import-all=', mzml_path),
-    paste0('--import-peak-boundaries=', import_peak_boundaries),
-    paste0('--save-settings'),
-    paste0('--overwrite'),
-    paste0('--out=', out_file),
-    paste0('--report-conflict-resolution=overwrite'),
-    paste0('--report-name=YYYY-MM-DD_xskylineR_1_project_name'),
-    paste0('--report-file=', report_file),
-    paste0('--report-add=', report_template),
-    paste0('--report-format=csv'),
-    paste0('--report-invariant'),
-    paste0('--chromatogram-file=', chromatogram_file),
-    paste0('--chromatogram-precursors'),
-    paste0('--chromatogram-products'),
-    paste0('--chromatogram-base-peaks'),
-    paste0('--chromatogram-tics'),
-    sep = " "
-  )
+   # Get absolute path to data directory
+    data_dir <- normalizePath(file.path(master_list$project_details$project_dir, plate_idx, "data"))
 
-  system(cmd)
+    # Build filenames
+    date_str <- Sys.Date()
+    project <- master_list$project_details$project_name
+    base_path <- file.path("skyline")
+
+    in_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, ".sky"))
+    import_transition_list <- file.path(base_path, paste0(date_str, "_RT_update_", project, "_", plate_idx, ".csv"))
+    mzml_path <- "mzml"
+    import_peak_boundaries <- file.path(base_path, paste0(date_str, "_peak_boundary_update_", project, "_", plate_idx, ".csv"))
+    out_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, ".sky"))
+    report_name <- "YYYY-MM-DD_xskylineR_1_project_name"
+    report_file <- file.path(base_path, paste0(date_str, "_xskylineR_1_", project, "_", plate_idx, ".csv"))
+    report_template <- file.path(base_path,"YYYY-MM-DD_xskylineR_1_project_name.skyr")
+    chromatogram_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, "_chromatograms.tsv"))
+
+
+
+    docker_command <- sprintf(
+      'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
+      --dir=/data \
+      --in=%s \
+      --import-transition-list=%s \
+      --import-all=%s \
+      --import-peak-boundaries=%s \
+      --save-settings --overwrite \
+      --out=%s \
+      --report-conflict-resolution=overwrite \
+      --report-name=%s \
+      --report-file=%s \
+      --report-add=%s \
+      --report-format=csv \
+      --report-invariant \
+      --chromatogram-file=%s \
+      --chromatogram-precursors \
+      --chromatogram-products \
+      --chromatogram-base-peaks \
+      --chromatogram-tics',
+      data_dir, #-v "%s:/data"
+      shQuote(in_file), #--in=%s
+      shQuote(import_transition_list), #--import-transition-list=%s
+      shQuote(mzml_path), #--import-all=%s
+      shQuote(import_peak_boundaries), #--import-peak-boundaries=%s
+      shQuote(out_file), #--out=%s
+      shQuote(report_name), #--report-name=%s
+      shQuote(report_file), # --report-file=%s
+      shQuote(report_template), # --report-add=%s
+      shQuote(chromatogram_file) #--chromatogram-file=%s
+    )
+
+    system(docker_command)
 }
 
 
 #' reimport_skyline_file
 #'
 #' This function reimports a Skyline file for a given plate, converts specific columns to numeric, and cleans the column names.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to reimport the Skyline file for.
 #' @return A data frame containing the reimported Skyline data with cleaned column names.
@@ -908,7 +888,7 @@ reimport_skyline_file <- function(master_list, plate_idx) {
 #' check_sil_standards
 #'
 #' This function checks if the SIL standards on a given plate match the SIL standards for a specified mrm_guide version.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to check the SIL standards for.
 #' @param version The version of the MRM guide to compare against.
@@ -921,15 +901,14 @@ check_sil_standards <- function(master_list, plate_idx, version) {
   sil_on_plate <- master_list$data$skyline_report[[plate_idx]][grepl("SIL", master_list$data$skyline_report[[plate_idx]][["molecule_name"]], ignore.case = TRUE),] %>%
                   select(contains("molecule_name")) %>% unique() %>% rename("SIL" = "molecule_name")
   sil_for_version <- master_list$templates$mrm_guides[[version]][["mrm_guide"]][grepl("SIL", master_list$templates$mrm_guides[[version]][["mrm_guide"]][["Precursor Name"]], ignore.case = TRUE),] %>% select(contains("Precursor Name")) %>% unique() %>% rename("SIL" = "Precursor Name")
-  sil_found <- ifelse(nrow(sil_on_plate) == nrow(sil_for_version), TRUE, FALSE)
+  sil_found <- setequal(sil_on_plate, sil_for_version)
   return(sil_found)
 }
-
 
 #' save_plate_data
 #'
 #' This function saves the master list data for a given plate to an RDA file.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and data.
 #' @param plate_idx The index of the plate to save the data for.
 #' @return Saves the master list data to an RDA file in the specified project directory.
@@ -970,7 +949,7 @@ archive_raw_files <- function(project_directory) {
 #' Archive Files
 #'
 #' This function moves a specified folder to the archive directory within the project directory.
-#'
+#' @keywords internal
 #' @param project_directory The directory of the project.
 #' @param folder_name The name of the folder to be archived.
 #' @return Moves the specified folder to the archive directory.
@@ -980,4 +959,118 @@ archive_raw_files <- function(project_directory) {
 #' }
 archive_files <- function(project_directory, folder_name) {
   move_folder(file.path(project_directory, folder_name), file.path(project_directory, "archive"))
+}
+
+#Move Folder Functions----
+
+###Primary Function----
+#' move_folder
+#' This function moves a folder from the source directory to the destination directory, waits until files are not in use, and then deletes the source directory.
+#' @param source_dir Directory path for the folder to copy.
+#' @param dest_dir Directory path for the folder to be copied to.
+#' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder.
+#' @param max_retries Maximum number of attempts to try move/delete prior to error. Default 30
+#' @return None. The function performs the move operation and prints a message upon successful completion.
+#' @examples
+#' \dontrun{
+#' move_folder(source_dir = "path/to/source", dest_dir = "path/to/destination", max_wait = 60, max_retries = 30)
+#' }
+move_folder <- function(source_dir, dest_dir, max_wait = 60, max_retries = 30) {
+  validate_directories(source_dir, dest_dir)
+  files_to_copy <- copy_files(source_dir, dest_dir)
+  wait_until_files_free(files_to_copy, max_wait, max_retries)
+  delete_source_directory(source_dir)
+  return(TRUE)
+}
+
+###Sub Functions----
+
+#' validate_directories
+#' This function validates the existence of the source directory and creates the destination directory if it does not exist.
+#' @keywords internal
+#' @param source_dir Directory path for the folder to copy.
+#' @param dest_dir Directory path for the folder to be copied to.
+#' @return None. The function performs directory validation.
+#' @examples
+#' \dontrun{
+#' validate_directories(source_dir = "path/to/source", dest_dir = "path/to/destination")
+#' }
+validate_directories <- function(source_dir, dest_dir) {
+  if (!dir.exists(source_dir)) {
+    stop(paste("Source directory does not exist:", source_dir))
+  }
+  if (!dir.exists(dest_dir)) {
+    dir.create(dest_dir, recursive = TRUE)
+  }
+}
+
+#' copy_files
+#' This function copies files from the source directory to the destination directory.
+#' @keywords internal
+#' @param source_dir Directory path for the folder to copy.
+#' @param dest_dir Directory path for the folder to be copied to.
+#' @return A vector of file paths that were copied.
+#' @examples
+#' \dontrun{
+#' copy_files(source_dir = "path/to/source", dest_dir = "path/to/destination")
+#' }
+copy_files <- function(source_dir, dest_dir) {
+  files_to_copy <- list.files(source_dir, full.names = TRUE)
+  success <- file.copy(files_to_copy, dest_dir, recursive = TRUE)
+  if (!all(success)) {
+    stop("Some files failed to copy.")
+  }
+  return(files_to_copy)
+}
+
+#' wait_until_files_free
+#' This function waits until files are not in use by attempting to rename them.
+#' @keywords internal
+#' @param files_to_copy A vector of file paths to check.
+#' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder. Default is 60
+#' @param max_retries Maximum number of attempts to try move/delete prior to error. Default is 30.
+#' @return None. The function waits until files are free.
+#' @examples
+#' \dontrun{
+#' wait_until_files_free(files_to_copy, max_wait = 60, max_retries = 30)
+#' }
+wait_until_files_free <- function(files_to_copy, max_wait = 60, max_retries = 30) {
+  for (test_file in files_to_copy) {
+    retries <- 0
+    start_time <- Sys.time()
+    while (TRUE) {
+      if (!file.exists(test_file)) break
+
+      test_rename <- try(file.rename(test_file, paste0(test_file, ".tmp")), silent = TRUE)
+      if (!inherits(test_rename, "try-error") && test_rename) {
+        file.rename(paste0(test_file, ".tmp"), test_file)
+        break
+      }
+
+      if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait || retries >= max_retries) {
+        stop(paste("File still in use after waiting:", test_file))
+      }
+
+      Sys.sleep(2)
+      retries <- retries + 1
+    }
+  }
+}
+
+#' delete_source_directory
+#' This function deletes the source directory after files have been moved.
+#' @keywords internal
+#' @param source_dir Directory path for the folder to delete.
+#' @return None. The function deletes the source directory.
+#' @examples
+#' \dontrun{
+#' delete_source_directory(source_dir = "path/to/source")
+#' }
+delete_source_directory <- function(source_dir) {
+  unlink(source_dir, recursive = TRUE, force = TRUE)
+  if (dir.exists(source_dir)) {
+    stop(paste("Failed to delete directory:", source_dir))
+  } else {
+    message(paste("Successfully moved and deleted:", source_dir))
+  }
 }

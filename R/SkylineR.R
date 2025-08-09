@@ -1,51 +1,51 @@
 #'SkylineR
 #'
-#' @description This function converts raw data files from mass spec vendors to `.mzml` files, followed by targeted analysis using Skyline.
+#' @description This function performs peak picking and integration via Skyline
+#' in a Docker container. Allowing for usage across all major OS systems.
 #'
-#' @param project_directory Path to project directory containing a folder named 'wiff' with selected .wiff and .wiff.scan files.
-#' @param mrm_template_list Path to Multiple reaction monitoring (MRM) guides, must be in specified format. See examples and run load example mrm_guide for structure. May contain more than one template for multi-method projects. e.g mrm_template_list = list("path/to/mrm_guide_v1", "path/to/mrm_guide_v2")
+#' If the user has not used MetaboExploreR::msConvertR to convert vendor files
+#' please ensure you create a project folder containing sub folder
+#' "msConvert_mzml_output" with mzml files for project.
+#' @param user_name A character string to identify user.
+#' @param project_directory A path to project directory
+#' @param mrm_template_list Path to Multiple reaction monitoring MRM guides,
+#' must be in specified format. See examples and run load example
+#' mrm_guide for structure. May contain more than one template for
+#' multi-method projects.
 #' @param QC_sample_label User specified tag to filter QC samples.
-#' E.g. "ROCIT20_C1_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+#' Character case is not sensitive
+#'
+#' E.g. "JANE_C5_URI_MS-LIPIDS_PLIP01_PLATE_3-PLASMA LTR_19.mzML"
+#'
 #' QC_sample_label = "LTR" to target files containing LTR for QC.
-#' @return Curated project directory containing raw data files and .mzml files, and Skyline exports.
+#' @param plateID_outputs A vector of character strings specifying plateIDs for
+#' project. This parameter must only be specified by users who have not used
+#' MetaboExploreR::msConvertR..... Default is NULL
+#'
+#' These must match mzml files.
+#' e.g. If you have two plates:
+#'  - JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1-PLASMA_sample_1.mzML
+#'  - JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2-PLASMA_sample_1.mzML
+#'
+#' An appropriate input would be:
+#'  - plateID_outputs = c("JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1",
+#'                        "JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2")
+#' @return Curated project directory containing Skyline exports.
 #' @export
 #' @examples
-#' #mrm_guide structure
-#' str(mrm_guide)
-#' spc_tbl_[1,243 × 11] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
-#' $ Molecule List Name            : chr [1:1243] "CE" "CE" "CE" "CE" ... # Molecule Class
-#' $ Precursor Name                : chr [1:1243] "CE(14:0)" "CE(16:0)" "CE(16:1)" "CE(18:0)" ... #Molecule Species
-#' $ Precursor Mz                  : num [1:1243] 615 643 641 671 669 ...
-#' $ Precursor Charge              : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
-#' $ Product Mz                    : num [1:1243] 369 369 369 369 369 ...
-#' $ Product Charge                : num [1:1243] 1 1 1 1 1 1 1 1 1 1 ...
-#' $ Explicit Retention Time       : num [1:1243] 11.6 12.3 11.6 12.8 12.3 ...
-#' $ Explicit Retention Time Window: num [1:1243] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
-#' $ Note                          : chr [1:1243] "SIL_20:3 cholesteryl-d7 ester" "SIL_20:3 cholesteryl-d7 ester"... #Internal Standard
-#' $ Source                        : chr [1:1243] NA NA NA NA ...
-#' $ control_chart                 : logi [1:1243] FALSE FALSE FALSE FALSE FALSE FALSE ... # TRUE = plot for control charts in qcCheckeR
-#' - attr(*, "spec")=
-#'   .. cols(
-#'     ..   `Molecule List Name` = col_character(),
-#'     ..   `Precursor Name` = col_character(),
-#'     ..   `Precursor Mz` = col_double(),
-#'     ..   `Precursor Charge` = col_double(),
-#'     ..   `Product Mz` = col_double(),
-#'     ..   `Product Charge` = col_double(),
-#'     ..   `Explicit Retention Time` = col_double(),
-#'     ..   `Explicit Retention Time Window` = col_double(),
-#'     ..   Note = col_character(),
-#'     ..   Source = col_character(),
-#'     ..   control_chart = col_logical()
-#'     .. )
-#' - attr(*, "problems")=<externalptr>
 #'
 #' #Load example mrm_guide
 #'   file_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
 #'   example_mrm_template <- read_tsv(file_path)
 #'
 #' #Run SkylineR function
-#' SkylineR(project_directory = "USER/PATH/TO/PROJECT/DIRECTORY", mrm_template_list = list("user_mrm_guide_v1.tsv", "user_mrm_guide_v2.tsv"))
+#' SkylineR(user_name = "Mad_max"
+#'          project_directory = "USER/PATH/TO/PROJECT/DIRECTORY",
+#'          mrm_template_list = list("User/path/to/user_mrm_guide_v1.tsv",
+#'                                   "user/path/to/user_mrm_guide_v2.tsv"),
+#'          QC_sample_label = "LTR",
+#'          plateID_outputs = NULL
+#'          )
 #'
 #' @details
 #' \itemize{
@@ -56,23 +56,17 @@
 #'   }
 #'  \item \strong{File Handling:}
 #'   \itemize{
-#'    \item Set wiff file paths from project file wiff
-#'    \item Check if wiff files are found
-#'    \item Set plateIDs
+#'    \item Set plateIDs from either plate MetaboExploreR::msConvertR or
+#'          user specified plateID_outputs
 #'   }
 #'  \item \strong{Processing Plates:}
 #'   \itemize{
 #'    \item For each plateID:
 #'     \itemize{
 #'      \item Setup project
-#'      \item mzml conversion with MSConvert
-#'      \item Import mzml
-#'      \item Peak picking/intergration with Skyline MS
+#'      \item Import mzml files
+#'      \item Peak picking/integration with Skyline MS through docker
 #'     }
-#'   }
-#'  \item \strong{Error Handling:}
-#'   \itemize{
-#'    \item Catch and log errors during plate processing
 #'   }
 #'  \item \strong{Final Cleanup:}
 #'   \itemize{
@@ -80,7 +74,13 @@
 #'    \item Message about availability of chromatograms and reports
 #'   }
 #' }
-SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
+SkylineR <- function(user_name, project_directory, mrm_template_list = NULL,
+                     QC_sample_label = "LTR", plateID_outputs = NULL) {
+
+  #Validate user
+  if (!is.character(user_name) || nchar(user_name) == 0) {
+    stop("Invalid user name. Please provide a valid character string.")
+  }
 
   # Validate project_directory
   validate_project_directory(project_directory)
@@ -89,21 +89,59 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   setwd(project_directory)
 
   # Validate mrm_template_list
-  validate_mrm_template_list(mrm_template_list) # patch to check the mrm_guide has appropriate columns also need to add a check to ensure wiff has a .wiff and a .wiff.scan
+  validated_list <-  validate_mrm_template_list(mrm_template_list, user_name)
+    ## If validate_mrm_template_list returned something, use it
+    if (!is.null(validated_list)) {
+      mrm_template_list <- validated_list
+    }
 
-  # Validate msconvert and skyline are installed in C:/Program Files/
-  validate_proteowizard_skyline()
-
-  # Validate wiff files
-  file_paths <- validate_file_types(project_directory)
-
-  # Check if wiff files are found
-  if (length(file_paths) == 0) {
-    stop("No files supported found in the specified project directory for processing. Please check the directory and try again.")
+  # Validate QC_sample_label
+  if (!is.character(QC_sample_label) || nchar(QC_sample_label) == 0) {
+    stop("Invalid QC_sample_label. Please ensure the parameter
+         is of character type and length > 0")
   }
 
+  #Check install and run status of docker
+  check_docker()
+
   # Set plateIDs
-  plateIDs <- str_remove(str_extract(file_paths, "[^/]+$"), "\\.(wiff|raw|d|RAW|yep|td2)$")
+  file_paths <- list.files(project_directory)
+  plateIDs <- file_paths[!grepl("raw_data|msConvert_mzml_output|all|archive|error_log.txt", file_paths)]
+
+  if (is.null(plateIDs) || length(plateIDs) == 0) {
+
+    # Check if plate_ID_outputs are contained in mzML files
+    mzml_files <- list.files(file.path(project_directory, "msConvert_mzml_output"))
+    valid_count <- 0
+    count_data <- list()
+
+    for (plate in plateID_outputs) {
+      count_data[[plate]] <- length(mzml_files[grepl(plate, mzml_files)])
+      valid_count <- valid_count + count_data[[plate]]
+    }
+
+    # Check for any plates with zero count
+    zero_plates <- names(count_data)[unlist(count_data) == 0]
+
+    if (length(zero_plates) > 0) {
+      message("The following plateIDs have zero associated mzML files:\n", paste(zero_plates, collapse = ", "))
+      stop("Zero associated mzml files forbidden. Please check your input for plateID_outputs parameter.")
+    }
+
+    if (valid_count == length(mzml_files)) {
+        message("Valid plateID_outputs have been provided")
+        message("plateID_outputs parameter break down:\n", paste(capture.output(str(count_data)), collapse = "\n"))
+        plateIDs <- plateID_outputs
+      } else {
+          message("Mismatch in provided plateID_outputs parameter and supplied mzML files.\n
+                  Ensure plateID_outputs parameter match mzML files project/plate identifiers")
+          message("plateID_outputs  parameter break down:\n", paste(capture.output(str(count_data)), collapse = "\n"))
+          stop()
+        }
+  }else {
+    message("plateIDs gathered from existing project directory\n",
+            "Plates for processing:\n ", paste(plateIDs, collapse = "\n"))
+  }
 
   #Set failed/successful plates
   failed_plates <- c()
@@ -112,6 +150,7 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
   # Process each plate
   for (plateID in plateIDs) {
     tryCatch({
+      message("Initialising plate: ", paste(plateID))
       master_list <- skyline_setup_project(project_directory, plateID, mrm_template_list, QC_sample_label)
       master_list <- import_mzml(plateID, master_list)
       master_list <- peak_picking(plateID, master_list)
@@ -121,6 +160,7 @@ SkylineR <- function(project_directory, mrm_template_list, QC_sample_label) {
       log_error(paste("Error processing plate ",plateID,": ",e$message))
       failed_plates <<- c(failed_plates, plateID)
     })
+      message("Finished processing: ", paste(plateID))
   }
 
   # Display results

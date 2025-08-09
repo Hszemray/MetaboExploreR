@@ -181,15 +181,34 @@ validate_master_list_project_directory <- function(master_list) {
 #' \dontrun{
 #' validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"))
 #' }
-validate_mrm_template_list <- function(mrm_template_list) {
-  # Check if mrm_template_list is a list of strings
-  if (!is.list(mrm_template_list) || !all(sapply(mrm_template_list, is.character))) {
-    stop("mrm_template_list must be a list of strings.")
+validate_mrm_template_list <- function(mrm_template_list, user_name) {
+  # If user is not ANPC, validate the input
+  if (user_name != "ANPC") {
+    if (is.null(mrm_template_list)) {
+      stop("Please provide a valid mrm_template_list.")
+    }
+
+    if (!is.list(mrm_template_list) || !all(sapply(mrm_template_list, is.character))) {
+      stop("mrm_template_list must be a list of strings.")
+    }
+
+    message("mrm_template validation complete")
   }
 
-  # Return TRUE if validation is successful
-  return("mrm_template validation complete")
+  # Construct default template list if user is ANPC and mrm_template_list is missing or NULL
+  if (user_name == "ANPC" && is.null(mrm_template_list)) {
+    mrm_template_list <- list(
+      v1 = system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"),
+      v2 = system.file("extdata", "LGW_lipid_mrm_template_v2.tsv", package = "MetaboExploreR")
+    )
+    message("mrm_template validation complete")
+    return(mrm_template_list)
+
+  }
+
 }
+
+
 
 
 #' Log Error to File
@@ -287,47 +306,64 @@ validate_qcCheckR_mrm_template_list <- function(master_list) {
     return(TRUE)
   }
 
-# Validate Proteowizard and Skyline install----
-#' Validate Proteowizard and Skyline install
+# Check Docker----
 #'
-#' This function check proteowizard and skyline are correctly installed in users C dive program files.
-#'
-#' @return Returns a program found if installed in correct location or stops script and asks user to install if not.
+#' Function to check Docker installation, daemon, and containers
+#' @keywords internal
+#' @return Returns current status of docker
 #' @examples
 #' \dontrun{
-#' validate_proteowizard_skyline()
+#' check_docker()
 #' }
-validate_proteowizard_skyline <- function() {
-  base_path <- "C:\\Program Files\\"
-  folders <- list.dirs(base_path, full.names = FALSE, recursive = FALSE)
+# Function to check Docker installation, daemon status, and container execution
+check_docker <- function() {
+  # Check if Docker is installed
+  docker_installed <- tryCatch({
+    system("docker --version", intern = TRUE, ignore.stderr = TRUE)
+    TRUE
+  }, error = function(e) {
+    FALSE
+  })
 
-  # Check ProteoWizard
-  if ("ProteoWizard" %in% folders) {
-    message("ProteoWizard found in C:\\Program Files")
-  } else {
-    stop(message("ProteoWizard not found.\nPlease install it in C:\\Program Files from: https://proteowizard.sourceforge.io/download.html"))
+  if (!docker_installed) {
+    message("Docker is NOT installed. Please install Docker to proceed")
+    message("Directing you to Docker website for install")
+    Sys.sleep(5)
+    browseURL("https://www.docker.com/products/docker-desktop/")
+    stop("Execution halted due to missing Docker installation")
+    return(invisible(FALSE))
   }
 
-  # Check Skyline
-  if ("Skyline" %in% folders) {
-    message("Skyline found in C:\\Program Files")
-  } else {
-    stop(message("Skyline not found.\nPlease install it in C:\\Program Files from: https://skyline.ms/wiki/home/software/Skyline/page.view?name=install-administator-64"))
-  }
+  # Docker is installed now check it's running
+  docker_container_status <- system("docker run hello-world")
+
+  if (docker_container_status == 0) {
+    message("Docker is installed, running, and able to execute containers successfully.")
+    message("Pulling proteowizard docker...  ")
+    pull_status <- system("docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
+    if(pull_status == 0){
+      message("Successfully pulled proteowizard docker!")
+    } else{stop("Awwww snap an error occured during pull!")}
+  }else{
+    stop("\n!!!Execution halted!!!
+            \nDocker is installed, but NOT running.
+            \nPlease open Docker Application.
+            \nIf docker is open please restart the application.")
+    }
 }
 
 # Validate Raw files----
 #' Validate Raw files
 #'
 #' This function checks project directories contains wiff files and associated wiff.scan files.
-#'
+#' @param input_directory directory path for vendor file locations
 #' @return validated paths and returns message on outcome of check.
 #' @examples
 #' \dontrun{
-#' all_file_paths <- validate_file_types()
+#' all_file_paths <- validate_file_types(input_directory)
 #' }
-validate_file_types <- function(project_directory) {
-  file_path <- file.path(project_directory, "raw_data")
+validate_file_types <- function(input_directory) {
+  file_path <- file.path(input_directory, "raw_data")
   files <- list.files(path = file_path, full.names = TRUE)
 
   validated_files <- c()
@@ -340,23 +376,40 @@ validate_file_types <- function(project_directory) {
         validated_files <- c(validated_files, file)
       } else {
         message("Missing .wiff.scan for: ", basename(file))
-        invalid_files <- c(invalid_wiff_files, file)
+        invalid_files <- c(invalid_files, file)
       }
-    } else if (grepl("\\.raw$", file)) {
+    } else if (grepl("\\.wiff2$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.raw$", file, ignore.case = TRUE)) {
       validated_files <- c(validated_files, file)
     } else if (grepl("\\.d$", file) && dir.exists(file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.RAW$", file)) {
+    } else if (grepl("\\.baf$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.fid$", file)) {
       validated_files <- c(validated_files, file)
     } else if (grepl("\\.yep$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.td2$", file)) {
+    } else if (grepl("\\.tsf$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.tdf$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.mbi$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.qgd$", file) || grepl("\\.qgb$", file) || grepl("\\.qgm$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.lcd$", file) || grepl("\\.lcdproj$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.uep$", file) || grepl("\\.sdf$", file) || grepl("\\.dat$", file)) {
+      validated_files <- c(validated_files, file)
+    } else if (grepl("\\.wcf$", file) || grepl("\\.wproj$", file) || grepl("\\.wdata$", file)) {
       validated_files <- c(validated_files, file)
     } else if (!grepl("\\.wiff\\.scan$", file)) {
       message("Unsupported file type found: ", basename(file))
       invalid_files <- c(invalid_files, file)
     }
   }
+
 
   if (length(validated_files) > 0) {
     message("Returning validated files for processing:\n", paste(basename(validated_files), collapse = "\n"))
@@ -368,5 +421,4 @@ validate_file_types <- function(project_directory) {
   }
 
 }
-
 
