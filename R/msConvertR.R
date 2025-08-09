@@ -22,9 +22,6 @@ msConvertR <- function (input_directory,  output_directory){
   # Validate input_directory
   validate_input_directory(input_directory)
 
-  # Validate msconvert is installed in C:/Program Files/
-  validate_proteowizard_skyline()
-
   # Validate wiff files
   file_paths <- validate_file_types(input_directory)
 
@@ -33,56 +30,44 @@ msConvertR <- function (input_directory,  output_directory){
     stop("No files supported found in the specified project directory for processing. Please check the directory and try again.")
   }
 
+  #Vendor file extentions
+  vendor_extension_patterns <- "\\.(d|baf|fid|yep|tsf|tdf|mbi|wiff|wiff2|qgd|qgb|qgm|lcd|lcdproj|raw|uep|sdf|dat|wcf|wproj|wdata)$"
+
   # Set plateIDs
-  plateIDs <- str_remove(str_extract(file_paths, "[^/]+$"), "\\.(wiff|raw|d|RAW|yep|td2)$")
+  plateIDs <- str_remove(str_extract(file_paths, "[^/]+$"), vendor_extension_patterns)
 
-  #Set failed/successful plates
-  failed_plates <- c()
-  successful_plates <- c()
+  #Check install and run status of docker
+  check_docker()
 
-  # Process each plate
-  for (plateID in plateIDs) {
-    tryCatch({
-      file_path <- file_paths[grepl(plateID, file_paths)]
-      msConvertR_mzml_conversion(input_directory, output_directory, file_path, plateID)
-      successful_plates <- c(successful_plates, plateID)
-    }, error = function(e) {
-      message(paste("Error processing plate ",plateID,": ",e$message))
-      log_error(paste("Error processing plate ",plateID,": ",e$message))
-      failed_plates <<- c(failed_plates, plateID)
-    })
-  }
+  # Process vendor files
+  tryCatch({
+    msConvertR_mzml_conversion(
+      input_directory,
+      output_directory,
+      plateIDs,
+      vendor_extension_patterns
+    )
 
-  # Display results
-  message("Processing complete! \n")
-  if (length(successful_plates) > 0){
-    message("Successful plates:\n", paste(successful_plates, collapse = "\n"))
-  }
-  if (length(failed_plates) > 0){
-    message("Failed plates:\n", paste(failed_plates, collapse = "\n "))
-  }
+  }, error = function(e) {
+    message("Error processing vendor files: ", e$message)
+  })
 
-  # Check if all plates failed
-  if (length(successful_plates) == 0) {
-    stop("All plates failed. Halting script.")
-  }
+  # Notify user about converted files
+  message("\nConverted mzML files are located in ",
+          file.path(output_directory, "plate_id", "data", "mzml"))
 
-  message("\n Converted mzml files are located in ",
-          paste(output_directory,
-                "plate_id/data/mzml"))
-
+  # Directory structure messages
   if (input_directory == output_directory) {
     message("\nNote: Input and output directories are the same.\n",
-            paste0("Vendor files have been relocated to ",
-            output_directory, "/plateID/data/raw_data."))
+            "Vendor files have been relocated to ",
+            file.path(output_directory, "plateID", "data", "raw_data"))
+  } else {
+    message("\nNote: Input and output directories are different.\n",
+            "The project structure has been created in ", output_directory, ".\n",
+            "Vendor files are located in ",
+            file.path(input_directory, "plateID", "data", "raw_data"))
   }
 
-  if (input_directory != output_directory) {
-    message(paste0("\nNote: Input and output directories are different.\n",
-      "The project structure has been created in ", output_directory,".\n",
-      "Vendor files are located in", input_directory,"/plateID/data/raw_data."))
-  }
+  message("Thank you for using msConvertR")
+
 }
-
-
-

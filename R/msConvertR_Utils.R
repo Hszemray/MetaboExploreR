@@ -6,14 +6,13 @@
 #' @name msConvertR_import_external_functions
 #' @importFrom stringr str_subset
 
-
 NULL
 #'
 #mzML File Conversion Functions ----
 #' Validate input Directory
 #'
 #' This function checks if the `input_directory` parameter is a single string and if the specified directory exists.
-#'
+#' @keywords internal
 #' @param input_directory A character string representing the path to the project directory.
 #' @return TRUE if the validation is successful, otherwise an error is thrown.
 #' @examples
@@ -40,21 +39,25 @@ validate_input_directory <- function(input_directory) {
 #'
 #' This function converts raw vendor files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
 #'
-#' @param input_directory Directory path for vendor files.
-#' @param output_directory Directory path for the mzml output.
-#' @param file_path Path to the vendor file to be converted.
-#' @param plateID Plate ID for the current plate.
+#' @param input_directory Directory path for project folder
+#' @param output_directory Directory path for project folder if different from
+#' input directory.
+#' @param plateIDs vector of vendor files names to be converted
+#' @param vendor_extension_patterns character string of vendor file extensions.
 #' @return Converted mzml files.
 #' @examples
 #' \dontrun{
-#' msConvertR_mzml_conversion(input_directory, output_directory, file_path, plateID)
+#' msConvertR_mzml_conversion(input_directory, output_directory, plateIDs)
 #' }
-msConvertR_mzml_conversion <- function(input_directory, output_directory, file_path, plateID) {
+msConvertR_mzml_conversion <- function(input_directory,
+                                       output_directory,
+                                       plateIDs,
+                                       vendor_extension_patterns) {
   msConvertR_set_working_directory(input_directory)
-  msConvertR_setup_project_directories(output_directory, plateID)
-  command <- msConvertR_construct_command_for_terminal(file_path, output_directory)
+  msConvertR_setup_project_directories(output_directory, plateIDs)
+  command <- msConvertR_construct_command_for_terminal(input_directory, output_directory)
   msConvertR_execute_command(command)
-  msConvertR_restructure_directory(output_directory, plateID)
+  msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
 }
 
 ###Sub Functions----
@@ -62,30 +65,33 @@ msConvertR_mzml_conversion <- function(input_directory, output_directory, file_p
 #' msConvertR_setup_project_directories
 #'
 #' This function sets up project directories for each plate ID.
-#'
+#' @keywords internal
 #' @param output_directory Output directory for mzml files.
-#' @param plateID Plate ID for the current plate.
+#' @param plateIDs vector of vendor files names being converted
 #' @return None. The function sets up directories.
 #' @examples
 #' \dontrun{
-#' msConvertR_setup_project_directories(output_directory, plateID)
+#' msConvertR_setup_project_directories(output_directory, plateIDs)
 #' }
-msConvertR_setup_project_directories <- function(output_directory, plateID) {
-    dir.create(paste0(output_directory, "/", plateID), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data/mzml"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data/rda"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data/skyline"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data/raw_data"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/data/batch_correction"), showWarnings = FALSE)
-    dir.create(paste0(output_directory, "/", plateID, "/html_report"), showWarnings = FALSE)
+msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
+  for (plateID in plateIDs){
+  base_path <- file.path(output_directory, plateID)
+    dir.create(base_path, showWarnings = FALSE)
+    dir.create(file.path(base_path,"data"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"data","mzml"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"data","rda"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"data","skyline"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"data","raw_data"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"data","batch_correction"), showWarnings = FALSE)
+    dir.create(file.path(base_path,"html_report"), showWarnings = FALSE)
   }
+}
 
 
 #' msConvertR_set_working_directory
 #'
 #' This function sets the working directory to the project directory.
-#'
+#' @keywords internal
 #' @param output_directory Directory path for the project folder.
 #' @return None. The function sets the working directory.
 #' @examples
@@ -99,50 +105,46 @@ msConvertR_set_working_directory <- function(output_directory) {
 #' msConvertR_construct_command_for_terminal
 #'
 #' This function constructs the command for terminal to convert files to mzML format.
-#'
-#' @param file_path path to vendor file to be converted.
+#' @keywords internal
+#' @param input_directory path to input directory containing vendor files
 #' @param output_directory path to output directory.
 #' @return The constructed command string.
 #' @examples
 #' \dontrun{
-#' command <- msConvertR_construct_command_for_terminal(file_path, "path/to/output_directory")
+#' command <- msConvertR_construct_command_for_terminal(path/to/input/directory, "path/to/output_directory")
 #' }
-msConvertR_construct_command_for_terminal <- function(file_path, output_directory) {
-  # Normalise file paths
-  command_path <- gsub("/", "\\\\", file_path)
+msConvertR_construct_command_for_terminal <- function(input_directory, output_directory) {
 
-  # Detect ProteoWizard version folder
-  base_path <- "C:\\Program Files\\ProteoWizard\\"
-  folders <- list.dirs(base_path, full.names = FALSE, recursive = FALSE)
-  version_folder <- folders[grepl("^ProteoWizard", folders)]
+  # Normalise directory
+  input_path <- normalizePath(file.path(input_directory, "raw_data"), mustWork = FALSE)
+  # Normalise output directory
+  output_dir <- normalizePath(file.path(output_directory, "msConvert_mzml_output"), mustWork = FALSE)
 
-  # Use the first match or sort to get the latest version
-  selected_version <- sort(version_folder, decreasing = TRUE)[1]
-  msconvert_path <- file.path(base_path, selected_version, "msconvert.exe")
+  # Docker image name
+  docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
 
-  # Construct the base command
-  base_command <- sprintf('"%s" --zlib --filter "titleMaker <RunId>.<ScanNumber>.<ScanNumber>.<ChargeState> File:\\"<SourcePath>\\", NativeID:\\"<Id>\\""', msconvert_path)
+  # Mount point inside container
+  container_data_path <- "/data"
+  output_data_path <- "/output"
 
-  # Prepare output directory
-  output_dir <- gsub("/", "\\\\", output_directory) %>% paste0(.,"\\msConvert_mzml_output")
+  # Extract filename from full path
+  file_name <- "**" #Runs all files in directory
 
-  # Quote file paths
-  quoted_file_paths <- shQuote(command_path)
-
-  # Construct full command
-  full_command <- paste(
-    base_command,
-    paste(quoted_file_paths, collapse = " "),
-    "--outdir", shQuote(output_dir)
+  # Construct Docker command
+  docker_command <- sprintf(
+    'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
+    input_path, container_data_path ,output_dir,output_data_path, docker_image,
+    file.path(container_data_path, file_name),
+    output_data_path
   )
 
-  return(full_command)
+  return(docker_command)
 }
 
 #' msConvertR_execute_command
 #'
 #' This function executes the command to convert files to mzML format.
-#'
+#' @keywords internal
 #' @param command The command string to execute.
 #' @return None. The function executes the command.
 #' @examples
@@ -156,15 +158,17 @@ msConvertR_execute_command <- function(command) {
 #' msConvertR_restructure_directory
 #'
 #' This function restructures the directory by moving raw_data and mzML files to correct locations.
-#'
+#' @keywords internal
 #' @param output_directory Output directory where the mzML files will be stored.
-#' @param plateID Plate ID for the current plate.
+#' @param plateIDs filenames for plates being converted with no extension.
+#' @param vendor_extension_patterns vector of file extensions for vendor files
 #' @return The updated master list object with mzML file paths.
 #' @examples
 #' \dontrun{
-#' master_list <- msConvertR_restructure_directory(output_directory, "plateID")
+#' master_list <- msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
 #' }
-msConvertR_restructure_directory <- function(output_directory, plateID) {
+msConvertR_restructure_directory <- function(output_directory, plateIDs, vendor_extension_patterns) {
+  for (plateID in plateIDs) {
   # Define key paths
   project_dir <- output_directory
   raw_data_dir <- file.path(output_directory, "raw_data")
@@ -179,7 +183,7 @@ msConvertR_restructure_directory <- function(output_directory, plateID) {
 
   # Find raw data files matching plateID
   raw_files <- list.files(path = raw_data_dir,
-                          pattern = "\\.(wiff.scan|wiff|d|raw)$",
+                          pattern = vendor_extension_patterns,
                           full.names = TRUE)
   matched_raw_files <- str_subset(raw_files, plateID)
 
@@ -204,5 +208,5 @@ msConvertR_restructure_directory <- function(output_directory, plateID) {
   matched_mzml <- str_subset(mzml_files, plateID)
   file.copy(from = matched_mzml, to = mzml_dest, recursive = FALSE)
 
+  }
 }
-
