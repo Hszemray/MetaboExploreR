@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Harrison", "Szemray", , "Hszemray@live.com.au", role = c("aut", "cre"))
     person("Luke", "Whiley", ,"luke.whiley@murdoch.edu.au" , role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: Provides tools to take a user from raw vendor files to concentration data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -12,6 +12,7 @@ RoxygenNote: 7.3.2
 Imports: 
     data.table,
     dplyr,
+    fs,
     ggplot2,
     janitor,
     magrittr,

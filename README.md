@@ -1,40 +1,52 @@
 
-# MetaboExploreR: Targeted Lipidomics Processing Pipeline
+# MetaboExploreR: Targeted Mass Spectrometry Processing Pipeline
 
-**Authors**: Harrison John Szemray, Luke Gray Whiley 
+**Authors**: Harrison John Szemray, Vimalnath Nambiar, Luke Gray Whiley
 
 ## Overview
 
-MetaboExploreR provides an automated pipeline for processing and quality
-control of targeted lipidomics data. The toolkit consists of two main
-functions:
+MetaboExploreR provides an tools to create an automated pipeline for processing 
+and quality control of targeted mass spectrometry data. 
+The toolkit consists of three main functions:
 
-1.  **`SkylineR()`**: Processes raw mass spectrometry data (.wiff
-    files), performs retention time optimization, and prepares data for
-    Skyline analysis, saves Skyline output to project directory.
-    (WINDOWS OS COMPATIBLE ONLY)
+1.  **`msConvertR()`**: Processes raw mass spectrometry data vendor files into 
+    open source mzml files
 
+2.  **`SkylineR()`**: Performs retention time optimisation, Skyline peak picking
+    and peak integration, saves Skyline output to project directory.
+    
 2.  **`qcCheckeR()`**: Performs comprehensive quality control, batch
-    correction, and generates analytical reports ready for data
-    analysis.
+    correction/signal drift correction, and generates analytical reports 
+    ready for data analysis.
 
 ## Installation
+Place holder.....
 
 ## Directory Structure
 
-Create this proejct folder structure before execution:
+Create this project folder structure before execution:
+project_name/
+├── raw_data/ # Place vendor files here
 
-``` r
-project_directory/
-├── wiff/          # Raw .wiff files and associated .wiff.scan files
-```
 
 ## Functions
 
-### 1. SkylineR()
+### 1. msConvertR()
 
 ``` r
-SkylineR(project_directory, mrm_template_list, QC_sample_label)
+msConvertR(input_directory, output_directory)
+```
+
+#### Processing Workflow:
+
+1.  Converts vendor files → .mzML via ProteoWizard msConvert
+    Supported vendor files include 
+2.  Organises mzml outputs into file structure for each vendor file
+
+### 2. SkylineR()
+
+``` r
+SkylineR(user_name, project_directory, mrm_template_list, QC_sample_labe, )
 ```
 
 #### Processing Workflow:
@@ -45,7 +57,7 @@ SkylineR(project_directory, mrm_template_list, QC_sample_label)
 4.  Executes Skyline processing  
 5.  Organises output into plate-specific folders
 
-### 2. qcCheckeR()
+### 3. qcCheckeR()
 
 ``` r
 qcCheckeR(project_directory, mrm_template_list, QC_sample_label, user_name)
