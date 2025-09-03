@@ -21,3 +21,4 @@ It assigns sample types, validates QC coverage, and sets the appropriate QC type
 master_list <- qcCheckR_sort_data(master_list)
 }
 }
+\keyword{internal}

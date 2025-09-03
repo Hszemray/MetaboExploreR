@@ -19,3 +19,4 @@ Export HTML Report
 This function exports the \code{master_list} data to an HTML report using a predefined R Markdown template.
 It renders the report and opens it in the default web browser.
 }
+\keyword{internal}

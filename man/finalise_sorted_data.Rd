@@ -15,3 +15,4 @@ The updated master list with finalised sorted data.
 \description{
 This function finalises the sorted data by adding sample type factors, reversing the order of sample types, and setting the sample data source.
 }
+\keyword{internal}

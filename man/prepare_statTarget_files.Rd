@@ -16,3 +16,4 @@ The updated \code{FUNC_list} with created phenotype and profile files.
 This function prepares the phenotype and profile files required for \code{statTarget} batch correction.
 It creates a phenotype file with sample metadata and a profile file with metabolite data.
 }
+\keyword{internal}

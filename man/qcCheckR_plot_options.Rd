@@ -20,3 +20,4 @@ Sets the plot color, fill, shape, and size options for the \code{master_list} da
 master_list <- qcCheckR_plot_options(master_list)
 }
 }
+\keyword{internal}

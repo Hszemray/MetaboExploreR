@@ -13,6 +13,8 @@ calculate_sil_flags_per_version(master_list)
 The updated \code{master_list} with SIL flags calculated for each version.
 }
 \description{
-This function calculates flags for SIL internal standards across different template versions.
-It aggregates SIL flags from all plates for each version, counts missing values, and flags versions with excessive missing values.
+This function calculates flags for SIL internal standards across different
+template versions. It aggregates SIL flags from all plates for each version,
+counts missing values, and flags versions with excessive missing values.
 }
+\keyword{internal}

@@ -20,3 +20,4 @@ Generates control charts for the \code{master_list} data, showing the values of 
 master_list <- qcCheckR_target_control_charts(master_list)
 }
 }
+\keyword{internal}

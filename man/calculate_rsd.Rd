@@ -17,3 +17,4 @@ calculate_rsd(master_list, source_name, data_batches)
 This function calculates the relative standard deviation (RSD) for each feature in the provided data batches.
 It filters out failed samples and selects only QC samples, then computes the RSD values.
 }
+\keyword{internal}

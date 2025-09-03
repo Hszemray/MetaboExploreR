@@ -18,3 +18,4 @@ The updated \code{master_list} with integrated corrected data.
 This function integrates the corrected data from \code{statTarget} into the master list.
 It splits the corrected data by sample plate ID, updates the sample data source, and processes the peak area and concentration data.
 }
+\keyword{internal}

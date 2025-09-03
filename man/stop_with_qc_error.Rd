@@ -20,3 +20,4 @@ Stops the script execution with an error message.
 This function stops the script execution and prints a detailed error message if no viable QC type is found.
 It includes information about the global QC pass status and plate QC assessment.
 }
+\keyword{internal}

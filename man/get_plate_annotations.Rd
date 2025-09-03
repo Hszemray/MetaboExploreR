@@ -16,3 +16,4 @@ A tibble containing plate annotations with median run indices.
 This function retrieves the median run index for each plate in the \code{master_list} data.
 It creates a tibble with sample data source, plate ID, run index, and placeholder values for PCA components and value.
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ A tibble containing the user guide with key metrics and descriptions.
 \description{
 This function creates a user guide for the \code{master_list} project, summarizing key project details and metrics.
 }
+\keyword{internal}

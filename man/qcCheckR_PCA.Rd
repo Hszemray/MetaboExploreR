@@ -20,3 +20,4 @@ Performs PCA analysis on the \code{master_list} data and generates PCA plots usi
 master_list <- qcCheckR_PCA(master_list)
 }
 }
+\keyword{internal}

@@ -19,3 +19,4 @@ Transpose and Merge Corrected Data
 This function transposes the corrected data and merges it with the metabolite list from the profile file.
 It renames columns, filters out unwanted rows, and adds sample metadata.
 }
+\keyword{internal}

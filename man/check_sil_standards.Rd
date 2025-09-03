@@ -4,7 +4,7 @@
 \alias{check_sil_standards}
 \title{check_sil_standards}
 \usage{
-check_sil_standards(master_list, plate_idx, version)
+check_sil_standards(master_list, plate_idx, current_version)
 }
 \arguments{
 \item{master_list}{A list containing project details and data.}
@@ -21,7 +21,7 @@ This function checks if the SIL standards on a given plate match the SIL standar
 }
 \examples{
 \dontrun{
-check_sil_standards(master_list, plate_idx, version)
+check_sil_standards(master_list, plate_idx, current_version)
 }
 }
 \keyword{internal}

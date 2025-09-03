@@ -27,3 +27,4 @@ The updated master list with calculated response and concentration data for the 
 This function calculates the response and concentration for a specific plate in the master list.
 It retrieves the peak area data, identifies SIL columns, and processes each SIL target to compute response ratios and concentrations.
 }
+\keyword{internal}

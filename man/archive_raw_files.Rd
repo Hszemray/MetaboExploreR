@@ -10,7 +10,7 @@ archive_raw_files(project_directory)
 \item{project_directory}{Path to the directory for the project parsed from SkylineR.}
 }
 \value{
-None. The function performs the archive operation and prints a message upon successful completion.
+None. The function performs the archive operation and a message upon successful completion.
 }
 \description{
 This function moves raw files (wiff and mzML) to an archive directory after processing is complete.

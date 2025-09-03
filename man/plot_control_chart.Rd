@@ -20,5 +20,7 @@ A \code{ggplot} object representing the control chart for the specified metaboli
 }
 \description{
 This function generates a control chart for a specific metabolite in the \code{master_list}.
-It combines data from peak area, SIL peak area, concentration, and stat target concentration, and plots the values against the sample run index.
+It combines data from peak area, SIL peak area, concentration, and stat target concentration,
+and plots the values against the sample run index.
 }
+\keyword{internal}

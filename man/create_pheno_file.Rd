@@ -16,3 +16,4 @@ The updated \code{FUNC_list} with the created phenotype file.
 This function creates a phenotype file from the master data.
 It selects relevant columns, renames them, and formats the sample IDs and classes.
 }
+\keyword{internal}

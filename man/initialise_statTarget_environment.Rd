@@ -16,3 +16,4 @@ A list containing the project directory, master data, and metabolite list for \c
 This function initialises the environment for \code{statTarget} batch correction.
 It creates necessary directories, sets up the master data, and flags failed QC injections.
 }
+\keyword{internal}

@@ -21,3 +21,4 @@ It uses SIL internal standards and template guides to compute values for both so
 master_list <- qcCheckR_calculate_response_concentration(master_list)
 }
 }
+\keyword{internal}

@@ -17,3 +17,4 @@ NULL if validation passes, otherwise throws an error.
 \description{
 This function validates the sample types in the run order against the provided sample tags.
 }
+\keyword{internal}

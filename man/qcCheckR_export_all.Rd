@@ -20,3 +20,4 @@ Exports the \code{master_list} to XLSX, HTML, and RDA formats, including summary
 master_list <- qcCheckR_export_all(master_list)
 }
 }
+\keyword{internal}

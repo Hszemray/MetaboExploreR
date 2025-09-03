@@ -18,3 +18,4 @@ A tibble containing SIL flags for each lipid, including counts of peak areas bel
 This function calculates flags for SIL internal standards on a per-plate basis.
 It computes the number of peak areas below a threshold, counts missing values, and flags plates with excessive missing values.
 }
+\keyword{internal}

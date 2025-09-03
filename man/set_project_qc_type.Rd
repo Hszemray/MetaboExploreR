@@ -15,3 +15,4 @@ The updated master list with the project QC type set.
 \description{
 This function sets the QC type for the project based on user-specified QC types and global QC pass status.
 }
+\keyword{internal}

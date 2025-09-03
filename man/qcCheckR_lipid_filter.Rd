@@ -21,3 +21,4 @@ Flags lipids with more than 50\% missing values and compiles a list of failed li
 master_list <- qcCheckR_lipid_filter(master_list)
 }
 }
+\keyword{internal}

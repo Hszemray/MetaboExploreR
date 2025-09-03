@@ -16,3 +16,4 @@ The updated \code{FUNC_list} with the created profile file.
 This function creates a profile file from the master data.
 It selects the sample names and metabolite data, renames columns, and formats the data into a matrix.
 }
+\keyword{internal}

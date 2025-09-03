@@ -16,3 +16,4 @@ The updated master list with harmonised lipid columns.
 This function harmonises the lipid columns across response and concentration data types in the master list.
 It ensures that all lipid subtypes have the same columns by selecting only the common lipids across all plates.
 }
+\keyword{internal}

@@ -8,7 +8,7 @@ SkylineR(
   user_name,
   project_directory,
   mrm_template_list = NULL,
-  QC_sample_label = "LTR",
+  QC_sample_label = NULL,
   plateID_outputs = NULL
 )
 }
@@ -86,18 +86,19 @@ user specified plateID_outputs
 }
 }
 \examples{
-
+\dontrun{
 #Load example mrm_guide
   file_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
   example_mrm_template <- read_tsv(file_path)
 
 #Run SkylineR function
-SkylineR(user_name = "Mad_max"
+SkylineR(user_name = "Mad_max",
          project_directory = "USER/PATH/TO/PROJECT/DIRECTORY",
          mrm_template_list = list("User/path/to/user_mrm_guide_v1.tsv",
                                   "user/path/to/user_mrm_guide_v2.tsv"),
          QC_sample_label = "LTR",
          plateID_outputs = NULL
          )
+}
 
 }

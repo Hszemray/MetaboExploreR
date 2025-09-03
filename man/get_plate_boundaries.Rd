@@ -16,3 +16,4 @@ A vector of unique boundaries for the plates.
 This function retrieves the boundaries for each plate in the \code{master_list} data.
 It calculates the minimum and maximum run indices for each plate and creates a list of boundaries and labels for plotting.
 }
+\keyword{internal}

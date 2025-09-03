@@ -2,8 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{export_master_list_rda}
 \alias{export_master_list_rda}
-\title{Export Master List as RDA File
-This function exports the \code{master_list} to an RDA file, which can be used for future analysis or sharing.}
+\title{Export Master List as RDA File}
 \usage{
 export_master_list_rda(master_list)
 }
@@ -14,6 +13,6 @@ export_master_list_rda(master_list)
 The updated \code{master_list} with the RDA file exported.
 }
 \description{
-Export Master List as RDA File
 This function exports the \code{master_list} to an RDA file, which can be used for future analysis or sharing.
 }
+\keyword{internal}

@@ -20,5 +20,7 @@ A tibble containing the summary metrics for the specified plate.
 }
 \description{
 This function generates a summary for a specific plate in the \code{master_list}.
-It includes metrics such as matrix type, sample counts, lipid targets, SIL versions, missing value filter flags, and RSD percentages.
+It includes metrics such as matrix type, sample counts, lipid targets,
+SIL versions, missing value filter flags, and RSD percentages.
 }
+\keyword{internal}

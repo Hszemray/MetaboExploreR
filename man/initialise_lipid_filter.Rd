@@ -16,3 +16,4 @@ The updated \code{master_list} with initialised lipid filter structure.
 This function initialses the structure for lipid filtering in the \code{master_list}.
 It creates a list to store lipid missing values, a summary data frame, and lists for project flags and failed lipids.
 }
+\keyword{internal}

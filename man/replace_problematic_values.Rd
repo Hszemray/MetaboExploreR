@@ -2,8 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{replace_problematic_values}
 \alias{replace_problematic_values}
-\title{Replace Problematic Values
-This function replaces zeros, infinite, and NaN values in a matrix with NA.}
+\title{Replace Problematic Values}
 \usage{
 replace_problematic_values(mat)
 }
@@ -14,6 +13,6 @@ replace_problematic_values(mat)
 A matrix with zeros replaced by NA, and infinite and NaN values also replaced by NA.
 }
 \description{
-Replace Problematic Values
 This function replaces zeros, infinite, and NaN values in a matrix with NA.
 }
+\keyword{internal}

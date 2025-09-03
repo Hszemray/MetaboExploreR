@@ -2,9 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{lgw_impute}
 \alias{lgw_impute}
-\title{LGW Impute
-This function performs imputation on a tibble by replacing zero values with half the minimum non-zero value in each column.
-It calculates the minimum non-zero value for each column, divides it by 2, and replaces zero values with this calculated value.}
+\title{LGW Impute}
 \usage{
 lgw_impute(x)
 }
@@ -15,7 +13,7 @@ lgw_impute(x)
 A tibble with zero values replaced by half the minimum non-zero value in each column.
 }
 \description{
-LGW Impute
 This function performs imputation on a tibble by replacing zero values with half the minimum non-zero value in each column.
 It calculates the minimum non-zero value for each column, divides it by 2, and replaces zero values with this calculated value.
 }
+\keyword{internal}

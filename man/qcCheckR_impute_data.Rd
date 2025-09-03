@@ -21,3 +21,4 @@ It handles infinite and NaN values, applies imputation, and merges metadata back
 master_list <- qcCheckR_impute_data(master_list)
 }
 }
+\keyword{internal}

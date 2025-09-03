@@ -16,3 +16,4 @@ The updated master list with QC coverage results.
 This function assesses the QC coverage for each plate in the master list.
 It checks the ratio of QC samples to total samples and determines if the QC passed or failed.
 }
+\keyword{internal}

@@ -24,3 +24,4 @@ The updated master list with calculated response and concentration data for the 
 This function processes a specific SIL target by calculating the response ratio and concentration for each sample.
 It retrieves the precursor names from the SIL guide, calculates the response ratio by dividing the peak area by the SIL value, and computes the concentration using the concentration factor from the template.
 }
+\keyword{internal}

@@ -7,7 +7,7 @@
 validate_qcCheckR_mrm_template_list(master_list)
 }
 \arguments{
-\item{mrm_template_list}{A list specifying the file paths for the templates.}
+\item{master_list}{A list containing all project details and data}
 }
 \value{
 TRUE if validation passes. Stops execution if validation fails.

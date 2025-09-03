@@ -10,7 +10,7 @@ qcCheckR_set_project_details(
   project_directory,
   QC_sample_label,
   sample_tags,
-  mv_sample_threshold
+  mv_threshold
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ qcCheckR_set_project_details(
 
 \item{sample_tags}{Character vector of sample tags to filter sample types from file_names.}
 
-\item{mv_sample_threshold}{Numeric value for the missing value sample threshold.}
+\item{mv_threshold}{Numeric value for the missing value sample threshold.}
 }
 \value{
 The updated master list object with project details.
@@ -34,7 +34,7 @@ This function sets project details in the master list.
 }
 \examples{
 \dontrun{
-master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
+master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
 }
 }
 \keyword{internal}

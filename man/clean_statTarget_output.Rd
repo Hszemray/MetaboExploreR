@@ -16,3 +16,4 @@ A cleaned tibble with renamed columns and numeric data types.
 This function cleans the output data from \code{statTarget} by filtering out unwanted rows and renaming columns.
 It handles different column structures based on the presence of specific sample columns.
 }
+\keyword{internal}

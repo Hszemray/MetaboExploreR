@@ -13,5 +13,7 @@ export_xlsx_file(master_list)
 The updated \code{master_list} with the XLSX file exported.
 }
 \description{
-This function exports the \code{master_list} data to an XLSX file, including user guide, QC metrics, and processed data.
+This function exports the \code{master_list} data to an XLSX file, including user
+guide, QC metrics, and processed data.
 }
+\keyword{internal}

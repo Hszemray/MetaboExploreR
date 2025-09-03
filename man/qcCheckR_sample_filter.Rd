@@ -21,3 +21,4 @@ Applies thresholds to identify low-quality samples and aggregates results across
 master_list <- qcCheckR_sample_filter(master_list)
 }
 }
+\keyword{internal}

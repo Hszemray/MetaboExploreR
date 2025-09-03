@@ -21,3 +21,4 @@ This function runs a PCA model on the specified data source from the \code{maste
 It preprocesses the data by filtering out failed samples and high RSD lipids if \code{preprocessed} is set to TRUE.
 It then performs PCA using the \code{ropls} package and stores the model and scores in the \code{master_list}.
 }
+\keyword{internal}

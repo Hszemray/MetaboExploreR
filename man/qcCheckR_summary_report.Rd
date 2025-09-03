@@ -13,10 +13,13 @@ qcCheckR_summary_report(master_list)
 The updated \code{master_list} with the summary report.
 }
 \description{
-Generates a summary report for the \code{master_list} data, including metrics for cohorts, matrix types, sample counts, lipid targets, SIL versions, missing value filter flags, and RSD percentages.
+Generates a summary report for the \code{master_list} data,
+including metrics for cohorts, matrix types, sample counts, lipid targets,
+SIL versions, missing value filter flags, and RSD percentages.
 }
 \examples{
 \dontrun{
 master_list <- qcCheckR_summary_report(master_list)
 }
 }
+\keyword{internal}

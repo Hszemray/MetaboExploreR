@@ -18,5 +18,8 @@ A tibble containing the inter-plate summary metrics.
 }
 \description{
 This function generates a summary of all plates in the \code{master_list}.
-It aggregates data across all plates, including metrics such as matrix type, sample counts, lipid targets, SIL versions, missing value filter flags, and RSD percentages.
+It aggregates data across all plates, including metrics such as matrix type,
+sample counts, lipid targets, SIL versions, missing value filter flags,
+and RSD percentages.
 }
+\keyword{internal}

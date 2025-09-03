@@ -24,3 +24,4 @@ A \code{ggplot} object representing the run order plot.
 This function generates a run order plot for PCA scores using \code{ggplot2}.
 It plots the PCA scores against the sample run index, with vertical lines indicating plate boundaries and annotations for plate IDs.
 }
+\keyword{internal}

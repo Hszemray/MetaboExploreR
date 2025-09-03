@@ -6,6 +6,10 @@
 \usage{
 apply_lgw_imputation(mat)
 }
-\description{
-Apply LGW Imputation
+\arguments{
+\item{mat}{dataframe or matrix for imputation to be applied}
 }
+\description{
+A wrapper to apply lgw_impute to the dataframe
+}
+\keyword{internal}

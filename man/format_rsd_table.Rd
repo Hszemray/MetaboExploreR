@@ -16,3 +16,4 @@ A tibble containing the formatted RSD table with rounded values and transposed s
 This function formats the RSD table from the \code{master_list} filters.
 It rounds the RSD values, adds a data column, and transposes the table for better readability.
 }
+\keyword{internal}

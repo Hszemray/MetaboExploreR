@@ -18,3 +18,4 @@ A \code{ggplot} object representing the PCA scores.
 This function generates a PCA plot using \code{ggplot2} for the PCA scores stored in the \code{master_list}.
 It allows for coloring the points by a specified variable (e.g., sample type or plate ID).
 }
+\keyword{internal}

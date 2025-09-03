@@ -15,3 +15,4 @@ get_lipid_data(master_list, idx_batch)
 This function extracts the lipid data matrix for a specific batch from the \code{master_list}.
 It filters out samples with missing values and selects relevant columns.
 }
+\keyword{internal}

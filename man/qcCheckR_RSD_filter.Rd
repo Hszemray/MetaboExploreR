@@ -21,3 +21,4 @@ Applies filtering to peakArea, concentration, and statTarget concentration data 
 master_list <- qcCheckR_RSD_filter(master_list)
 }
 }
+\keyword{internal}

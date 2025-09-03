@@ -8,7 +8,7 @@ qcCheckR(
   user_name,
   project_directory,
   mrm_template_list = NULL,
-  QC_sample_label = NULL,
+  QC_sample_label = "LTR",
   sample_tags = NULL,
   mv_threshold = 50
 )

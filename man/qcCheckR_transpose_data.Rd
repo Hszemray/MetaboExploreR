@@ -21,3 +21,4 @@ It reshapes the data, cleans sample names, converts values to numeric, and store
 qcCheckR_transpose_data(master_list)
 }
 }
+\keyword{internal}

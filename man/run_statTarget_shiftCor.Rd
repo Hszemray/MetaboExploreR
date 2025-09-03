@@ -8,6 +8,8 @@ run_statTarget_shiftCor(FUNC_list, master_list)
 }
 \arguments{
 \item{FUNC_list}{A list containing the project directory, phenotype file, and profile file.}
+
+\item{master_list}{A list containing all project details and data.}
 }
 \value{
 The updated \code{FUNC_list} with corrected data and adjusted QC means.
@@ -16,3 +18,4 @@ The updated \code{FUNC_list} with corrected data and adjusted QC means.
 This function runs the \code{statTarget::shiftCor} function to perform signal drift correction on the prepared phenotype and profile files.
 It specifies the correction parameters and reads the corrected data from the output file.
 }
+\keyword{internal}

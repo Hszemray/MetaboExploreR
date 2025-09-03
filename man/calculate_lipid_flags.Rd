@@ -20,3 +20,4 @@ A tibble containing lipid flags, including counts of peak areas below a threshol
 This function calculates flags for lipids based on their signal intensity and missing values in a specific batch.
 It checks for SIL internal standards, counts peak areas below a threshold, and flags plates with excessive missing values.
 }
+\keyword{internal}

@@ -17,3 +17,4 @@ This function determines the QC type based on the global QC pass status.
 It checks if there are multiple QC types that have passed.
 Assesses if a secondary QC sample is available such as a pooled Quality controls.
 }
+\keyword{internal}

@@ -16,3 +16,4 @@ The updated \code{FUNC_list} with flagged failed QC injections.
 This function flags failed QC injections by checking the signal intensity of QC samples.
 It identifies QC samples with low signal intensity and marks them as "sample" in the master data.
 }
+\keyword{internal}

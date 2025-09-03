@@ -10,7 +10,7 @@ qcCheckR_setup_project(
   mrm_template_list,
   QC_sample_label,
   sample_tags,
-  mv_sample_threshold
+  mv_threshold
 )
 }
 \arguments{
@@ -21,6 +21,10 @@ qcCheckR_setup_project(
 \item{mrm_template_list}{List of lists for mrm_guides.}
 
 \item{QC_sample_label}{Key for filtering QC samples from sample list.}
+
+\item{sample_tags}{Vector of character strings to pull sample types for names}
+
+\item{mv_threshold}{threshold for missing value filter. default is 50\%.}
 }
 \value{
 The updated \code{master_list} object with the project setup details.
@@ -30,6 +34,6 @@ This function sets up the project by initialising the master list, setting up pr
 }
 \examples{
 \dontrun{
-qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_sample_threshold)
+qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
 }
 }

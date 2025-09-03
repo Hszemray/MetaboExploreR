@@ -21,3 +21,4 @@ It prepares phenotype and profile files, runs \code{statTarget::shiftCor}, and i
 master_list <- qcCheckR_statTarget_batch_correction(master_list)
 }
 }
+\keyword{internal}

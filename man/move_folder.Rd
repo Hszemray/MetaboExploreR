@@ -17,7 +17,7 @@ move_folder(source_dir, dest_dir, max_wait = 60, max_retries = 30)
 \item{max_retries}{Maximum number of attempts to try move/delete prior to error. Default 30}
 }
 \value{
-None. The function performs the move operation and prints a message upon successful completion.
+None. The function performs the move operation and a message upon successful completion.
 }
 \description{
 move_folder

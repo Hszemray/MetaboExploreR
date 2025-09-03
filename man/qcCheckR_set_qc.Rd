@@ -21,3 +21,4 @@ If no viable QC type is found, the function stops execution and prints a detaile
 master_list <- qcCheckR_set_qc(master_list)
 }
 }
+\keyword{internal}

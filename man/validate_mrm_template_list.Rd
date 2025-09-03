@@ -7,16 +7,18 @@
 validate_mrm_template_list(mrm_template_list, user_name)
 }
 \arguments{
-\item{mrm_template_list}{A list of character strings representing the paths to MRM templates.}
+\item{mrm_template_list}{A list of character strings or a named list of data frames representing MRM templates.}
+
+\item{user_name}{A character string identifying the user.}
 }
 \value{
-TRUE if the validation is successful, otherwise an error is thrown.
+NULL or an ANPC mrm_template_list if mrm_template_list is NULL and user_name is ANPC
 }
 \description{
-This function checks if the \code{mrm_template_list} parameter is a list of strings.
+This function checks if the \code{mrm_template_list} parameter is valid and contains required columns.
 }
 \examples{
 \dontrun{
-validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"))
+validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"), "user")
 }
 }

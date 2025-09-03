@@ -12,7 +12,8 @@ skyline_setup_project(
 )
 }
 \arguments{
-\item{project_directory}{Directory path for the project folder containing the wiff folder and wiff files.}
+\item{project_directory}{Directory path for the project folder containing
+the wiff folder and wiff files.}
 
 \item{plateID}{Plate ID for the current plate.}
 
@@ -24,10 +25,12 @@ skyline_setup_project(
 The updated \code{master_list} object with the project setup details.
 }
 \description{
-This function sets up the project by initialising the master list, setting up project directories, and updating the script log.
+This function sets up the project by initialising the master list,
+setting up project directories, and updating the script log.
 }
 \examples{
 \dontrun{
-skyline_setup_project("path/to/project_directory", "plateID", mrm_template_list, "QC_sample_label")
+skyline_setup_project("path/to/project_directory", "plateID",
+mrm_template_list, "QC_sample_label")
 }
 }
