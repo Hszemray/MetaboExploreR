@@ -2,22 +2,15 @@
 
 #' Import specific functions from packages
 #' @name SkylineR_import_external_functions
-#' @importFrom utils installed.packages sessionInfo browseURL capture.output install.packages data str read.csv
-#' @importFrom readr read_tsv write_csv read_tsv write_tsv
-#' @importFrom dplyr slice arrange_at mutate_all mutate bind_rows bind_cols filter select setequal rename arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup
-#' @importFrom purrr map
-#' @importFrom plotly ggplotly layout
-#' @importFrom ggplot2 ggplot aes geom_vline geom_hline geom_point theme_bw scale_shape_manual scale_color_manual scale_size_manual guides guide_legend facet_wrap scale_fill_manual ylab geom_text
-#' @importFrom tibble tibble add_column as_tibble is_tibble column_to_rownames rownames_to_column
-#' @importFrom tidyr replace_na pivot_wider
-#' @importFrom stringr str_remove str_extract str_sub str_subset str_detect
+#' @importFrom utils installed.packages sessionInfo data str flush.console
+#' @importFrom readr read_csv write_csv read_tsv write_tsv
+#' @importFrom dplyr bind_rows bind_cols filter select setequal rename arrange contains intersect
+#' @importFrom tibble tibble add_column
+#' @importFrom stringr str_extract str_sub
 #' @importFrom mzR openMSfile chromatogramHeader chromatograms
 #' @importFrom janitor clean_names
 #' @importFrom magrittr %>%
-#' @importFrom stats median setNames na.omit
-#' @importFrom data.table :=
-#' @importFrom tidyselect where
-#' @importFrom stats sd
+#' @importFrom stats median setNames
 NULL
 
 #SkylineR internal functions----
@@ -31,18 +24,24 @@ NULL
 ###Primary Function----
 #' skyline_setup_project
 #'
-#' This function sets up the project by initialising the master list, setting up project directories, and updating the script log.
+#' This function sets up the project by initialising the master list,
+#' setting up project directories, and updating the script log.
 #'
-#' @param project_directory Directory path for the project folder containing the wiff folder and wiff files.
+#' @param project_directory Directory path for the project folder containing
+#' the wiff folder and wiff files.
 #' @param plateID Plate ID for the current plate.
 #' @param mrm_template_list List of MRM guides.
 #' @param QC_sample_label Key for filtering QC samples from sample list.
 #' @return The updated `master_list` object with the project setup details.
 #' @examples
 #' \dontrun{
-#' skyline_setup_project("path/to/project_directory", "plateID", mrm_template_list, "QC_sample_label")
+#' skyline_setup_project("path/to/project_directory", "plateID",
+#'mrm_template_list, "QC_sample_label")
 #' }
-skyline_setup_project <- function(project_directory, plateID, mrm_template_list, QC_sample_label) {
+skyline_setup_project <- function(project_directory,
+                                  plateID,
+                                  mrm_template_list,
+                                  QC_sample_label) {
   master_list <- initialise_master_list()
   master_list <- store_environment_details(master_list)
   master_list <- set_project_details(master_list, project_directory, plateID, QC_sample_label)
@@ -86,9 +85,11 @@ initialise_master_list <- function() {
 #' master_list <- store_environment_details(master_list)
 #' }
 store_environment_details <- function(master_list) {
-  master_list$environment$r_version <- sessionInfo()$R.version$version.string
-  master_list$environment$base_packages <- sessionInfo()$basePkgs
-  master_list$environment$user_packages <- paste0(names(sessionInfo()$otherPkgs), ": ", paste0(installed.packages()[names(sessionInfo()$otherPkgs), "Version"]))
+  master_list$environment$r_version <- utils::sessionInfo()$R.version$version.string
+  master_list$environment$base_packages <- utils::sessionInfo()$basePkgs
+  master_list$environment$user_packages <- paste0(names(utils::sessionInfo()$otherPkgs),
+                                                  ": ",
+                                                  paste0(utils::installed.packages()[names(sessionInfo()$otherPkgs), "Version"]))
   return(master_list)
 }
 
@@ -105,11 +106,14 @@ store_environment_details <- function(master_list) {
 #' \dontrun{
 #' master_list <- set_project_details(master_list, "path/to/project_directory", "plateID", "QC_sample_label")
 #' }
-set_project_details <- function(master_list, project_directory, plateID, QC_sample_label) {
+set_project_details <- function(master_list,
+                                project_directory,
+                                plateID,
+                                QC_sample_label) {
   master_list$project_details$project_dir <- project_directory
   master_list$project_details$lipidExploreR_version <- "Automated"
   master_list$project_details$user_name <- "Australian National Phenome Centre"
-  master_list$project_details$project_name <- str_extract(master_list$project_details$project_dir, "[^/]*$")
+  master_list$project_details$project_name <- stringr::str_extract(master_list$project_details$project_dir, "[^/]*$")
   master_list$project_details$plateID <- plateID
   master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$script_log$timestamps$start_time <- Sys.time()
@@ -137,54 +141,82 @@ read_mrm_guides <- function(master_list, mrm_template_list) {
 
     # Determine file extension and read accordingly
     if (grepl("\\.csv$", file_path, ignore.case = TRUE)) {
-      guide_data <- readr::read_csv(file_path, show_col_types = FALSE)
+      guide_data <- readr::read_csv(file_path,
+                                    show_col_types = FALSE,
+                                    name_repair = "minimal")
     } else if (grepl("\\.tsv$", file_path, ignore.case = TRUE)) {
-      guide_data <- readr::read_tsv(file_path,show_col_types = FALSE)
+      guide_data <- readr::read_tsv(file_path,
+                                    show_col_types = FALSE ,
+                                    name_repair = "minimal")
     } else {
-      stop(paste("Unsupported file format for:", file_path,
-                 ". \n Please ensure mrm_templates are .csv or .tsv"))
+      stop(
+        paste(
+          "Unsupported file format for:",
+          file_path,
+          ". \n Please ensure mrm_templates are .csv or .tsv"
+        )
+      )
     }
-
 
     # validate mrm_template_list
     ##Check column  names and length
-      mandatory_cols <- c(
-        "Molecule List Name", "Precursor Name", "Precursor Mz",
-        "Precursor Charge", "Product Mz", "Product Charge",
-        "Explicit Retention Time", "Explicit Retention Time Window", "Note",
-        "control_chart"
-      )
-      guide_cols <- colnames(guide_data)
-      matching_cols  <- intersect(mandatory_cols, guide_cols)
+    mandatory_cols <- c(
+      "Molecule List Name",
+      "Precursor Name",
+      "Precursor Mz",
+      "Precursor Charge",
+      "Product Mz",
+      "Product Charge",
+      "Explicit Retention Time",
+      "Explicit Retention Time Window",
+      "Note",
+      "control_chart"
+    )
+    guide_cols <- colnames(guide_data)
+    matching_cols  <- dplyr::intersect(mandatory_cols, guide_cols)
 
-      # report if all cols are matching
-      if (length(matching_cols) == length(mandatory_cols)) {
-        message(paste(version,": All mandatory columns are present."))
-      } else {
-        missing_cols <- setdiff(mandatory_cols, guide_cols)
-        stop(paste(version,": Missing mandatory columns: ",
-                   paste(missing_cols, collapse = ", ")))
-      }
+    # report if all cols are matching
+    if (length(matching_cols) != length(mandatory_cols)) {
+      missing_cols <- setdiff(mandatory_cols, guide_cols)
+      stop(paste(
+        version,
+        ": Missing mandatory columns: ",
+        paste(missing_cols, collapse = ", ")
+      ))
+    }
 
     ## Check there are no NA in all columns
     ## Except "Note" if "Precursor Name" contains "SIL" then expect an NA
-      sil_rows <- grepl("SIL", guide_data[["Precursor Name"]],
-                        ignore.case = TRUE)
-      cols_to_check <- setdiff(mandatory_cols, "Note")
-      for (col in cols_to_check) {
-        if (any(is.na(guide_data[[col]]))) {
-          stop(paste(version,": Column", col,
-                     "contains NA values, which are not allowed."))
-        }
+    sil_rows <- grepl("SIL", guide_data[["Precursor Name"]], ignore.case = TRUE)
+    cols_to_check <- setdiff(mandatory_cols, "Note")
+    for (col in cols_to_check) {
+      if (any(is.na(guide_data[[col]]))) {
+        stop(paste(
+          version,
+          ": Column",
+          col,
+          "contains NA values, which are not allowed."
+        ))
       }
-      note_na <- is.na(guide_data[["Note"]])
-      invalid_note_na <- note_na & !sil_rows
-      if (any(invalid_note_na)) {
-        stop(paste(version, ": NA values in 'Note' column
-        are only allowed for rows where 'Precursor Name' contains 'SIL'."))
-      }
+    }
+    note_na <- is.na(guide_data[["Note"]])
+    invalid_note_na <- note_na & !sil_rows
+    if (any(invalid_note_na)) {
+      stop(
+        paste(
+          version,
+          ": NA values in 'Note' column
+        are only allowed for rows where 'Precursor Name' contains 'SIL'."
+        )
+      )
+    }
 
-      message(paste(version, ": All required columns are validated and contain no unexpected NA values."))
+    message(
+      paste(
+        version,
+        ": All required columns are validated and contain no unexpected NA values."
+      )
+    )
 
     #Store valdiated mrm_template in master_list
     master_list$templates$mrm_guides[[version]]$mrm_guide <- guide_data
@@ -205,17 +237,42 @@ read_mrm_guides <- function(master_list, mrm_template_list) {
 #' setup_project_directories(master_list)
 #' }
 setup_project_directories <- function(master_list) {
-
   for (plate_ID in master_list$project_details$plateID) {
     base_path <- file.path(master_list$project_details$project_dir, plate_ID)
-    dir.create(base_path, showWarnings = FALSE)
-    dir.create(file.path(base_path, "data"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "data", "mzml"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "data", "rda"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "data", "skyline"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "data", "raw_data"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "data", "batch_correction"), showWarnings = FALSE)
-    dir.create(file.path(base_path, "html_report"), showWarnings = FALSE)
+    dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path, "data"),
+               showWarnings = FALSE,
+               recursive = TRUE)
+    dir.create(
+      file.path(base_path, "data", "mzml"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "rda"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "skyline"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "raw_data"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "batch_correction"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "html_report"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
   }
 }
 
@@ -236,7 +293,9 @@ setup_project_directories <- function(master_list) {
 #' \dontrun{
 #' mzR_mrm_findR(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type)
 #' }
-mzR_mrm_findR <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type) {
+mzR_mrm_findR <- function(FUNC_mzR,
+                          FUNC_mrm_guide,
+                          FUNC_OPTION_qc_type) {
   validate_mzR_parameters(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type)
   mzML_filelist <- get_mzML_filelist(FUNC_mzR)
   mzML_filelist_qc <- filter_mzML_filelist_qc(mzML_filelist, FUNC_OPTION_qc_type)
@@ -259,8 +318,12 @@ mzR_mrm_findR <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type) {
 #' \dontrun{
 #' validate_mzR_parameters(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type)
 #' }
-validate_mzR_parameters <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_type) {
-  if (!is.list(FUNC_mzR) || !is.data.frame(FUNC_mrm_guide) || !is.character(FUNC_OPTION_qc_type)) {
+validate_mzR_parameters <- function(FUNC_mzR,
+                                    FUNC_mrm_guide,
+                                    FUNC_OPTION_qc_type) {
+  if (!is.list(FUNC_mzR) ||
+      !is.data.frame(FUNC_mrm_guide) ||
+      !is.character(FUNC_OPTION_qc_type)) {
     stop("Invalid input parameters.")
   }
 }
@@ -277,7 +340,7 @@ validate_mzR_parameters <- function(FUNC_mzR, FUNC_mrm_guide, FUNC_OPTION_qc_typ
 #' }
 get_mzML_filelist <- function(FUNC_mzR) {
   mzML_filelist <- NULL
-  for(idx_plate in names(FUNC_mzR)){
+  for (idx_plate in names(FUNC_mzR)) {
     mzML_filelist <- c(mzML_filelist, names(FUNC_mzR[[idx_plate]]))
   }
   return(mzML_filelist)
@@ -311,19 +374,21 @@ filter_mzML_filelist_qc <- function(mzML_filelist, FUNC_OPTION_qc_type) {
 #' \dontrun{
 #' process_files(FUNC_mzR, FUNC_mrm_guide, mzML_filelist_qc)
 #' }
-process_files <- function(FUNC_mzR, FUNC_mrm_guide, mzML_filelist_qc) {
+process_files <- function(FUNC_mzR,
+                          FUNC_mrm_guide,
+                          mzML_filelist_qc) {
   FUNC_tibble <- list()
-  for(idx_mzML in mzML_filelist_qc){
-    FUNC_tibble[[idx_mzML]] <- tibble()
-    for(idx_plate in names(FUNC_mzR)){
-      if(length(grep(idx_mzML, names(FUNC_mzR[[idx_plate]]))) == 1){
+  for (idx_mzML in mzML_filelist_qc) {
+    FUNC_tibble[[idx_mzML]] <- tibble::tibble()
+    for (idx_plate in names(FUNC_mzR)) {
+      if (length(grep(idx_mzML, names(FUNC_mzR[[idx_plate]]))) == 1) {
         FUNC_tibble[[idx_mzML]] <- process_mrm_transitions(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzML)
       }
     }
   }
-  FUNC_tibble <- bind_rows(FUNC_tibble) %>%
-    filter(lipid_class != "no match") %>%
-    filter(lipid_class != "multiple match")
+  FUNC_tibble <- dplyr::bind_rows(FUNC_tibble) %>%
+    dplyr::filter(lipid_class != "no match") %>%
+    dplyr::filter(lipid_class != "multiple match")
   return(FUNC_tibble)
 }
 
@@ -341,28 +406,54 @@ process_files <- function(FUNC_mzR, FUNC_mrm_guide, mzML_filelist_qc) {
 #' \dontrun{
 #' process_mrm_transitions(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzML)
 #' }
-process_mrm_transitions <- function(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzML) {
-  FUNC_tibble <- tibble()
-  for(idx_mrm in 3:nrow(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_header)){
-    if(nrow(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]) > 0){
+process_mrm_transitions <- function(FUNC_mzR,
+                                    FUNC_mrm_guide,
+                                    idx_plate,
+                                    idx_mzML) {
+  FUNC_tibble <- tibble::tibble()
+  for (idx_mrm in 3:nrow(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_header)) {
+    if (nrow(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]) > 0) {
       precursor_mz <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_header$precursorIsolationWindowTargetMZ[idx_mrm]
       product_mz <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_header$productIsolationWindowTargetMZ[idx_mrm]
       baseline_value <- calculate_baseline(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
       peak_apex_idx <- find_peak_apex_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
-      peak_start_idx <- find_peak_start_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value)
-      peak_end_idx <- find_peak_end_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value)
+      peak_start_idx <- find_peak_start_idx(FUNC_mzR,
+                                            idx_plate,
+                                            idx_mzML,
+                                            idx_mrm,
+                                            peak_apex_idx,
+                                            baseline_value)
+      peak_end_idx <- find_peak_end_idx(FUNC_mzR,
+                                        idx_plate,
+                                        idx_mzML,
+                                        idx_mrm,
+                                        peak_apex_idx,
+                                        baseline_value)
       mzml_rt_apex <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime[peak_apex_idx] %>% round(2)
       mzml_rt_start <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime[peak_start_idx] %>% round(2)
       mzml_rt_end <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime[peak_end_idx] %>% round(2)
-      lipid_info <- find_lipid_info(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_apex, FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
-      FUNC_tibble <- FUNC_tibble %>% bind_rows(bind_cols("mzml" = idx_mzML,
-                                                         "lipid_class" = lipid_info$class,
-                                                         "lipid" = lipid_info$name,
-                                                         "precursor_mz" = precursor_mz,
-                                                         "product_mz" = product_mz,
-                                                         "peak_apex" = mzml_rt_apex,
-                                                         "peak_start" = mzml_rt_start,
-                                                         "peak_end" = mzml_rt_end))
+      lipid_info <- find_lipid_info(
+        FUNC_mrm_guide,
+        precursor_mz,
+        product_mz,
+        mzml_rt_apex,
+        FUNC_mzR,
+        idx_plate,
+        idx_mzML,
+        idx_mrm
+      )
+      FUNC_tibble <- FUNC_tibble %>% dplyr::bind_rows(
+        dplyr::bind_cols(
+          "mzml" = idx_mzML,
+          "lipid_class" = lipid_info$class,
+          "lipid" = lipid_info$name,
+          "precursor_mz" = precursor_mz,
+          "product_mz" = product_mz,
+          "peak_apex" = mzml_rt_apex,
+          "peak_start" = mzml_rt_start,
+          "peak_end" = mzml_rt_end
+        )
+      )
     }
   }
   return(FUNC_tibble)
@@ -382,9 +473,9 @@ process_mrm_transitions <- function(FUNC_mzR, FUNC_mrm_guide, idx_plate, idx_mzM
 #' calculate_baseline(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 #' }
 calculate_baseline <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
-  baseline_value <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2] %>% median()
-  if(baseline_value < 1){
-    baseline_value <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2] %>% mean()
+  baseline_value <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2] %>% stats::median()
+  if (baseline_value < 1) {
+    baseline_value <- FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2] %>% base::mean()
   }
   return(baseline_value)
 }
@@ -403,9 +494,12 @@ calculate_baseline <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
 #' find_peak_apex_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 #' }
 find_peak_apex_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
-  peak_apex_idx <- which.max(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2])
-  if(peak_apex_idx < 5 || peak_apex_idx > (length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2])-5)){
-    peak_apex_idx <- which.max((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2])[5:(length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2])-5)]) + 4
+  peak_apex_idx <- which.max(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2])
+  if (peak_apex_idx < 5 ||
+      peak_apex_idx > (length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2]) -
+                       5)) {
+    peak_apex_idx <- which.max((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2])[5:(length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2]) -
+                                                                                                         5)]) + 4
   }
   return(peak_apex_idx)
 }
@@ -425,10 +519,16 @@ find_peak_apex_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
 #' \dontrun{
 #' find_peak_start_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value)
 #' }
-find_peak_start_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value) {
-  baseline_idx <- which((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2]) < baseline_value)
-  peak_start_idx <- baseline_idx[which(baseline_idx < peak_apex_idx)][(length(which(baseline_idx < peak_apex_idx)))-3]
-  if(length(peak_start_idx) == 0 || peak_start_idx < 1){
+find_peak_start_idx <- function(FUNC_mzR,
+                                idx_plate,
+                                idx_mzML,
+                                idx_mrm,
+                                peak_apex_idx,
+                                baseline_value) {
+  baseline_idx <- which((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2]) < baseline_value)
+  peak_start_idx <- baseline_idx[which(baseline_idx < peak_apex_idx)][(length(which(baseline_idx < peak_apex_idx))) -
+                                                                        3]
+  if (length(peak_start_idx) == 0 || peak_start_idx < 1) {
     peak_start_idx <- 1
   }
   return(peak_start_idx)
@@ -449,11 +549,18 @@ find_peak_start_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_ape
 #' \dontrun{
 #' find_peak_end_idx(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value)
 #' }
-find_peak_end_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_idx, baseline_value) {
-  baseline_idx <- which((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2]) < baseline_value)
+find_peak_end_idx <- function(FUNC_mzR,
+                              idx_plate,
+                              idx_mzML,
+                              idx_mrm,
+                              peak_apex_idx,
+                              baseline_value) {
+  baseline_idx <- which((FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2]) < baseline_value)
   peak_end_idx <- baseline_idx[which(baseline_idx > peak_apex_idx)][3]
-  if(length(peak_end_idx) == 0 || peak_end_idx > length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2]) || is.na(peak_end_idx)){
-    peak_end_idx <- length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][,2])
+  if (length(peak_end_idx) == 0 ||
+      peak_end_idx > length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2]) ||
+      is.na(peak_end_idx)) {
+    peak_end_idx <- length(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]][, 2])
   }
   return(peak_end_idx)
 }
@@ -476,23 +583,37 @@ find_peak_end_idx <- function(FUNC_mzR, idx_plate, idx_mzML, idx_mrm, peak_apex_
 #' \dontrun{
 #' find_lipid_info(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_apex, FUNC_mzR, idx_plate, idx_mzML, idx_mrm)
 #' }
-find_lipid_info <- function(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_apex, FUNC_mzR, idx_plate, idx_mzML, idx_mrm) {
-  lipid_idx <- which(FUNC_mrm_guide$precursor_mz == precursor_mz & FUNC_mrm_guide$product_mz == product_mz)
-  if(length(lipid_idx) != 1){
-    lipid_idx <- which(FUNC_mrm_guide$precursor_mz > (precursor_mz - 0.25) &
-                         FUNC_mrm_guide$precursor_mz < (precursor_mz + 0.25) &
-                         FUNC_mrm_guide$product_mz > (product_mz - 0.25) &
-                         FUNC_mrm_guide$product_mz < (product_mz + 0.25) &
-                         FUNC_mrm_guide$explicit_retention_time > (min(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime)-0.1) &
-                         FUNC_mrm_guide$explicit_retention_time < (max(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime)+0.1))
+find_lipid_info <- function(FUNC_mrm_guide,
+                            precursor_mz,
+                            product_mz,
+                            mzml_rt_apex,
+                            FUNC_mzR,
+                            idx_plate,
+                            idx_mzML,
+                            idx_mrm) {
+  lipid_idx <- which(
+    FUNC_mrm_guide$precursor_mz == precursor_mz &
+      FUNC_mrm_guide$product_mz == product_mz
+  )
+  if (length(lipid_idx) != 1) {
+    lipid_idx <- which(
+      FUNC_mrm_guide$precursor_mz > (precursor_mz - 0.25) &
+        FUNC_mrm_guide$precursor_mz < (precursor_mz + 0.25) &
+        FUNC_mrm_guide$product_mz > (product_mz - 0.25) &
+        FUNC_mrm_guide$product_mz < (product_mz + 0.25) &
+        FUNC_mrm_guide$explicit_retention_time > (min(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime) -
+                                                    0.1) &
+        FUNC_mrm_guide$explicit_retention_time < (max(FUNC_mzR[[idx_plate]][[idx_mzML]]$mzR_chromatogram[[idx_mrm]]$rtime) +
+                                                    0.1)
+    )
   }
-  if(length(lipid_idx) > 1){
+  if (length(lipid_idx) > 1) {
     lipid_class <- "multiple match"
     lipid <- "multiple match"
-  } else if(length(lipid_idx) == 0){
+  } else if (length(lipid_idx) == 0) {
     lipid_class <- "no match"
     lipid <- "no match"
-  } else {
+  } else if (length(lipid_idx == 1)) {
     lipid_class <- FUNC_mrm_guide$molecule_list_name[lipid_idx]
     lipid <- FUNC_mrm_guide$precursor_name[lipid_idx]
   }
@@ -512,30 +633,63 @@ find_lipid_info <- function(FUNC_mrm_guide, precursor_mz, product_mz, mzml_rt_ap
 #' \dontrun{
 #' create_output(FUNC_tibble, FUNC_mrm_guide, mzML_filelist)
 #' }
-create_output <- function(FUNC_tibble, FUNC_mrm_guide, mzML_filelist) {
-  FUNC_output <- list()
-  FUNC_output$mrm_guide_updated <- tibble()
-  FUNC_output$peak_boundary_update <- tibble()
-  for(idx_lipid in unique(FUNC_tibble$lipid)){
-    FUNC_output$mrm_guide_updated <- bind_rows(FUNC_output$mrm_guide_updated,
-                                               bind_cols("Molecule List Name" = (FUNC_tibble %>% filter(lipid == idx_lipid))[["lipid_class"]] %>% unique(),
-                                                         "Precursor Name" = idx_lipid,
-                                                         "Precursor Mz" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["precursor_mz"]],
-                                                         "Precursor Charge" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["precursor_charge"]],
-                                                         "Product Mz" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["product_mz"]],
-                                                         "Product Charge" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["product_charge"]],
-                                                         "Explicit Retention Time" = (FUNC_tibble %>% filter(lipid == idx_lipid))[["peak_apex"]] %>% median(),
-                                                         "Explicit Retention Time Window" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["explicit_retention_time_window"]],
-                                                         "Note" = (FUNC_mrm_guide %>% filter(precursor_name == idx_lipid))[["note"]]))
+create_output <- function(FUNC_tibble,
+                          FUNC_mrm_guide,
+                          mzML_filelist) {
+  if (nrow(FUNC_tibble) == 0) {
+    return(
+      list(
+        mrm_guide_updated = tibble::tibble(),
+        peak_boundary_update = tibble::tibble()
+      )
+    )
+  }
 
-    FUNC_output$peak_boundary_update <- bind_rows(FUNC_output$peak_boundary_update,
-                                                  bind_cols("FileName" = mzML_filelist,
-                                                            "FullPeptideName" = rep(idx_lipid, length(mzML_filelist)),
-                                                            "MinStartTime" = rep(((FUNC_tibble %>% filter(lipid == idx_lipid))[["peak_start"]] %>% summary())[["1st Qu."]], length(mzML_filelist)),
-                                                            "MaxEndTime" = rep(((FUNC_tibble %>% filter(lipid == idx_lipid))[["peak_end"]] %>% summary())[["3rd Qu."]], length(mzML_filelist))))
+  FUNC_output <- list()
+  FUNC_output$mrm_guide_updated <- tibble::tibble()
+  FUNC_output$peak_boundary_update <- tibble::tibble()
+  for (idx_lipid in unique(FUNC_tibble$lipid)) {
+    FUNC_output$mrm_guide_updated <- dplyr::bind_rows(
+      FUNC_output$mrm_guide_updated,
+      dplyr::bind_cols(
+        "Molecule List Name" = (FUNC_tibble %>% dplyr::filter(lipid == idx_lipid))[["lipid_class"]] %>% unique(),
+        "Precursor Name" = idx_lipid,
+        "Precursor Mz" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["precursor_mz"]],
+        "Precursor Charge" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["precursor_charge"]],
+        "Product Mz" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["product_mz"]],
+        "Product Charge" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["product_charge"]],
+        "Explicit Retention Time" = (FUNC_tibble %>% dplyr::filter(lipid == idx_lipid))[["peak_apex"]] %>% stats::median(),
+        "Explicit Retention Time Window" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["explicit_retention_time_window"]],
+        "Note" = (
+          FUNC_mrm_guide %>% dplyr::filter(precursor_name == idx_lipid)
+        )[["note"]]
+      )
+    )
+
+    FUNC_output$peak_boundary_update <- dplyr::bind_rows(
+      FUNC_output$peak_boundary_update,
+      dplyr::bind_cols(
+        "FileName" = mzML_filelist,
+        "FullPeptideName" = rep(idx_lipid, length(mzML_filelist)),
+        "MinStartTime" = rep(((FUNC_tibble %>% dplyr::filter(lipid == idx_lipid))[["peak_start"]] %>% summary()
+        )[["1st Qu."]], length(mzML_filelist)),
+        "MaxEndTime" = rep(((FUNC_tibble %>% dplyr::filter(lipid == idx_lipid))[["peak_end"]] %>% summary()
+        )[["3rd Qu."]], length(mzML_filelist))
+      )
+    )
   }
   FUNC_output$mrm_guide_updated <- FUNC_output$mrm_guide_updated %>% dplyr::arrange(`Precursor Name`)
-  FUNC_output$peak_boundary_update <- FUNC_output$peak_boundary_update %>% arrange(`FullPeptideName`)
+  FUNC_output$peak_boundary_update <- FUNC_output$peak_boundary_update %>% dplyr::arrange(`FullPeptideName`)
   return(FUNC_output)
 }
 
@@ -559,7 +713,12 @@ import_mzml <- function(plateID, master_list) {
   validate_master_list_project_directory(master_list)
   mzml_filelist <- initialise_mzml_filelist(master_list)
   master_list <- process_plates(master_list, mzml_filelist)
-  master_list <- update_script_log(master_list, "mzR_mzml_import", "project_setup", "mzml_file_processing")
+  master_list <- update_script_log(
+    master_list,
+    "mzR_mzml_import",
+    "project_setup",
+    "mzml_peak_picking_and_integration"
+  )
   return(master_list)
 }
 
@@ -577,8 +736,18 @@ import_mzml <- function(plateID, master_list) {
 #' }
 initialise_mzml_filelist <- function(master_list) {
   mzml_filelist <- list()
+
   for (idx_plate in master_list$project_details$plateID) {
-    mzml_filelist[[idx_plate]] <- list.files(file.path(master_list$project_details$project_dir, idx_plate, "data","mzml"), pattern = ".mzML", full.names = FALSE)
+    mzml_filelist[[idx_plate]] <- list.files(
+      file.path(
+        master_list$project_details$project_dir,
+        idx_plate,
+        "data",
+        "mzml"
+      ),
+      pattern = ".mzML",
+      full.names = FALSE
+    )
     mzml_filelist[[idx_plate]] <- mzml_filelist[[idx_plate]][!grepl("COND|Blank|ISTDs", mzml_filelist[[idx_plate]])]
   }
   return(mzml_filelist)
@@ -599,15 +768,35 @@ initialise_mzml_filelist <- function(master_list) {
 process_plates <- function(master_list, mzml_filelist) {
   for (idx_plate in master_list$project_details$plateID) {
     master_list$data[[idx_plate]]$mzR <- list()
+    long_path <- file.path(master_list$project_details$project_dir,
+                           idx_plate,
+                           "data",
+                           "mzml")
+    if (.Platform$OS.type == "windows") {
+      cmd <- paste0('cmd /c mklink /J "C:\\mzml_short" "', long_path, '"')
+      system(cmd)
+      mzml_path <- "C:/mzml_short"
+    } else {
+      # Use full path directly on macOS/Linux
+      mzml_path <- file.path(master_list$project_details$project_dir,
+                             idx_plate,
+                             "data",
+                             "mzml")
+    }
+
     for (idx_mzML in mzml_filelist[[idx_plate]]) {
       master_list$data[[idx_plate]]$mzR[[idx_mzML]] <- list()
-      master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_object <- mzR::openMSfile(filename = paste0(master_list$project_details$project_dir, "/", idx_plate, "/data/mzml/", idx_mzML))
+      master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_object <- mzR::openMSfile(filename = file.path(mzml_path, idx_mzML))
       master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_header <- mzR::chromatogramHeader(master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_object)
       master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_chromatogram <- mzR::chromatograms(master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_object)
       master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_timestamp <- master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_object@backend$getRunStartTimeStamp()
     }
     master_list$data$global_timestamp[[idx_plate]] <- extract_timestamp(master_list$data[[idx_plate]]$mzR[[idx_mzML]]$mzR_timestamp)
     master_list$project_details$mzml_sample_list[[idx_plate]] <- update_sample_list(master_list, idx_plate)
+
+    if (.Platform$OS.type == "windows") {
+      unlink("C:/mzml_short", recursive = TRUE)
+    }
   }
   return(master_list)
 }
@@ -624,7 +813,7 @@ process_plates <- function(master_list, mzml_filelist) {
 #' extract_timestamp("2025-06-17T13:31:58Z")
 #' }
 extract_timestamp <- function(timestamp) {
-  return(timestamp %>% str_sub(., 1, 4) %>% as.numeric())
+  return(timestamp %>% stringr::str_sub(., 1, 4) %>% as.numeric())
 }
 
 
@@ -643,7 +832,10 @@ update_sample_list <- function(master_list, idx_plate) {
   if (is.null(master_list$project_details$mzml_sample_list[[idx_plate]])) {
     master_list$project_details$mzml_sample_list[[idx_plate]] <- character()
   }
-  return(c(master_list$project_details$mzml_sample_list[[idx_plate]], names(master_list$data[[idx_plate]]$mzR)))
+  return(c(
+    master_list$project_details$mzml_sample_list[[idx_plate]],
+    names(master_list$data[[idx_plate]]$mzR)
+  ))
 }
 
 #.----
@@ -668,33 +860,108 @@ peak_picking <- function(plateID, master_list) {
   sil_found <- FALSE
 
   for (version in names(master_list$templates$mrm_guides)) {
-    if (sil_found == TRUE ) break
-    message(paste("Trying mrm_guide version:", version))
-    master_list$project_details$is_ver <- version
-    master_list$summary_tables$project_summary <- create_summary_table(master_list, plate_idx)
-    master_list$templates$mrm_guides$by_plate[[plate_idx]] <- optimise_retention_times(master_list, plate_idx)
-    export_files(master_list, plate_idx)
-    execute_skyline_command(master_list, plate_idx)
-    master_list$data$skyline_report[[plate_idx]] <- reimport_skyline_file(master_list, plate_idx)
-    sil_found <- check_sil_standards(master_list, plate_idx, version)
-    if (sil_found == TRUE) {
-      save_plate_data(master_list, plate_idx)
-      message(paste(plate_idx,"SIL matched to", version))
-      message(paste(plate_idx,": Skyline data has been saved!"))
-    } else {
-      message(paste("No SIL standards detected with version", version, "- trying next version"))
-    }
+    if (sil_found)
+      break
+
+    # Notify version being utilised
+    full_msg <- paste("Starting peak picking and integration using version:",
+                      version)
+    border <- paste(rep("=", nchar(full_msg) + 4), collapse = "")
+    message("\n", border)
+    message("= ", full_msg, " =")
+    message(border, "\n")
+
+
+
+    version_success <- tryCatch({
+      master_list$project_details$is_ver <- version
+      master_list$summary_tables$project_summary <- create_summary_table(master_list, plate_idx)
+      master_list$templates$mrm_guides$by_plate[[plate_idx]] <- optimise_retention_times(master_list, plate_idx)
+
+      export_files(master_list, plate_idx)
+      skyline_command <- execute_skyline_command(master_list, plate_idx)
+
+      system_success <- tryCatch({
+        output_file <- file.path(
+          master_list$project_details$project_dir,
+          plate_idx,
+          "data",
+          "skyline",
+          "skyline_output.txt"
+        )
+        run_system_command(skyline_command, output_file)
+        TRUE
+      }, error = function(e) {
+        cat("System command failed in version",
+            version,
+            ":",
+            e$message,
+            "\n")
+        flush.console()
+        FALSE
+      })
+
+      if (!system_success) {
+        message("Skipping version due to system command failure.\n")
+        return(FALSE)
+      }
+
+      master_list$data$skyline_report[[plate_idx]] <- reimport_skyline_file(master_list, plate_idx)
+      sil_result <- check_sil_standards(master_list, plate_idx, version)
+
+      if (isTRUE(sil_result)) {
+        sil_found <- TRUE
+
+
+
+
+        save_plate_data(master_list, plate_idx)
+        message("SIL matched to version:", version, "\n")
+        message("Skyline data saved for plate:", plate_idx, "\n")
+      } else {
+        message("No SIL standards detected with version: ",
+                version,
+                "- trying next version\n")
+      }
+
+      TRUE
+    }, error = function(e) {
+      message("\nError during processing of version",
+              version,
+              ":\n",
+              e$message,
+              "\n")
+      message("--- End of error for version ", version, "---\n")
+      flush.console()
+      FALSE
+    })
+
+    if (!version_success)
+      next
   }
 
-  if (sil_found == FALSE) {
-    stop(message(paste("No SIL internal standards detected in plate", plate_idx, "after trying all method versions. Please ensure your mrm_guide is the transitions used in the project!")))
+  if (!sil_found) {
+    stop(
+      paste(
+        "No SIL internal standards detected in plate",
+        plate_idx,
+        "after trying all method versions. Please ensure your mrm_guide is the transitions used in the project!"
+      )
+    )
   }
-
 
   setwd(master_list$project_details$project_dir)
-  master_list <- update_script_log(master_list, "peak_picking", "mzR_mzml_import", "next_plate_for_processing")
+  master_list <- update_script_log(
+    master_list,
+    "mzml_peak_picking_and_integration",
+    "mzR_mzml_import",
+    "next_plate_for_processing"
+  )
   return(master_list)
 }
+
+
+
 
 ###Sub Functions----
 
@@ -710,11 +977,30 @@ peak_picking <- function(plateID, master_list) {
 #' create_summary_table(master_list, plate_idx)
 #' }
 create_summary_table <- function(master_list, plate_idx) {
-  Temp_list <- master_list$project_details[c("project_dir", "lipidExploreR_version", "user_name", "project_name","qc_type", "plateID", "is_ver")]
+  Temp_list <- master_list$project_details[c(
+    "project_dir",
+    "lipidExploreR_version",
+    "user_name",
+    "project_name",
+    "qc_type",
+    "plateID",
+    "is_ver"
+  )]
   Temp_list$plateID <- paste(plate_idx)
-  project_summary <- tibble(unlist(Temp_list)) %>%
-    add_column("Project detail" = c("local directory", "lipidExploreR version", "user initials", "project name", "project QC", "plateID", "int. std. version"), .before = 1)
-  project_summary <- setNames(project_summary, c("Project detail", "value"))
+  project_summary <- tibble::tibble(unlist(Temp_list)) %>%
+    tibble::add_column(
+      "Project detail" = c(
+        "local directory",
+        "lipidExploreR version",
+        "user initials",
+        "project name",
+        "project QC",
+        "plateID",
+        "int. std. version"
+      ),
+      .before = 1
+    )
+  project_summary <- stats::setNames(project_summary, c("Project detail", "value"))
   return(project_summary)
 }
 
@@ -732,15 +1018,21 @@ create_summary_table <- function(master_list, plate_idx) {
 #' }
 optimise_retention_times <- function(master_list, plate_idx) {
   by_plate <- list()
-  for (idx in plate_idx) {
-    result <- mzR_mrm_findR(
-      FUNC_mzR = master_list$data[[idx]],
-      FUNC_mrm_guide = master_list$templates$mrm_guides[[master_list$project_details$is_ver]]$mrm_guide %>% clean_names(),
-      FUNC_OPTION_qc_type = master_list$project_details$qc_type
-    ) %>% append(master_list$templates$mrm_guides[[master_list$project_details$is_ver]])
-    by_plate[[plate_idx]] <- result
-  }
-  by_plate[[plate_idx]]$mrm_guide_updated <- setNames(by_plate[[plate_idx]]$mrm_guide_updated, names(by_plate[[plate_idx]]$mrm_guide))
+  idx <- plate_idx
+  result <- mzR_mrm_findR(
+    FUNC_mzR = master_list$data[[idx]],
+    FUNC_mrm_guide = master_list$templates$mrm_guides[[master_list$project_details$is_ver]]$mrm_guide %>% janitor::clean_names(),
+    FUNC_OPTION_qc_type = master_list$project_details$qc_type
+  ) %>% append(master_list$templates$mrm_guides[[master_list$project_details$is_ver]])
+
+  #Replace 0 retention times with default
+  zero_rt_indices <- which(result$mrm_guide_updated$`Explicit Retention Time` == 0)
+  result[["mrm_guide_updated"]][["Explicit Retention Time"]][zero_rt_indices] <-  result[["mrm_guide"]][["Explicit Retention Time"]][zero_rt_indices]
+
+  by_plate[[plate_idx]] <- result
+  by_plate[[plate_idx]]$mrm_guide_updated <- stats::setNames(by_plate[[plate_idx]]$mrm_guide_updated, names(by_plate[[plate_idx]]$mrm_guide))
+
+
   message("Successfully optimised retention times!")
   return(by_plate)
 }
@@ -758,37 +1050,80 @@ optimise_retention_times <- function(master_list, plate_idx) {
 #' export_files(master_list, plate_idx)
 #' }
 export_files <- function(master_list, plate_idx) {
+  long_path <- file.path(master_list$project_details$project_dir,
+                         plate_idx,
+                         "data",
+                         "skyline")
+  if (.Platform$OS.type == "windows") {
+    cmd <- paste0('cmd /c mklink /J "C:\\skyline_short" "', long_path, '"')
+    system(cmd)
+    skyline_path <- "C:/skyline_short"
+  } else {
+    # Use full path directly on macOS/Linux
+    skyline_path <- long_path
+  }
 
-  project_name <- master_list$project_details$project_name
-  skyline_path <- file.path(master_list$project_details$project_dir, plate_idx, "data" ,"skyline")
+  readr::write_csv(
+    x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$mrm_guide_update,
+    file = file.path(
+      skyline_path,
+      paste0(Sys.Date(), "_RT_update_", plate_idx, ".csv")
+    )
+  )
 
-  write_csv(x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$mrm_guide_update,
-            file = file.path(skyline_path, paste0(Sys.Date(), "_RT_update_",
-                                                  project_name, "_", plate_idx, ".csv")))
+  readr::write_csv(
+    x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$peak_boundary_update,
+    file = file.path(
+      skyline_path,
+      paste0(Sys.Date(), "_peak_boundary_update_", plate_idx, ".csv")
+    )
+  )
 
-  write_csv(x = master_list$templates$mrm_guides$by_plate[[plate_idx]][[plate_idx]]$peak_boundary_update,
-            file = file.path(skyline_path, paste0(Sys.Date(), "_peak_boundary_update_", project_name, "_", plate_idx, ".csv")))
+  file.copy(
+    from = system.file("templates", "default_skyline_file.sky", package = "MetaboExploreR"),
+    to = paste0(skyline_path)
+  )
 
-  file.copy(from = system.file("templates", "default_skyline_file.sky", package = "MetaboExploreR"),
-            to = paste0(skyline_path))
+  file.rename(
+    from = file.path(skyline_path, "default_skyline_file.sky"),
+    to = file.path(skyline_path, paste0(Sys.Date(), "_", plate_idx, ".sky"))
+  )
+  file.copy(
+    from = system.file("templates", "default_csv.csv", package = "MetaboExploreR"),
+    to = file.path(skyline_path)
+  )
 
-  file.rename(from = file.path(skyline_path,"default_skyline_file.sky"),
-              to = file.path(skyline_path, paste0(Sys.Date(),"_",project_name,"_",plate_idx,".sky")))
-  file.copy(from = system.file("templates", "default_csv.csv", package = "MetaboExploreR"),
-            to = file.path(skyline_path))
+  file.rename(
+    from = file.path(skyline_path, "default_csv.csv"),
+    to = file.path(
+      skyline_path,
+      paste0(Sys.Date(), "_xskylineR_1_", plate_idx, ".csv")
+    )
+  )
+  file.copy(
+    from = system.file("templates", "default_tsv.tsv", package = "MetaboExploreR"),
+    to = file.path(skyline_path)
+  )
 
-  file.rename(from = file.path(skyline_path,"default_csv.csv"),
-              to = file.path(skyline_path, paste0(Sys.Date(),"_xskylineR_1_",project_name,"_",plate_idx,".csv")))
-  file.copy(from = system.file("templates", "default_tsv.tsv", package = "MetaboExploreR"),
-            to = file.path(skyline_path))
+  file.rename(
+    from = file.path(skyline_path , "default_tsv.tsv"),
+    to = file.path(
+      skyline_path,
+      paste0(Sys.Date(), "_", plate_idx, "_chromatograms.tsv")
+    )
+  )
+  file.copy(
+    from = system.file(
+      "templates",
+      "YYYY-MM-DD_xskylineR_1_project_name.skyr",
+      package = "MetaboExploreR"
+    ),
+    to = file.path(skyline_path)
+  )
 
-  file.rename(from = file.path(skyline_path ,"default_tsv.tsv"),
-              to = file.path(skyline_path, paste0(Sys.Date(),"_",project_name,"_",plate_idx,"_chromatograms.tsv")))
-  file.copy(from = system.file("templates", "YYYY-MM-DD_xskylineR_1_project_name.skyr", package = "MetaboExploreR"),
-            to = file.path(skyline_path))
-
-  Sys.sleep(10)
-  message("Skyline Template Files Rendered in directory")
+  if (.Platform$OS.type == "windows") {
+    unlink("C:/skyline_short", recursive = TRUE)
+  }
 }
 
 
@@ -804,31 +1139,35 @@ export_files <- function(master_list, plate_idx) {
 #' execute_skyline_command(master_list, plate_idx)
 #' }
 execute_skyline_command <- function(master_list, plate_idx) {
+  # Get absolute path to data directory
+  data_dir <- normalizePath(file.path(master_list$project_details$project_dir, plate_idx, "data"))
 
-   # Get absolute path to data directory
-    data_dir <- normalizePath(file.path(master_list$project_details$project_dir, plate_idx, "data"))
+  # Build filenames
+  date_str <- Sys.Date()
+  base_path <- file.path("skyline")
 
-    # Build filenames
-    date_str <- Sys.Date()
-    project <- master_list$project_details$project_name
-    base_path <- file.path("skyline")
+  in_file <- file.path(base_path, paste0(date_str, "_", plate_idx, ".sky"))
+  import_transition_list <- file.path(base_path,
+                                      paste0(date_str, "_RT_update_", plate_idx, ".csv"))
+  mzml_path <- "mzml"
+  import_peak_boundaries <- file.path(base_path,
+                                      paste0(date_str, "_peak_boundary_update_", plate_idx, ".csv"))
+  out_file <- file.path(base_path, paste0(date_str, "_", plate_idx, ".sky"))
+  report_name <- "YYYY-MM-DD_xskylineR_1_project_name"
+  report_file <- file.path(base_path,
+                           paste0(date_str, "_xskylineR_1_", plate_idx, ".csv"))
+  report_template <- file.path(base_path, "YYYY-MM-DD_xskylineR_1_project_name.skyr")
+  chromatogram_file <- file.path(base_path,
+                                 paste0(date_str, "_", plate_idx, "_chromatograms.tsv"))
 
-    in_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, ".sky"))
-    import_transition_list <- file.path(base_path, paste0(date_str, "_RT_update_", project, "_", plate_idx, ".csv"))
-    mzml_path <- "mzml"
-    import_peak_boundaries <- file.path(base_path, paste0(date_str, "_peak_boundary_update_", project, "_", plate_idx, ".csv"))
-    out_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, ".sky"))
-    report_name <- "YYYY-MM-DD_xskylineR_1_project_name"
-    report_file <- file.path(base_path, paste0(date_str, "_xskylineR_1_", project, "_", plate_idx, ".csv"))
-    report_template <- file.path(base_path,"YYYY-MM-DD_xskylineR_1_project_name.skyr")
-    chromatogram_file <- file.path(base_path, paste0(date_str, "_", project, "_", plate_idx, "_chromatograms.tsv"))
+  #Add the following to the command if missing targets to adjust mz tolerance when matching template to mrm_guide
+  #--instrument-method-mz-tolerance=0.0006 \
 
-
-
-    docker_command <- sprintf(
-      'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
+  docker_command <- sprintf(
+    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
       --dir=/data \
       --in=%s \
+      --instrument-method-mz-tolerance=0.055 \
       --import-transition-list=%s \
       --import-all=%s \
       --import-peak-boundaries=%s \
@@ -845,20 +1184,66 @@ execute_skyline_command <- function(master_list, plate_idx) {
       --chromatogram-products \
       --chromatogram-base-peaks \
       --chromatogram-tics',
-      data_dir, #-v "%s:/data"
-      shQuote(in_file), #--in=%s
-      shQuote(import_transition_list), #--import-transition-list=%s
-      shQuote(mzml_path), #--import-all=%s
-      shQuote(import_peak_boundaries), #--import-peak-boundaries=%s
-      shQuote(out_file), #--out=%s
-      shQuote(report_name), #--report-name=%s
-      shQuote(report_file), # --report-file=%s
-      shQuote(report_template), # --report-add=%s
-      shQuote(chromatogram_file) #--chromatogram-file=%s
-    )
+    data_dir,
+    #-v "%s:/data"
+    shQuote(in_file),
+    #--in=%s
+    shQuote(import_transition_list),
+    #--import-transition-list=%s
+    shQuote(mzml_path),
+    #--import-all=%s
+    shQuote(import_peak_boundaries),
+    #--import-peak-boundaries=%s
+    shQuote(out_file),
+    #--out=%s
+    shQuote(report_name),
+    #--report-name=%s
+    shQuote(report_file),
+    # --report-file=%s
+    shQuote(report_template),
+    # --report-add=%s
+    shQuote(chromatogram_file) #--chromatogram-file=%s
+  )
 
-    system(docker_command)
+  return(docker_command)
 }
+
+
+#' run_system_command
+#'
+#' This function wraps the system command to run docker skyline allowing for
+#' unit testing. It captures all output (stdout and stderr) and writes it to a .txt file.
+#' @keywords internal
+#' @param skyline_command developed skyline docker command
+#' @param output_file optional path to save the command output
+#' @examples
+#' \dontrun{
+#' run_system_command("docker run skyline", "output.txt")
+#' }
+run_system_command <- function(skyline_command, output_file) {
+  # Redirect both stdout and stderr
+  full_command <- paste0(skyline_command, " 2>&1")
+
+  result <- tryCatch({
+    suppressWarnings(system(full_command, intern = TRUE))
+  }, error = function(e) {
+    message("Error occurred: ", e$message)
+    return(NULL)
+  }, warning = function(w) {
+    message("Warning occurred: ", w$message)
+    return(NULL)
+  })
+
+  if (is.null(result)) {
+    message("The system command failed, but the error was suppressed.")
+  } else {
+    if (!is.null(output_file)) {
+      writeLines(result, con = output_file)
+    }
+    return(result)
+  }
+}
+
 
 
 #' reimport_skyline_file
@@ -873,17 +1258,48 @@ execute_skyline_command <- function(master_list, plate_idx) {
 #' reimport_skyline_file(master_list, plate_idx)
 #' }
 reimport_skyline_file <- function(master_list, plate_idx) {
-  skyline_data <- read.csv(
+  long_path <- file.path(master_list$project_details$project_dir,
+                         plate_idx,
+                         "data",
+                         "skyline")
+  if (.Platform$OS.type == "windows") {
+    cmd <- paste0('cmd /c mklink /J "C:\\skyline_short" "', long_path, '"')
+    system(cmd)
+    skyline_path <- "C:/skyline_short"
+  } else {
+    # Use full path directly on macOS/Linux
+    skyline_path <- file.path(master_list$project_details$project_dir,
+                              plate_idx,
+                              "data",
+                              "skyline")
+  }
+
+  skyline_data <- suppressWarnings(readr::read_csv(
     file = list.files(
-      paste0(master_list$project_details$project_dir, "/", plate_idx, "/data/skyline"),
-      pattern = paste0("xskylineR_1_", master_list$project_details$project_name),
-      full.names = TRUE))
-  cols_to_convert <- c("PrecursorMz", "ProductMz", "RetentionTime", "StartTime", "EndTime", "Area", "Height")
+      skyline_path,
+      pattern = paste0("xskylineR_1_", plate_idx),
+      full.names = TRUE
+    ),
+    show_col_types = FALSE
+  ))
+  cols_to_convert <- c(
+    "PrecursorMz",
+    "ProductMz",
+    "RetentionTime",
+    "StartTime",
+    "EndTime",
+    "Area",
+    "Height"
+  )
   suppressWarnings(skyline_data[cols_to_convert] <- lapply(skyline_data[cols_to_convert], as.numeric))
   skyline_data <- janitor::clean_names(skyline_data)
+
+  if (.Platform$OS.type == "windows") {
+    unlink("C:/skyline_short", recursive = TRUE)
+  }
+
   return(skyline_data)
 }
-
 
 #' check_sil_standards
 #'
@@ -895,13 +1311,39 @@ reimport_skyline_file <- function(master_list, plate_idx) {
 #' @return A logical value indicating whether the SIL standards on the plate match the SIL standards for the specified version.
 #' @examples
 #' \dontrun{
-#' check_sil_standards(master_list, plate_idx, version)
+#' check_sil_standards(master_list, plate_idx, current_version)
 #' }
-check_sil_standards <- function(master_list, plate_idx, version) {
-  sil_on_plate <- master_list$data$skyline_report[[plate_idx]][grepl("SIL", master_list$data$skyline_report[[plate_idx]][["molecule_name"]], ignore.case = TRUE),] %>%
-                  select(contains("molecule_name")) %>% unique() %>% rename("SIL" = "molecule_name")
-  sil_for_version <- master_list$templates$mrm_guides[[version]][["mrm_guide"]][grepl("SIL", master_list$templates$mrm_guides[[version]][["mrm_guide"]][["Precursor Name"]], ignore.case = TRUE),] %>% select(contains("Precursor Name")) %>% unique() %>% rename("SIL" = "Precursor Name")
-  sil_found <- setequal(sil_on_plate, sil_for_version)
+check_sil_standards <- function(master_list, plate_idx, current_version) {
+  # Extract SILs from the plate
+  sil_on_plate <- master_list$data$skyline_report[[plate_idx]] %>%
+    dplyr::filter(grepl("SIL", molecule_name, ignore.case = TRUE)) %>%
+    dplyr::pull(molecule_name) %>%
+    unique()
+
+  template_versions <- setdiff(names(master_list$templates$mrm_guides), "by_plate")
+
+  sil_by_version <- lapply(template_versions, function(version) {
+    master_list$templates$mrm_guides[[version]]$mrm_guide %>%
+      dplyr::filter(grepl("SIL", `Precursor Name`, ignore.case = TRUE)) %>%
+      dplyr::pull(`Precursor Name`) %>%
+      unique()
+  })
+  names(sil_by_version) <- template_versions
+
+  current_sils <- sil_by_version[[current_version]]
+
+  other_versions <- setdiff(template_versions, current_version)
+  other_sils <- unlist(sil_by_version[other_versions], use.names = FALSE)
+
+  # Compute SILs unique to current version
+  unique_sils_current <- setdiff(current_sils, other_sils)
+
+  # Match plate SILs to unique SILs and keep if 75% match
+  matching_sils <- intersect(sil_on_plate, unique_sils_current)
+  match_ratio <- length(matching_sils) / length(unique_sils_current)
+
+  sil_found <- match_ratio >= 0.90
+
   return(sil_found)
 }
 
@@ -917,12 +1359,43 @@ check_sil_standards <- function(master_list, plate_idx, version) {
 #' save_plate_data(master_list, plate_idx)
 #' }
 save_plate_data <- function(master_list, plate_idx) {
-  save(master_list, file = paste0(
-    master_list$project_details$project_dir, "/", plate_idx, "/data/rda/",
-    Sys.Date(), "_", master_list$project_details$user_name, "_", master_list$project_details$project_name, "_", plate_idx,
-    "_skylineR.rda"))
-}
+  long_path <- file.path(master_list$project_details$project_dir,
+                         plate_idx,
+                         "data",
+                         "rda")
+  if (.Platform$OS.type == "windows") {
+    cmd <- paste0('cmd /c mklink /J "C:\\rda" "', long_path, '"')
+    system(cmd)
+    mzml_path <- "C:/rda"
+  } else {
+    # Use full path directly on macOS/Linux
+    mzml_path <- file.path(master_list$project_details$project_dir,
+                           plate_idx,
+                           "data",
+                           "mzml")
+  }
+  save(
+    master_list,
+    file = paste0(
+      master_list$project_details$project_dir,
+      "/",
+      plate_idx,
+      "/data/rda/",
+      Sys.Date(),
+      "_",
+      master_list$project_details$user_name,
+      "_",
+      master_list$project_details$project_name,
+      "_",
+      plate_idx,
+      "_skylineR.rda"
+    )
+  )
 
+  if (.Platform$OS.type == "windows") {
+    unlink("C:/rda", recursive = TRUE)
+  }
+}
 #.----
 #Archive Raw Files ----
 
@@ -932,7 +1405,7 @@ save_plate_data <- function(master_list, plate_idx) {
 #' This function moves raw files (wiff and mzML) to an archive directory after processing is complete.
 #'
 #' @param project_directory Path to the directory for the project parsed from SkylineR.
-#' @return None. The function performs the archive operation and prints a message upon successful completion.
+#' @return None. The function performs the archive operation and a message upon successful completion.
 #' @examples
 #' \dontrun{
 #' archive_raw_files("path/to/project_directory")
@@ -958,7 +1431,10 @@ archive_raw_files <- function(project_directory) {
 #' archive_files(project_directory, folder_name)
 #' }
 archive_files <- function(project_directory, folder_name) {
-  move_folder(file.path(project_directory, folder_name), file.path(project_directory, "archive"))
+  move_folder(
+    file.path(project_directory, folder_name),
+    file.path(project_directory, "archive")
+  )
 }
 
 #Move Folder Functions----
@@ -970,12 +1446,15 @@ archive_files <- function(project_directory, folder_name) {
 #' @param dest_dir Directory path for the folder to be copied to.
 #' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder.
 #' @param max_retries Maximum number of attempts to try move/delete prior to error. Default 30
-#' @return None. The function performs the move operation and prints a message upon successful completion.
+#' @return None. The function performs the move operation and a message upon successful completion.
 #' @examples
 #' \dontrun{
 #' move_folder(source_dir = "path/to/source", dest_dir = "path/to/destination", max_wait = 60, max_retries = 30)
 #' }
-move_folder <- function(source_dir, dest_dir, max_wait = 60, max_retries = 30) {
+move_folder <- function(source_dir,
+                        dest_dir,
+                        max_wait = 60,
+                        max_retries = 30) {
   validate_directories(source_dir, dest_dir)
   files_to_copy <- copy_files(source_dir, dest_dir)
   wait_until_files_free(files_to_copy, max_wait, max_retries)
@@ -998,79 +1477,84 @@ move_folder <- function(source_dir, dest_dir, max_wait = 60, max_retries = 30) {
 validate_directories <- function(source_dir, dest_dir) {
   if (!dir.exists(source_dir)) {
     stop(paste("Source directory does not exist:", source_dir))
-  }
-  if (!dir.exists(dest_dir)) {
-    dir.create(dest_dir, recursive = TRUE)
-  }
-}
-
-#' copy_files
-#' This function copies files from the source directory to the destination directory.
-#' @keywords internal
-#' @param source_dir Directory path for the folder to copy.
-#' @param dest_dir Directory path for the folder to be copied to.
-#' @return A vector of file paths that were copied.
-#' @examples
-#' \dontrun{
-#' copy_files(source_dir = "path/to/source", dest_dir = "path/to/destination")
-#' }
-copy_files <- function(source_dir, dest_dir) {
-  files_to_copy <- list.files(source_dir, full.names = TRUE)
-  success <- file.copy(files_to_copy, dest_dir, recursive = TRUE)
-  if (!all(success)) {
-    stop("Some files failed to copy.")
-  }
-  return(files_to_copy)
-}
-
-#' wait_until_files_free
-#' This function waits until files are not in use by attempting to rename them.
-#' @keywords internal
-#' @param files_to_copy A vector of file paths to check.
-#' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder. Default is 60
-#' @param max_retries Maximum number of attempts to try move/delete prior to error. Default is 30.
-#' @return None. The function waits until files are free.
-#' @examples
-#' \dontrun{
-#' wait_until_files_free(files_to_copy, max_wait = 60, max_retries = 30)
-#' }
-wait_until_files_free <- function(files_to_copy, max_wait = 60, max_retries = 30) {
-  for (test_file in files_to_copy) {
-    retries <- 0
-    start_time <- Sys.time()
-    while (TRUE) {
-      if (!file.exists(test_file)) break
-
-      test_rename <- try(file.rename(test_file, paste0(test_file, ".tmp")), silent = TRUE)
-      if (!inherits(test_rename, "try-error") && test_rename) {
-        file.rename(paste0(test_file, ".tmp"), test_file)
-        break
-      }
-
-      if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait || retries >= max_retries) {
-        stop(paste("File still in use after waiting:", test_file))
-      }
-
-      Sys.sleep(2)
-      retries <- retries + 1
+    # }
+    if (!dir.exists(dest_dir)) {
+      dir.create(dest_dir, recursive = TRUE)
     }
   }
 }
 
-#' delete_source_directory
-#' This function deletes the source directory after files have been moved.
-#' @keywords internal
-#' @param source_dir Directory path for the folder to delete.
-#' @return None. The function deletes the source directory.
-#' @examples
-#' \dontrun{
-#' delete_source_directory(source_dir = "path/to/source")
-#' }
-delete_source_directory <- function(source_dir) {
-  unlink(source_dir, recursive = TRUE, force = TRUE)
-  if (dir.exists(source_dir)) {
-    stop(paste("Failed to delete directory:", source_dir))
-  } else {
-    message(paste("Successfully moved and deleted:", source_dir))
+  #' copy_files
+  #' This function copies files from the source directory to the destination directory.
+  #' @keywords internal
+  #' @param source_dir Directory path for the folder to copy.
+  #' @param dest_dir Directory path for the folder to be copied to.
+  #' @return A vector of file paths that were copied.
+  #' @examples
+  #' \dontrun{
+  #' copy_files(source_dir = "path/to/source", dest_dir = "path/to/destination")
+  #' }
+  copy_files <- function(source_dir, dest_dir) {
+    files_to_copy <- list.files(source_dir, full.names = TRUE)
+    success <- file.copy(files_to_copy, dest_dir, recursive = TRUE)
+    if (!all(success)) {
+      stop("Some files failed to copy.")
+    }
+    return(files_to_copy)
   }
-}
+
+  #' wait_until_files_free
+  #' This function waits until files are not in use by attempting to rename them.
+  #' @keywords internal
+  #' @param files_to_copy A vector of file paths to check.
+  #' @param max_wait Maximum wait time (in seconds) for the system prior to deleting the moved folder. Default is 60
+  #' @param max_retries Maximum number of attempts to try move/delete prior to error. Default is 30.
+  #' @return None. The function waits until files are free.
+  #' @examples
+  #' \dontrun{
+  #' wait_until_files_free(files_to_copy, max_wait = 60, max_retries = 30)
+  #' }
+  wait_until_files_free <- function(files_to_copy,
+                                    max_wait = 60,
+                                    max_retries = 30) {
+    for (test_file in files_to_copy) {
+      retries <- 0
+      start_time <- Sys.time()
+      while (TRUE) {
+        if (!file.exists(test_file))
+          break
+
+        test_rename <- try(file.rename(test_file, paste0(test_file, ".tmp")), silent = TRUE)
+        if (!inherits(test_rename, "try-error") && test_rename) {
+          file.rename(paste0(test_file, ".tmp"), test_file)
+          break
+        }
+
+        if (as.numeric(Sys.time() - start_time, units = "secs") > max_wait ||
+            retries >= max_retries) {
+          stop(paste("File still in use after waiting:", test_file))
+        }
+
+        Sys.sleep(2)
+        retries <- retries + 1
+      }
+    }
+  }
+
+  #' delete_source_directory
+  #' This function deletes the source directory after files have been moved.
+  #' @keywords internal
+  #' @param source_dir Directory path for the folder to delete.
+  #' @return None. The function deletes the source directory.
+  #' @examples
+  #' \dontrun{
+  #' delete_source_directory(source_dir = "path/to/source")
+  #' }
+  delete_source_directory <- function(source_dir) {
+    unlink(source_dir, recursive = TRUE, force = TRUE)
+    if (dir.exists(source_dir)) {
+      stop(paste("Failed to delete directory:", source_dir))
+    } else {
+      message(paste("Successfully moved and deleted:", source_dir))
+    }
+  }

@@ -21,7 +21,8 @@ NULL
 #' }
 validate_input_directory <- function(input_directory) {
   # Check if input_directory is a single string
-  if (!is.character(input_directory) || length(input_directory) != 1) {
+  if (!is.character(input_directory) ||
+      length(input_directory) != 1) {
     stop("input_directory must be a single string.")
   }
 
@@ -74,16 +75,42 @@ msConvertR_mzml_conversion <- function(input_directory,
 #' msConvertR_setup_project_directories(output_directory, plateIDs)
 #' }
 msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
-  for (plateID in plateIDs){
-  base_path <- file.path(output_directory, plateID)
+  for (plateID in plateIDs) {
+    base_path <- file.path(output_directory, plateID)
     dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(base_path,"data"), showWarnings = FALSE,recursive = TRUE)
-    dir.create(file.path(base_path,"data","mzml"), showWarnings = FALSE,recursive = TRUE)
-    dir.create(file.path(base_path,"data","rda"), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(base_path,"data","skyline"), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(base_path,"data","raw_data"), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(base_path,"data","batch_correction"), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(base_path,"html_report"), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(base_path, "data"),
+               showWarnings = FALSE,
+               recursive = TRUE)
+    dir.create(
+      file.path(base_path, "data", "mzml"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "rda"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "skyline"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "raw_data"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "data", "batch_correction"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+    dir.create(
+      file.path(base_path, "html_report"),
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
   }
 }
 
@@ -114,11 +141,11 @@ msConvertR_set_working_directory <- function(output_directory) {
 #' command <- msConvertR_construct_command_for_terminal(path/to/input/directory, "path/to/output_directory")
 #' }
 msConvertR_construct_command_for_terminal <- function(input_directory, output_directory) {
-
   # Normalise directory
   input_path <- normalizePath(file.path(input_directory, "raw_data"), mustWork = FALSE)
   # Normalise output directory
-  output_dir <- normalizePath(file.path(output_directory, "msConvert_mzml_output"), mustWork = FALSE)
+  output_dir <- normalizePath(file.path(output_directory, "msConvert_mzml_output"),
+                              mustWork = FALSE)
 
   # Docker image name
   docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
@@ -133,7 +160,11 @@ msConvertR_construct_command_for_terminal <- function(input_directory, output_di
   # Construct Docker command
   docker_command <- sprintf(
     'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
-    input_path, container_data_path ,output_dir,output_data_path, docker_image,
+    input_path,
+    container_data_path ,
+    output_dir,
+    output_data_path,
+    docker_image,
     file.path(container_data_path, file_name),
     output_data_path
   )
@@ -167,46 +198,58 @@ msConvertR_execute_command <- function(command) {
 #' \dontrun{
 #' master_list <- msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
 #' }
-msConvertR_restructure_directory <- function(output_directory, plateIDs, vendor_extension_patterns) {
+msConvertR_restructure_directory <- function(output_directory,
+                                             plateIDs,
+                                             vendor_extension_patterns) {
   for (plateID in plateIDs) {
-  # Define key paths
-  project_dir <- output_directory
-  raw_data_dir <- file.path(output_directory, "raw_data")
-  mzml_output_dir <- file.path(output_directory, "msConvert_mzml_output")
-  plate_data_dir <- file.path(output_directory, plateID, "data")
-  raw_data_dest <- file.path(plate_data_dir, "raw_data")
-  mzml_dest <- file.path(plate_data_dir, "mzml")
+    # Define key paths
+    project_dir <- output_directory
+    raw_data_dir <- file.path(output_directory, "raw_data")
+    mzml_output_dir <- file.path(output_directory, "msConvert_mzml_output")
+    plate_data_dir <- file.path(output_directory, plateID, "data")
+    raw_data_dest <- file.path(plate_data_dir, "raw_data")
+    mzml_dest <- file.path(plate_data_dir, "mzml")
 
-  # Create destination directories if they don't exist
-  dir.create(raw_data_dest, recursive = TRUE, showWarnings = FALSE)
-  dir.create(mzml_dest, recursive = TRUE, showWarnings = FALSE)
+    # Create destination directories if they don't exist
+    dir.create(raw_data_dest,
+               recursive = TRUE,
+               showWarnings = FALSE)
+    dir.create(mzml_dest, recursive = TRUE, showWarnings = FALSE)
 
-  # Find raw data files matching plateID
-  raw_files <- list.files(path = raw_data_dir,
-                          pattern = vendor_extension_patterns,
-                          full.names = TRUE)
-  matched_raw_files <- str_subset(raw_files, plateID)
+    # Find raw data files matching plateID
+    raw_files <- list.files(path = raw_data_dir,
+                            pattern = vendor_extension_patterns,
+                            full.names = TRUE)
+    matched_raw_files <- str_subset(raw_files, plateID)
 
-  # Copy individual raw files (non-directories)
-  file_info <- file.info(matched_raw_files)
-  raw_file_paths <- matched_raw_files[!file_info$isdir]
-  file.copy(from = raw_file_paths, to = raw_data_dest, recursive = FALSE)
+    # Copy individual raw files (non-directories)
+    file_info <- file.info(matched_raw_files)
+    raw_file_paths <- matched_raw_files[!file_info$isdir]
+    file.copy(from = raw_file_paths,
+              to = raw_data_dest,
+              recursive = FALSE)
 
-  # Copy entire .d directories
-  d_dirs <- matched_raw_files[file_info$isdir]
-  for (dir in d_dirs) {
-    dest_dir <- file.path(raw_data_dest)
-    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
-    file.copy(from = dir, to = dest_dir, recursive = TRUE)
-  }
+    # Copy entire .d directories
+    d_dirs <- matched_raw_files[file_info$isdir]
+    for (dir in d_dirs) {
+      dest_dir <- file.path(raw_data_dest)
+      dir.create(dest_dir,
+                 recursive = TRUE,
+                 showWarnings = FALSE)
+      file.copy(from = dir,
+                to = dest_dir,
+                recursive = TRUE)
+    }
 
-  # Filter and copy mzML files
-  mzml_files <- list.files(path = mzml_output_dir,
-                           pattern = "\\.mzML$",
-                           full.names = TRUE)
-  mzml_files <- mzml_files[!grepl("COND|Blank|ISTDs", mzml_files)]
-  matched_mzml <- str_subset(mzml_files, plateID)
-  file.copy(from = matched_mzml, to = mzml_dest, recursive = FALSE)
+    # Filter and copy mzML files
+    mzml_files <- list.files(path = mzml_output_dir,
+                             pattern = "\\.mzML$",
+                             full.names = TRUE)
+    mzml_files <- mzml_files[!grepl("COND|Blank|ISTDs", mzml_files)]
+    matched_mzml <- str_subset(mzml_files, plateID)
+    file.copy(from = matched_mzml,
+              to = mzml_dest,
+              recursive = FALSE)
 
   }
 }

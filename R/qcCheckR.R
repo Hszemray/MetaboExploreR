@@ -43,67 +43,77 @@
 #'          mv_threshold = 0.5) #default is 50% missing values
 #' }
 #' @export
-qcCheckR <- function(user_name, project_directory, mrm_template_list = NULL,
-                     QC_sample_label = "LTR", sample_tags = NULL,
+qcCheckR <- function(user_name,
+                     project_directory,
+                     mrm_template_list = NULL,
+                     QC_sample_label = "LTR",
+                     sample_tags = NULL,
                      mv_threshold = 50) {
-
   #validate user_name
-  if(missing(user_name)){
+  if (missing(user_name)) {
     stop("user_name parameter is required. Please see documentation for details.")
-  }else{
-    message(paste0("Welcome ", user_name,"!"))
+  } else{
+    message(paste0("Welcome ", user_name, "!"))
   }
 
   # validate project_directory
   validate_project_directory(project_directory)
 
   # validate templates
-  if (user_name!= "ANPC" && missing(mrm_template_list)){
+  if (user_name != "ANPC" && missing(mrm_template_list)) {
     stop("mrm_template_list parameter is required.")
   }
 
   # validate QC_sample_label
-  if(user_name !=  "ANPC" && missing(QC_sample_label)){
+  if (user_name !=  "ANPC" && missing(QC_sample_label)) {
     stop("QC_sample_label parameter is required.")
   }
 
   # validate sample_tags
-  if(user_name != "ANPC" && missing(sample_tags)){
+  if (user_name != "ANPC" && missing(sample_tags)) {
     stop("sample_tags parameter is required.")
   }
 
   # validate mv_threshold
-  if (!is.numeric(mv_threshold) || mv_threshold < 0 || mv_threshold > 100) {
+  if (!is.numeric(mv_threshold) ||
+      mv_threshold < 0 || mv_threshold > 100) {
     stop("mv_threshold must be a numeric value between 0 and 100.")
   }
 
   # process data
-    #tryCatch({
-      ##project setup
-      master_list <- qcCheckR_setup_project(user_name, project_directory, mrm_template_list, QC_sample_label, sample_tags, mv_threshold)
-      ##data preparation
-      master_list <- qcCheckR_transpose_data(master_list)
-      master_list <- qcCheckR_sort_data(master_list)
-      master_list <- qcCheckR_impute_data(master_list)
-      master_list <- qcCheckR_calculate_response_concentration(master_list)
-      master_list <- qcCheckR_statTarget_batch_correction(master_list)
-      #filtering
-      master_list <- qcCheckR_set_qc(master_list)
-      master_list <- qcCheckR_sample_filter(master_list)
-      master_list <- qcCheckR_sil_IntStd_filter(master_list)
-      master_list <- qcCheckR_lipid_filter(master_list)
-      master_list <- qcCheckR_RSD_filter(master_list)
-      #summary report
-      master_list <- qcCheckR_summary_report(master_list)
-      #plot generation
-      master_list <- qcCheckR_plot_options(master_list)
-      master_list <- qcCheckR_PCA(master_list)
-      master_list <- qcCheckR_run_order_plots(master_list)
-      master_list <- qcCheckR_target_control_charts(master_list)
-      #exports
-      master_list <- qcCheckR_export_all(master_list)
-    # }, error = function(e) {
-    #   message(paste("Error during project QC",  ":", e$message))
-    #   log_error(paste("Error during project QC", ":", e$message))
-    # })
-  }#close of function
+  #tryCatch({
+  ##project setup
+  master_list <- qcCheckR_setup_project(
+    user_name,
+    project_directory,
+    mrm_template_list,
+    QC_sample_label,
+    sample_tags,
+    mv_threshold
+  )
+  ##data preparation
+  master_list <- qcCheckR_transpose_data(master_list)
+  master_list <- qcCheckR_sort_data(master_list)
+  master_list <- qcCheckR_impute_data(master_list)
+  master_list <- qcCheckR_calculate_response_concentration(master_list)
+  master_list <- qcCheckR_statTarget_batch_correction(master_list)
+  #filtering
+  master_list <- qcCheckR_set_qc(master_list)
+  master_list <- qcCheckR_sample_filter(master_list)
+  master_list <- qcCheckR_sil_IntStd_filter(master_list)
+  master_list <- qcCheckR_lipid_filter(master_list)
+  master_list <- qcCheckR_RSD_filter(master_list)
+  #summary report
+  master_list <- qcCheckR_summary_report(master_list)
+  #plot generation
+  master_list <- qcCheckR_plot_options(master_list)
+  master_list <- qcCheckR_PCA(master_list)
+  master_list <- qcCheckR_run_order_plots(master_list)
+  master_list <- qcCheckR_target_control_charts(master_list)
+  #exports
+  master_list <- qcCheckR_export_all(master_list)
+  # }, error = function(e) {
+  #   message(paste("Error during project QC",  ":", e$message))
+  #   log_error(paste("Error during project QC", ":", e$message))
+  # })
+}#close of function

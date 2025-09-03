@@ -18,7 +18,10 @@
 #'                     runtimes = list(), messages = list())))
 #' update_script_log(master_list, "section_1", "start_time", "section_2")
 #' }
-update_script_log <- function(master_list, section_name, previous_section_name, next_section_name) {
+update_script_log <- function(master_list,
+                              section_name,
+                              previous_section_name,
+                              next_section_name) {
   validate_previous_section(master_list, previous_section_name)
   master_list <- capture_current_time(master_list, section_name)
   master_list <- calculate_runtime(master_list, section_name, previous_section_name)
@@ -67,7 +70,9 @@ capture_current_time <- function(master_list, section_name) {
 #'
 #' @return None
 
-calculate_runtime <- function(master_list, section_name, previous_section_name) {
+calculate_runtime <- function(master_list,
+                              section_name,
+                              previous_section_name) {
   master_list$project_details$script_log$runtimes[[section_name]] <- difftime(
     master_list$project_details$script_log$timestamps[[section_name]],
     master_list$project_details$script_log$timestamps[[previous_section_name]],
@@ -103,13 +108,31 @@ calculate_total_runtime <- function(master_list, section_name) {
 #'
 #' @return None
 
-create_message <- function(master_list, section_name, next_section_name) {
+create_message <- function(master_list,
+                           section_name,
+                           next_section_name) {
   master_list$project_details$script_log$messages[[section_name]] <- paste0(
-    "\n", toupper(gsub("_", " ", section_name)), " complete!",
-    "\n\n Section runtime: ", signif(as.numeric(master_list$project_details$script_log$runtimes[[section_name]]), digits = 3), " minutes",
-    "\n\n Total runtime: ", signif(as.numeric(master_list$project_details$script_log$runtimes$total_runtime), digits = 3), " minutes",
     "\n",
-    "\nInitialising: ", toupper(gsub("_", " ", next_section_name)), "...."
+    toupper(gsub("_", " ", section_name)),
+    " complete!",
+    "\n\n Section runtime: ",
+    signif(
+      as.numeric(master_list$project_details$script_log$runtimes[[section_name]]),
+      digits = 3
+    ),
+    " minutes",
+    "\n\n Total runtime: ",
+    signif(
+      as.numeric(
+        master_list$project_details$script_log$runtimes$total_runtime
+      ),
+      digits = 3
+    ),
+    " minutes",
+    "\n",
+    "\nInitialising: ",
+    toupper(gsub("_", " ", next_section_name)),
+    "...."
   )
   return(master_list)
 }
@@ -122,10 +145,16 @@ create_message <- function(master_list, section_name, next_section_name) {
 #' @param section_name A string representing the name of the current section.
 #'
 #' @return None
+
 print_message <- function(master_list, section_name) {
-  cat(master_list$project_details$script_log$messages[[section_name]])
+  msg <- master_list$project_details$script_log$messages[[section_name]]
+  if (is.null(msg)) {
+    stop("No message found for the given section.")
+  }
+  message(msg)
   return(master_list)
 }
+
 
 
 #Validate Parameter Functions----
@@ -141,7 +170,8 @@ print_message <- function(master_list, section_name) {
 #' }
 validate_project_directory <- function(project_directory) {
   # Check if project_directory is a single string
-  if (!is.character(project_directory) || length(project_directory) != 1) {
+  if (!is.character(project_directory) ||
+      length(project_directory) != 1) {
     stop("project_directory must be a single string.")
   }
 
@@ -164,7 +194,12 @@ validate_project_directory <- function(project_directory) {
 #' }
 validate_master_list_project_directory <- function(master_list) {
   if (!dir.exists(master_list$project_details$project_dir)) {
-    stop(paste("Project directory does not exist:", master_list$project_details$project_dir))
+    stop(
+      paste(
+        "Project directory does not exist:",
+        master_list$project_details$project_dir
+      )
+    )
   }
 }
 
@@ -173,43 +208,77 @@ validate_master_list_project_directory <- function(master_list) {
 
 #' Validate MRM Template List
 #'
-#' This function checks if the `mrm_template_list` parameter is a list of strings.
+#' This function checks if the `mrm_template_list` parameter is valid and contains required columns.
 #'
-#' @param mrm_template_list A list of character strings representing the paths to MRM templates.
-#' @return TRUE if the validation is successful, otherwise an error is thrown.
+#' @param mrm_template_list A list of character strings or a named list of data frames representing MRM templates.
+#' @param user_name A character string identifying the user.
+#' @return NULL or an ANPC mrm_template_list if mrm_template_list is NULL and user_name is ANPC
 #' @examples
 #' \dontrun{
-#' validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"))
+#' validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"), "user")
 #' }
 validate_mrm_template_list <- function(mrm_template_list, user_name) {
-  # If user is not ANPC, validate the input
-  if (user_name != "ANPC") {
+  required_columns <- c(
+    "Molecule List Name",
+    "Precursor Name",
+    "Precursor Mz",
+    "Precursor Charge",
+    "Product Mz",
+    "Product Charge",
+    "Explicit Retention Time",
+    "Explicit Retention Time Window",
+    "Note",
+    "control_chart"
+  )
+
+  if (user_name == "ANPC") {
     if (is.null(mrm_template_list)) {
-      stop("Please provide a valid mrm_template_list.")
+      mrm_template_list <- list(
+        v1 = system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"),
+        v3 = system.file("extdata", "LGW_lipid_mrm_template_v3.tsv", package = "MetaboExploreR"),
+        v4 = system.file("extdata", "LGW_lipid_mrm_template_v4.tsv", package = "MetaboExploreR")
+      )
+      message("mrm_template validation complete")
+      return(mrm_template_list)
+    } else {
+      message("mrm_template validation complete")
+      return(NULL)
     }
-
-    if (!is.list(mrm_template_list) || !all(sapply(mrm_template_list, is.character))) {
-      stop("mrm_template_list must be a list of strings.")
-    }
-
-    message("mrm_template validation complete")
   }
 
-  # Construct default template list if user is ANPC and mrm_template_list is missing or NULL
-  if (user_name == "ANPC" && is.null(mrm_template_list)) {
-    mrm_template_list <- list(
-      v1 = system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"),
-      v2 = system.file("extdata", "LGW_lipid_mrm_template_v2.tsv", package = "MetaboExploreR")
-    )
-    message("mrm_template validation complete")
-    return(mrm_template_list)
-
+  if (is.null(mrm_template_list)) {
+    stop("Please provide a valid mrm_template_list.")
   }
 
+  if (!is.list(mrm_template_list)) {
+    stop("mrm_template_list must be a list.")
+  }
+
+  for (version in names(mrm_template_list)) {
+    version_list <- mrm_template_list[[version]]
+
+    if (!is.data.frame(version_list)) {
+      stop(
+        paste(
+          "Each version in mrm_template_list must be a data frame. Problem with:",
+          version
+        )
+      )
+    }
+
+    missing_columns <- setdiff(required_columns, colnames(version_list))
+    if (length(missing_columns) > 0) {
+      stop(paste(
+        "Missing required columns in version",
+        version,
+        ":\n",
+        paste(missing_columns, collapse = "\n")
+      ))
+    }
+  }
+  message("mrm_template validation complete")
+  return(NULL)
 }
-
-
-
 
 #' Log Error to File
 #'
@@ -231,80 +300,110 @@ log_error <- function(error_message) {
 #'
 #' This function validates the mrm_template_list list by checking the column headers and ensuring there are no NA or NULL values in the SIL_guide and conc_guide files.
 #'
-#' @param mrm_template_list A list specifying the file paths for the templates.
+#' @param master_list A list containing all project details and data
 #' @return TRUE if validation passes. Stops execution if validation fails.
 #' @examples
 #' \dontrun{
 #' validate_qcCheckR_mrm_template_list(master_list)
 #' }
 validate_qcCheckR_mrm_template_list <- function(master_list) {
+  mrm_template_list <- master_list$templates$mrm_guides
 
-    mrm_template_list <- master_list$templates$mrm_guides
-
-    if (!is.list(mrm_template_list)) {
-      stop("mrm_template_list must be a list.")
-    }
-
-    for (version in names(mrm_template_list)) {
-      version_list <- mrm_template_list[[version]]
-
-      # Check that version is a list
-      if (!is.list(version_list)) {
-        stop(paste("Each version in mrm_template_list must be a list. Problem with:", version))
-      }
-
-      for (guide in c("SIL_guide", "conc_guide")) {
-        if (!guide %in% names(version_list)) {
-          stop(paste("Missing", guide, "in version", version))
-        }
-
-        # Check required columns
-        if(guide == "SIL_guide") {
-          required_columns <- c("Molecule List Name", "Precursor Name",
-                                "Precursor Mz", "Precursor Charge", "Product Mz",
-                                "Product Charge", "Explicit Retention Time",
-                                "Explicit Retention Time Window",
-                                "Note", "control_chart")
-
-          data <- mrm_template_list[[version]][[guide]]
-
-          if (!all(required_columns %in% colnames(data))) {
-            #store missing columns
-            missing_columns <- setdiff(required_columns, colnames(data))
-            stop(paste(guide, "for version", version, "\n Missing required columns: ",
-                       paste(missing_columns, collapse = "\n")))
-          }
-
-          # Exclude 'note' column
-          data_to_check <- data[, setdiff(names(data), c("Source","Note"))]
-
-          # # Check for NA or NULL values
-          # if (any(is.na(data_to_check))) {
-          #   stop(paste("NA values found in", guide, "for version", version))
-          # }
-
-        } else if (guide == "conc_guide") {
-          required_columns <- c("concentration_factor", "SIL_name")
-
-          data <- mrm_template_list[[version]][[guide]]
-
-          if (!all(required_columns %in% colnames(data))) {
-            #store missing columns
-            missing_columns <- setdiff(required_columns, colnames(data))
-            stop(paste(guide, "for version", version, "\n Missing required columns: ",
-                       paste(missing_columns, collapse = "\n")))
-          }
-
-          # if (any(is.na(data))) {
-          #   stop(paste("NA values found in", guide, "for version", version))
-          # }
-        }
-      }
-    }
-
-    message("Validation passed: mrm_template_list structure and contents are valid.")
-    return(TRUE)
+  if (!is.list(mrm_template_list)) {
+    stop("mrm_template_list must be a list.")
   }
+
+  for (version in names(mrm_template_list)) {
+    version_list <- mrm_template_list[[version]]
+
+    # Check that version is a list
+    if (!is.list(version_list)) {
+      stop(paste(
+        "Each version in mrm_template_list must be a list. Problem with:",
+        version
+      ))
+    }
+
+    for (guide in c("SIL_guide", "conc_guide")) {
+      if (!guide %in% names(version_list)) {
+        stop(paste("Missing", guide, "in version", version))
+      }
+
+      # Check required columns
+      if (guide == "SIL_guide") {
+        required_columns <- c(
+          "Molecule List Name",
+          "Precursor Name",
+          "Precursor Mz",
+          "Precursor Charge",
+          "Product Mz",
+          "Product Charge",
+          "Explicit Retention Time",
+          "Explicit Retention Time Window",
+          "Note",
+          "control_chart"
+        )
+
+        data <- mrm_template_list[[version]][[guide]]
+
+        if (!all(required_columns %in% colnames(data))) {
+          #store missing columns
+          missing_columns <- setdiff(required_columns, colnames(data))
+          stop(paste(
+            guide,
+            "for version",
+            version,
+            "\n Missing required columns: ",
+            paste(missing_columns, collapse = "\n")
+          ))
+        }
+
+
+        # Define the columns you want to check
+        check_cols <- c(
+          "Molecule List Name",
+          "Precursor Name",
+          "Precursor Mz",
+          "Precursor Charge",
+          "Product Mz",
+          "Product Charge",
+          "Explicit Retention Time",
+          "Explicit Retention Time Window",
+          "control_chart"
+        )
+
+        # Subset the data to only include the filtered check columns
+        data_to_check <- data[, check_cols, drop = FALSE]
+
+
+        # Check for NA or NULL values
+        if (any(is.na(data_to_check))) {
+          stop(paste("NA values found in", guide, "for version", version))
+        }
+
+      } else if (guide == "conc_guide") {
+        required_columns <- c("concentration_factor", "SIL_name")
+
+        data <- mrm_template_list[[version]][[guide]]
+
+        if (!all(required_columns %in% colnames(data))) {
+          #store missing columns
+          missing_columns <- setdiff(required_columns, colnames(data))
+          stop(paste(
+            guide,
+            "for version",
+            version,
+            "\n Missing required columns: ",
+            paste(missing_columns, collapse = "\n")
+          ))
+        }
+      }
+    }
+  }
+
+  message("Validation passed: mrm_template_list structure and contents are valid.")
+  return(TRUE)
+}
 
 # Check Docker----
 #'
@@ -319,7 +418,9 @@ validate_qcCheckR_mrm_template_list <- function(master_list) {
 check_docker <- function() {
   # Check if Docker is installed
   docker_installed <- tryCatch({
-    system("docker --version", intern = TRUE, ignore.stderr = TRUE)
+    system("docker --version",
+           intern = TRUE,
+           ignore.stderr = TRUE)
     TRUE
   }, error = function(e) {
     FALSE
@@ -340,16 +441,22 @@ check_docker <- function() {
   if (docker_container_status == 0) {
     message("Docker is installed, running, and able to execute containers successfully.")
     message("Pulling proteowizard docker...  ")
-    pull_status <- system("docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
-    if(pull_status == 0){
+    pull_status <- system(
+      "docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:skyline_25.1.0.224-519d29b"
+    )
+    if (pull_status == 0) {
       message("Successfully pulled proteowizard docker!")
-    } else{stop("Awwww snap an error occured during pull!")}
-  }else{
-    stop("\n!!!Execution halted!!!
+    } else{
+      stop("Awwww snap an error occured during pull!")
+    }
+  } else{
+    stop(
+      "\n!!!Execution halted!!!
             \nDocker is installed, but NOT running.
             \nPlease open Docker Application.
-            \nIf docker is open please restart the application.")
-    }
+            \nIf docker is open please restart the application."
+    )
+  }
 }
 
 # Validate Raw files----
@@ -396,13 +503,17 @@ validate_file_types <- function(input_directory) {
       validated_files <- c(validated_files, file)
     } else if (grepl("\\.mbi$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.qgd$", file) || grepl("\\.qgb$", file) || grepl("\\.qgm$", file)) {
+    } else if (grepl("\\.qgd$", file) ||
+               grepl("\\.qgb$", file) || grepl("\\.qgm$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.lcd$", file) || grepl("\\.lcdproj$", file)) {
+    } else if (grepl("\\.lcd$", file) ||
+               grepl("\\.lcdproj$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.uep$", file) || grepl("\\.sdf$", file) || grepl("\\.dat$", file)) {
+    } else if (grepl("\\.uep$", file) ||
+               grepl("\\.sdf$", file) || grepl("\\.dat$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (grepl("\\.wcf$", file) || grepl("\\.wproj$", file) || grepl("\\.wdata$", file)) {
+    } else if (grepl("\\.wcf$", file) ||
+               grepl("\\.wproj$", file) || grepl("\\.wdata$", file)) {
       validated_files <- c(validated_files, file)
     } else if (!grepl("\\.wiff\\.scan$", file)) {
       message("Unsupported file type found: ", basename(file))
@@ -412,13 +523,24 @@ validate_file_types <- function(input_directory) {
 
 
   if (length(validated_files) > 0) {
-    message("Returning validated files for processing:\n", paste(basename(validated_files), collapse = "\n"))
+    message("Returning validated files for processing:\n",
+            paste(basename(validated_files), collapse = "\n"))
     return(validated_files)
   }
 
   if (length(invalid_files) > 0) {
-    message("Removed following unsupported files:\n", paste(invalid_wiff_files, collapse = "\n"))
+    message(
+      "Removed following unsupported files:\n",
+      paste(invalid_wiff_files, collapse = "\n")
+    )
   }
 
 }
 
+
+# Functions for tests ----
+
+check_dir_exists <- function(path)
+  dir.exists(path)
+create_dir <- function(path)
+  dir.create(path, recursive = TRUE)
