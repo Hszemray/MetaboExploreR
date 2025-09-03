@@ -3,6 +3,7 @@ library(mockery)
 library(stringr)
 
 test_that("msConvertR runs successfully with valid input", {
+  suppressMessages({
   # Mock dependencies
   mock_validate_input_directory <- function(dir) TRUE
   mock_validate_file_types <- function(dir) c("sample1.wiff", "sample2.wiff")
@@ -18,10 +19,12 @@ test_that("msConvertR runs successfully with valid input", {
   expect_message(
     msConvertR("input_dir", "output_dir"),
     "Converted mzML files are located"
-  )
+    )
+  })
 })
 
 test_that("msConvertR stops when no vendor files are found", {
+  suppressMessages({
   stub(msConvertR, "validate_input_directory", function(dir) TRUE)
   stub(msConvertR, "validate_file_types", function(dir) character(0))
 
@@ -29,9 +32,11 @@ test_that("msConvertR stops when no vendor files are found", {
     msConvertR("input_dir", "output_dir"),
     "No files supported found"
   )
+  })
 })
 
 test_that("msConvertR handles errors during conversion gracefully", {
+  suppressMessages({
   stub(msConvertR, "validate_input_directory", function(dir) TRUE)
   stub(msConvertR, "validate_file_types", function(dir) c("sample1.wiff"))
   stub(msConvertR, "check_docker", function() TRUE)
@@ -41,9 +46,11 @@ test_that("msConvertR handles errors during conversion gracefully", {
     msConvertR("input_dir", "output_dir"),
     "Error processing vendor files"
   )
+  })
 })
 
 test_that("msConvertR gives correct message when input and output directories are the same", {
+  suppressMessages({
   stub(msConvertR, "validate_input_directory", function(dir) TRUE)
   stub(msConvertR, "validate_file_types", function(dir) c("sample1.wiff"))
   stub(msConvertR, "check_docker", function() TRUE)
@@ -53,9 +60,11 @@ test_that("msConvertR gives correct message when input and output directories ar
     msConvertR("same_dir", "same_dir"),
     "Input and output directories are the same"
   )
+  })
 })
 
 test_that("msConvertR gives correct message when input and output directories are different", {
+  suppressMessages({
   stub(msConvertR, "validate_input_directory", function(dir) TRUE)
   stub(msConvertR, "validate_file_types", function(dir) c("sample1.wiff"))
   stub(msConvertR, "check_docker", function() TRUE)
@@ -65,9 +74,11 @@ test_that("msConvertR gives correct message when input and output directories ar
     msConvertR("input_dir", "output_dir"),
     "Input and output directories are different"
   )
+  })
 })
 
 test_that("msConvertR_setup_project_directories creates correct structure", {
+  suppressMessages({
   output_dir <- file.path(tempdir(), "test_project")
   plateIDs <- c("plate1", "plate2")
 
@@ -82,16 +93,18 @@ test_that("msConvertR_setup_project_directories creates correct structure", {
     expect_true(dir.exists(file.path(base_path, "data", "batch_correction")))
     expect_true(dir.exists(file.path(base_path, "html_report")))
   }
+  })
 })
 
 test_that("msConvertR_construct_command_for_terminal builds correct Docker command", {
+  suppressMessages({
   # Use temporary directories for testing
   input_dir <- file.path(tempdir(), "input_test")
   output_dir <- file.path(tempdir(), "output_test")
 
   # Create dummy directories to simulate structure
-  dir.create(file.path(input_dir, "raw_data"), recursive = TRUE)
-  dir.create(file.path(output_dir, "msConvert_mzml_output"), recursive = TRUE)
+  dir.create(file.path(input_dir, "raw_data"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(output_dir, "msConvert_mzml_output"), recursive = TRUE, showWarnings = FALSE)
 
   # Run the function
   command <- msConvertR_construct_command_for_terminal(input_dir, output_dir)
@@ -117,9 +130,11 @@ test_that("msConvertR_construct_command_for_terminal builds correct Docker comma
   expected_output_mount <- sprintf('"%s:/output"', escape_for_regex(normalizePath(file.path(output_dir, "msConvert_mzml_output"), mustWork = FALSE)))
   expect_true(grepl(expected_output_mount, command))
 
+  })
 })
 
 test_that("msConvertR_restructure_directory moves files correctly", {
+  suppressMessages({
   # Create a temporary directory structure
   temp_dir <- tempdir()
   plateIDs <- c("Plate1")
@@ -128,12 +143,12 @@ test_that("msConvertR_restructure_directory moves files correctly", {
   # Create mock raw_data and mzML directories
   raw_data_dir <- file.path(temp_dir, "raw_data")
   mzml_output_dir <- file.path(temp_dir, "msConvert_mzml_output")
-  dir.create(raw_data_dir, recursive = TRUE)
-  dir.create(mzml_output_dir, recursive = TRUE)
+  dir.create(raw_data_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(mzml_output_dir, recursive = TRUE, showWarnings = FALSE)
 
   # Create mock raw files
   raw_file <- file.path(raw_data_dir, "Plate1_sample.raw")
-  dir.create(file.path(raw_data_dir, "Plate1_sample.d")) # mock .d directory
+  dir.create(file.path(raw_data_dir, "Plate1_sample.d"), recursive = TRUE, showWarnings = FALSE) # mock .d directory
   file.create(raw_file)
 
   # Create mock mzML files
@@ -151,6 +166,8 @@ test_that("msConvertR_restructure_directory moves files correctly", {
   # Check if mzML files were copied
   mzml_dest <- file.path(temp_dir, "Plate1", "data", "mzml")
   expect_true(file.exists(file.path(mzml_dest, "Plate1_sample.mzML")))
+
+  })
 })
 
 
