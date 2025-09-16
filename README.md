@@ -3,7 +3,7 @@ MetaboExploreR
 
 ## Overview
 
-MetaboExploreR provides tools for processing and quality control of
+MetaboExploreR provides a pipeline for processing and quality control of
 targeted mass spectrometry vendor files to concentration outputs ready
 for further analysis. The package allows for cross platform usage
 through Docker.
@@ -48,34 +48,16 @@ For example: “C:/User/Desktop/Project1/raw_data”
 
 - Project1 is the name of the project
 
-- raw_data is a subfolder where I keep the vendor files for the project
+- raw_data is a subfolder to keep vendor files for the project
 
 ## Main User Functions
 
-### 1. msConvertR()
-
-``` r
-msConvertR(input_directory, output_directory)
-```
-
-#### Workflow:
+### 1. msConvertR() Workflow:
 
 1.  Converts vendor files → .mzML via ProteoWizard msConvert.
 2.  Organises mzml outputs into file structure for each vendor file
 
-### 2. PeakForgeR()
-
-``` r
-PeakForgeR(user_name = "User",
-           project_directory = "USER/PATH/TO/PROJECT/DIRECTORY",
-           mrm_template_list = list("User/path/to/user_mrm_guide_v1.tsv",
-                                     "user/path/to/user_mrm_guide_v2.tsv"),
-           QC_sample_label = "QC",
-           plateID_outputs = NULL
-          )
-```
-
-#### Workflow:
+### 2. PeakForgeR() Workflow:
 
 Process iterates by plate to:
 
@@ -84,16 +66,7 @@ Process iterates by plate to:
 3.  Execute PeakForgeR peak picking and integration
 4.  Organise output into plate-specific folders
 
-### 3. qcCheckR()
-
-``` r
-qcCheckeR(project_directory,
-          mrm_template_list,
-          QC_sample_label,
-          user_name)
-```
-
-#### Workflow:
+### 3. qcCheckR() Workflow:
 
 1.  Batch / signal drift correction using statTarget  
 2.  Sample and feature filtering  
@@ -112,7 +85,6 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
     ├── ALL
     │   ├── data
     │   │   ├── batch_correction
-    │   │   ├── PeakForgeR_reports
     │   │   ├── rda # saved rda from qcCheckR 
     │   └── html_report #Summary of project, PCA, and control charts
     │   └── xlsx_report # Data for further user analysis
@@ -120,31 +92,16 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
         ├── data
             ├── mzml #converted mzml files
             ├── rda  #saved rda from PeakForgeR processing
-            ├── sciex_raw #original vendor files
+            ├── raw_data #original vendor files
             └── PeakForgeR #input and output files of PeakForgeR processing
 
-## Usage Example
+## Vignette
 
-### Single project
+For a more detailed guide please refer to vignette
 
 ``` r
-project_path <- USER/PATH/TO/PROJECT/DIRECTORY
-#Convert vendor files to mzml with msConvert
-msConvertR(input_directory = project_path, output_directory = project_path)
-
-# Peak Picking and integration through PeakForgeR
-PeakForgeR(project_directory = "project_path", 
-         mrm_template_list = list("user_mrm_guide_v1.tsv", 
-                                  "user_mrm_guide_v2.csv"
-                                  ),
-         
-                                  )
-
-# Perform QC and calculate concentration data
-qcCheckR(project_directory = "project_path", mrm_template_list = mrm_template_list, user_name = "Jane_Doe")
+vignette(package = "MetaboExploreR")
 ```
-
-### Multiproject pipeline
 
 ## Technical Notes
 
