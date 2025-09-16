@@ -36,3 +36,5 @@
 ^scripts$
 ^vignettes/MetaboExploreR-vignette\\.R$
 ^vignettes/MetaboExploreR-vignette\\.html$
+^doc$
+^Meta$

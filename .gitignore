@@ -197,3 +197,5 @@ inst/doc
 
 #Readme.rmd
 ^README\.Rmd$
+/doc/
+/Meta/
