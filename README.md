@@ -33,7 +33,7 @@ using MetaboExploreR if you are using a Mac or Windows OS.
 function
 
 ``` r
-source("https://raw.githubusercontent.com/Hszemray/MetaboExplorer/main/install.R")
+source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
 install_MetaboExplorer()
 ```
 

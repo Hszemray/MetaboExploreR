@@ -34,14 +34,14 @@ Before installing `MetaboExploreR`, you need to have Docker Desktop installed on
 
 Once Docker is installed and running, you can install `MetaboExploreR` from GitHub using the following commands in R:
 
-```r
-source("https://raw.githubusercontent.com/Hszemray/MetaboExplorer/main/install.R")
+```{r install assistant, eval=FALSE}
+source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
 install_MetaboExplorer()
 ```
 
 After installation, load the package into your R session:
 
-```{r load_library}
+```{r load_library, eval=FALSE}
 library(MetaboExploreR)
 ```
 

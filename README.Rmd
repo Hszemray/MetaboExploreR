@@ -31,7 +31,7 @@ Note: Please ensure Docker Application is running in the background when using M
 **`MetaboExploreR`**
 Installation is effortless with the below helper function
 ``` r
-source("https://raw.githubusercontent.com/Hszemray/MetaboExplorer/main/install.R")
+source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
 install_MetaboExplorer()
 ```
     
