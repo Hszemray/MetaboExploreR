@@ -1,4 +1,36 @@
-^MetaboExploreR\.Rproj$
-^\.Rproj\.user$
+# Git/GitHub
+^\.git$
+^\.github$
+^\.gitignore$
+^CITATION\.cff$
 ^LICENSE\.md$
-^README\.Rmd$
+
+# Node.js
+^node_modules$
+^package-lock\.json$
+^package\.json$
+
+# R
+^\.Rproj\.user$
+^\.Rbuildignore$
+^\.Rprofile$
+^.*\.Rproj$
+^.\*\.tar\.gz$
+
+# Visual Studio Code
+^\.vscode$
+
+# eslint
+^eslint\.config\.js$
+
+# prettier
+^\.prettierrc\.json$
+
+# commitizen
+^\.czrc$
+
+# semantic-release
+^\.releaserc\.json$
+
+# Resources
+^scripts$

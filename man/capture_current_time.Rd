@@ -17,3 +17,4 @@ updated master list
 \description{
 This function captures the current time for the given section.
 }
+\keyword{internal}

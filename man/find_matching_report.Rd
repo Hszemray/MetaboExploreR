@@ -2,12 +2,12 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{find_matching_report}
 \alias{find_matching_report}
-\title{Find Matching Skyline Report Name}
+\title{Find Matching PeakForgeR Report Name}
 \usage{
 find_matching_report(report_list, plate_id)
 }
 \arguments{
-\item{report_list}{A list of Skyline reports.}
+\item{report_list}{A list of PeakForgeR reports.}
 
 \item{plate_id}{The ID of the plate to match.}
 }
@@ -15,6 +15,6 @@ find_matching_report(report_list, plate_id)
 The name of the matching report, or NULL if not found.
 }
 \description{
-This function finds the matching Skyline report name based on the plate ID.
+This function finds the matching PeakForgeR report name based on the plate ID.
 }
 \keyword{internal}

@@ -2,25 +2,25 @@
 
 #' Import specific functions from packages
 #' @name qcCheckR_import_external_functions
-#' @importFrom utils installed.packages sessionInfo browseURL capture.output install.packages data str
+#' @keywords internal
+#' @importFrom utils browseURL capture.output
 #' @importFrom readr read_csv write_csv read_tsv
-#' @importFrom dplyr slice vars arrange_at mutate_all mutate bind_rows bind_cols filter select rename relocate arrange contains intersect pull left_join right_join any_of mutate_at all_of across distinct rowwise c_across ungroup group_by case_when everything row_number summarise
+#' @importFrom dplyr vars mutate_all mutate bind_rows bind_cols filter select rename relocate arrange contains intersect pull left_join right_join any_of all_of across distinct rowwise c_across ungroup group_by case_when everything row_number summarise
 #' @importFrom purrr map set_names
-#' @importFrom plotly ggplotly layout
+#' @importFrom plotly ggplotly
 #' @importFrom ggplot2 ggplot aes theme element_text labs geom_vline geom_hline geom_point theme_bw scale_shape_manual scale_color_manual scale_size_manual guides guide_legend facet_wrap scale_fill_manual ylab geom_text
 #' @importFrom tibble tibble add_column as_tibble is_tibble column_to_rownames rownames_to_column
 #' @importFrom tidyr replace_na pivot_wider
-#' @importFrom stringr str_remove str_extract str_sub str_subset str_detect
-#' @importFrom mzR openMSfile chromatogramHeader chromatograms
-#' @importFrom janitor clean_names
+#' @importFrom stringr str_extract str_detect
 #' @importFrom magrittr %>%
-#' @importFrom stats median setNames na.omit
+#' @importFrom stats median setNames na.omit sd
 #' @importFrom data.table :=
 #' @importFrom tidyselect where
-#' @importFrom stats sd
-#' @importFrom openxlsx write.xlsx read.xlsx
+#' @importFrom openxlsx write.xlsx
 #' @importFrom tools file_ext
 #' @importFrom viridis viridis
+#' @importFrom statTarget shiftCor
+#' @importFrom ropls opls
 NULL
 
 #.----
@@ -30,6 +30,7 @@ NULL
 #' qcCheckR_setup_project
 #'
 #' This function sets up the project by initialising the master list, setting up project directories, and updating the script log.
+#' @keywords internal
 #' @param user_name Character string representing the user name for the project.
 #' @param project_directory Directory path for the project folder containing the wiff folder and .wiff and .wiff.scan files for each plate.
 #' @param mrm_template_list List of lists for mrm_guides.
@@ -60,7 +61,7 @@ qcCheckR_setup_project <- function(user_name,
   )
   master_list <- qcCheckR_read_mrm_guides(master_list, mrm_template_list)
   qcCheckR_setup_project_directories(master_list)
-  master_list <- qcCheckR_import_skyline_reports(master_list)
+  master_list <- qcCheckR_import_PeakForgeR_reports(master_list)
   master_list <- find_method_version(master_list)
   master_list <- update_script_log(master_list,
                                    "project_setup",
@@ -83,7 +84,12 @@ qcCheckR_setup_project <- function(user_name,
 #' @return The updated master list object with project details.
 #' @examples
 #' \dontrun{
-#' master_list <- qcCheckR_set_project_details(master_list, user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
+#' master_list <- qcCheckR_set_project_details(master_list,
+#'                                             user_name,
+#'                                             project_directory,
+#'                                             QC_sample_label,
+#'                                             sample_tags,
+#'                                             mv_threshold)
 #' }
 qcCheckR_set_project_details <- function(master_list,
                                          user_name,
@@ -93,7 +99,7 @@ qcCheckR_set_project_details <- function(master_list,
                                          mv_threshold) {
   master_list$project_details$project_dir <- project_directory
   master_list$project_details$user_name <- user_name
-  master_list$project_details$project_name <- str_extract(master_list$project_details$project_dir, "[^/]*$")
+  master_list$project_details$project_name <- stringr::str_extract(master_list$project_details$project_dir, "[^/]*$")
   master_list$project_details$plateIDs <- c()
   master_list$project_details$qc_type <- QC_sample_label
   master_list$project_details$script_log$timestamps$start_time <- Sys.time()
@@ -131,75 +137,80 @@ qcCheckR_set_project_details <- function(master_list,
 qcCheckR_read_mrm_guides <- function(master_list, mrm_template_list) {
   if (master_list$project_details$user_name == "ANPC" &&
       is.null(mrm_template_list)) {
+
+    read_and_clean_sil <- function(path) {
+      guide <- readr::read_tsv(path, show_col_types = FALSE)
+      replace_precursor_symbols(guide, columns = c("Precursor Name", "Note"))
+    }
+
+    read_and_clean_conc <- function(path) {
+      guide <- readr::read_tsv(path, show_col_types = FALSE)
+      replace_precursor_symbols(guide, columns = c("SIL_name"))
+    }
+
     master_list$templates$mrm_guides <- list(
       v1 = list(
-        SIL_guide = readr::read_tsv(
-          system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        SIL_guide  = read_and_clean_sil(
+          system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
         ),
-        conc_guide = readr::read_tsv(
-          system.file("extdata", "LGW_SIL_batch_103.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        conc_guide = read_and_clean_conc(
+          system.file("extdata", "LGW_SIL_batch_103.tsv", package = "MetaboExploreR")
         )
       ),
       v2 = list(
-        SIL_guide = readr::read_tsv(
-          system.file("extdata", "LGW_lipid_mrm_template_v2.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        SIL_guide  = read_and_clean_sil(
+          system.file("extdata", "LGW_lipid_mrm_template_v2.tsv", package = "MetaboExploreR")
         ),
-        conc_guide = readr::read_tsv(
+        conc_guide = read_and_clean_conc(
           system.file(
             "extdata",
             "LGW_SIL_batch_Ultimate_2023_03_06.tsv",
             package = "MetaboExploreR"
-          ),
-          show_col_types = FALSE
+          )
         )
       ),
       v3 = list(
-        SIL_guide = readr::read_tsv(
-          system.file("extdata", "LGW_lipid_mrm_template_v3.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        SIL_guide  = read_and_clean_sil(
+          system.file("extdata", "LGW_lipid_mrm_template_v3.tsv", package = "MetaboExploreR")
         ),
-        conc_guide = readr::read_tsv(
+        conc_guide = read_and_clean_conc(
           system.file(
             "extdata",
             "LGW_SIL_batch_Ultimate_2023_03_06.tsv",
             package = "MetaboExploreR"
-          ),
-          show_col_types = FALSE
+          )
         )
       ),
       v4 = list(
-        SIL_guide = readr::read_tsv(
-          system.file("extdata", "LGW_lipid_mrm_template_v4.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        SIL_guide  = read_and_clean_sil(
+          system.file("extdata", "LGW_lipid_mrm_template_v4.tsv", package = "MetaboExploreR")
         ),
-        conc_guide = readr::read_tsv(
-          system.file("extdata", "v4_ISTD_conc_updated.tsv", package = "MetaboExploreR"),
-          show_col_types = FALSE
+        conc_guide = read_and_clean_conc(
+          system.file("extdata", "v4_ISTD_conc_updated.tsv", package = "MetaboExploreR")
         )
       )
     )
+
   } else {
     for (version in names(mrm_template_list)) {
       guide_paths <- mrm_template_list[[version]]
 
-      read_guide <- function(path) {
+      read_guide <- function(path, columns) {
         ext <- tools::file_ext(path)
-        if (ext == "tsv") {
+        guide <- if (ext == "tsv") {
           readr::read_tsv(path, show_col_types = FALSE)
         } else if (ext == "csv") {
           readr::read_csv(path, show_col_types = FALSE)
         } else {
           stop(paste("Unsupported file type:", ext))
         }
+        replace_precursor_symbols(guide, columns = columns)
       }
 
-      master_list$templates$mrm_guides[[version]]$SIL_guide  <- read_guide(guide_paths$SIL_guide)
-      master_list$templates$mrm_guides[[version]]$conc_guide <- read_guide(guide_paths$conc_guide)
+      master_list$templates$mrm_guides[[version]]$SIL_guide  <- read_guide(guide_paths$SIL_guide,
+                                                                           columns = c("Precursor Name", "Note"))
+      master_list$templates$mrm_guides[[version]]$conc_guide <- read_guide(guide_paths$conc_guide, columns = c("SIL_name"))
     }
-
   }
 
   validate_qcCheckR_mrm_template_list(master_list)
@@ -222,19 +233,16 @@ qcCheckR_setup_project_directories <- function(master_list) {
   qcCheckR_path <- file.path(master_list$project_details$project_dir, "all")
   # Create project directories if they do not exist
   if (!dir.exists(qcCheckR_path)) {
-    dir.create(qcCheckR_path, recursive = TRUE)
+    dir.create(qcCheckR_path, recursive = TRUE, showWarnings = FALSE)
   }
 
-  # Create subdirectories for data and results
   subdirs <- c("data", "html_report", "xlsx_report")
   for (subdir in subdirs) {
     dir_path <- file.path(qcCheckR_path, subdir)
     if (!dir.exists(dir_path)) {
-      dir.create(dir_path)
+      dir.create(dir_path, showWarnings = FALSE)
     }
   }
-
-  #check if directory has been created
   if (!dir.exists(qcCheckR_path)) {
     stop("Failed to create qcCheckR directory at: ", qcCheckR_path)
   } else {
@@ -242,20 +250,20 @@ qcCheckR_setup_project_directories <- function(master_list) {
   }
 }
 
-#' qcCheckR_import_skyline_reports
+#' qcCheckR_import_PeakForgeR_reports
 #'
-#' This function imports Skyline reports from the project directory and stores them in the master list.
+#' This function imports PeakForgeR reports from the project directory and stores them in the master list.
 #' @keywords internal
 #' @param master_list The master list object.
-#' @return The updated master list object with Skyline reports imported.
+#' @return The updated master list object with PeakForgeR reports imported.
 #' @examples
 #' \dontrun{
-#' master_list <- qcCheckR_import_skyline_reports(master_list)
+#' master_list <- qcCheckR_import_PeakForgeR_reports(master_list)
 #' }
-qcCheckR_import_skyline_reports <- function(master_list) {
-  skyline_report_files <- list.files(
+qcCheckR_import_PeakForgeR_reports <- function(master_list) {
+  PeakForgeR_report_files <- list.files(
     master_list$project_details$project_dir,
-    pattern = "_xskylineR_1_.*\\.(csv|tsv)$",
+    pattern = "_PeakForgeR_.*\\.(csv|tsv)$",
     full.names = TRUE,
     recursive = TRUE,
     ignore.case = FALSE,
@@ -263,19 +271,19 @@ qcCheckR_import_skyline_reports <- function(master_list) {
     no.. = FALSE
   )
 
-  if (length(skyline_report_files) == 0) {
+  if (length(PeakForgeR_report_files) == 0) {
     stop(
-      "No report files found in the specified project directory. Please ensure reports are in .csv or .tsv format and named with '_xskylineR_1_' pattern."
+      "No report files found in the specified project directory. Please ensure reports are in .csv or .tsv format and named with '_PeakForgeR_' pattern."
     )
   }
 
-  for (file in skyline_report_files) {
+  for (file in PeakForgeR_report_files) {
     file_ext <- tools::file_ext(file)
 
     if (file_ext == "csv") {
-      skyline_report <- readr::read_csv(file, show_col_types = FALSE)
+      PeakForgeR_report <- readr::read_csv(file, show_col_types = FALSE)
     } else if (file_ext == "tsv") {
-      skyline_report <- readr::read_tsv(file, show_col_types = FALSE)
+      PeakForgeR_report <- readr::read_tsv(file, show_col_types = FALSE)
     } else {
       warning(paste("Unsupported file type:", file))
       next
@@ -283,17 +291,17 @@ qcCheckR_import_skyline_reports <- function(master_list) {
 
     file_name <- basename(file) %>%
       sub("\\.(csv|tsv)$", "", .) %>%
-      sub("_xskylineR_1_", "_", .)
+      sub("_PeakForgeR_", "_", .)
 
-    colnames(skyline_report) <- gsub("\\.", "", colnames(skyline_report))
-    colnames(skyline_report) <- gsub(" ", "", colnames(skyline_report))
+    colnames(PeakForgeR_report) <- gsub("\\.", "", colnames(PeakForgeR_report))
+    colnames(PeakForgeR_report) <- gsub(" ", "", colnames(PeakForgeR_report))
 
-    skyline_report <- skyline_report[!is.na(skyline_report$FileName), ]
-    skyline_report <- skyline_report[skyline_report$Area != 0 &
-                                       skyline_report$Height != 0, ]
-    skyline_report <- skyline_report[!apply(is.na(skyline_report), 1, all), ]
+    PeakForgeR_report <- PeakForgeR_report[!is.na(PeakForgeR_report$FileName), ]
+    PeakForgeR_report <- PeakForgeR_report[PeakForgeR_report$Area != 0 &
+                                             PeakForgeR_report$Height != 0, ]
+    PeakForgeR_report <- PeakForgeR_report[!apply(is.na(PeakForgeR_report), 1, all), ]
 
-    master_list$data$skylineReport[[file_name]] <- skyline_report
+    master_list$data$PeakForgeRReport[[file_name]] <- PeakForgeR_report
     master_list$project_details$plateIDs <- c(master_list$project_details$plateIDs, file_name)
   }
 
@@ -308,19 +316,19 @@ qcCheckR_import_skyline_reports <- function(master_list) {
 #' @param master_list A list containing porject details and data.
 #' @return The updated `master_list` with method versions found for each plate.
 find_method_version <- function(master_list) {
-  for (plate_id in names(master_list$data$skylineReport)) {
-    #Gather unique SIL molecule names from the skyline report
-    report_SILS <-  master_list$data$skylineReport[[plate_id]] %>%
-      select(contains("MoleculeName")) %>%
-      filter(grepl("SIL", MoleculeName, ignore.case = TRUE)) %>%
+  for (plate_id in names(master_list$data$PeakForgeRReport)) {
+    #Gather unique SIL molecule names from the PeakForgeR report
+    report_SILS <-  master_list$data$PeakForgeRReport[[plate_id]] %>%
+      dplyr::select(dplyr::contains("MoleculeName")) %>%
+      dplyr::filter(grepl("SIL", MoleculeName, ignore.case = TRUE)) %>%
       unique()
 
     #Check for SILs in the SIL guides
     for (version in names(master_list$templates$mrm_guides)) {
       sil_guide <- master_list$templates$mrm_guides[[version]]$SIL_guide
       sil_targets <- sil_guide %>%
-        select(contains("Precursor Name")) %>%
-        filter(grepl("SIL", `Precursor Name`, ignore.case = TRUE)) %>%
+        dplyr::select(dplyr::contains("Precursor Name")) %>%
+        dplyr::filter(grepl("SIL", `Precursor Name`, ignore.case = TRUE)) %>%
         unique()
 
       #Check if all SILs in the report are present in the SIL guide
@@ -359,12 +367,12 @@ find_method_version <- function(master_list) {
 
 #Phase 1: Data preparation ----
 
-##Transpose Skyline Report Data Functions ----
+##Transpose PeakForgeR Report Data Functions ----
 ###Primary Function ----
 
-#' Transpose Skyline Report Data
+#' Transpose PeakForgeR Report Data
 #'
-#' This function transposes Skyline report data for each plate in the master list.
+#' This function transposes PeakForgeR report data for each plate in the master list.
 #' It reshapes the data, cleans sample names, converts values to numeric, and stores the result.
 #' @param master_list A list containing project details and data.
 #' @keywords internal
@@ -380,11 +388,11 @@ qcCheckR_transpose_data <- function(master_list) {
 
   for (plate_id in master_list$project_details$plateIDs) {
     message("\nTransposing plate: ", plate_id)
-    matching_name <- find_matching_report(master_list$data$skylineReport, plate_id)
+    matching_name <- find_matching_report(master_list$data$PeakForgeRReport, plate_id)
 
     if (length(matching_name) == 1) {
       tryCatch({
-        transposed <- transpose_plate_data(master_list$data$skylineReport[[matching_name]])
+        transposed <- transpose_plate_data(master_list$data$PeakForgeRReport[[matching_name]])
         master_list$data$peakArea$transposed[[plate_id]] <- transposed
         message("\nSuccessfully transposed plate: ", plate_id)
       }, error = function(e) {
@@ -392,10 +400,10 @@ qcCheckR_transpose_data <- function(master_list) {
         message("\nError message: ", e$message)
       })
     } else if (length(matching_name) > 1) {
-      message("\nMultiple matching skyline reports found for plate: ",
+      message("\nMultiple matching PeakForgeR reports found for plate: ",
               plate_id)
     } else {
-      message("\nNo matching skyline report found for plate: ", plate_id)
+      message("\nNo matching PeakForgeR report found for plate: ", plate_id)
     }
   }
 
@@ -411,16 +419,16 @@ qcCheckR_transpose_data <- function(master_list) {
 #' @return NULL if the structure is valid, otherwise throws an error.
 validate_master_list <- function(master_list) {
   if (!is.list(master_list) ||
-      !is.list(master_list$data$skylineReport)) {
+      !is.list(master_list$data$PeakForgeRReport)) {
     stop("Invalid master_list format.")
   }
 }
 
-#' Find Matching Skyline Report Name
+#' Find Matching PeakForgeR Report Name
 #'
-#' This function finds the matching Skyline report name based on the plate ID.
+#' This function finds the matching PeakForgeR report name based on the plate ID.
 #' @keywords internal
-#' @param report_list A list of Skyline reports.
+#' @param report_list A list of PeakForgeR reports.
 #' @param plate_id The ID of the plate to match.
 #' @return The name of the matching report, or NULL if not found.
 find_matching_report <- function(report_list, plate_id) {
@@ -429,14 +437,14 @@ find_matching_report <- function(report_list, plate_id) {
 
 #' Transpose and Clean Plate Data
 #'
-#' This function transposes the plate data from the Skyline report, reshaping it into a wide format.
+#' This function transposes the plate data from the PeakForgeR report, reshaping it into a wide format.
 #' It cleans the sample names by removing the file extension and converts area values to numeric.
 #' @keywords internal
-#' @param data The Skyline report data frame for a specific plate.
+#' @param data The PeakForgeR report data frame for a specific plate.
 #' @return A transposed tibble with sample names as rows and molecule names as columns.
 transpose_plate_data <- function(data) {
   transposed <- data %>%
-    pivot_wider(
+    tidyr::pivot_wider(
       id_cols = FileName,
       names_from = MoleculeName,
       values_from = Area,
@@ -446,10 +454,10 @@ transpose_plate_data <- function(data) {
 
   transposed$sample_name <- sub("\\.mzML$", "", transposed$sample_name)
   transposed[, -1] <- sapply(transposed[, -1], as.numeric)
-  as_tibble(transposed)
+  tibble::as_tibble(transposed)
   transposed <- transposed %>%
     replace(is.na(.), 0) %>%
-    select(where(~ !all(. == 0)))
+    dplyr::select(tidyselect::where(~ !all(. == 0)))
 
 
 
@@ -475,7 +483,7 @@ qcCheckR_sort_data <- function(master_list) {
   master_list$data$peakArea$sorted <- list()
 
   for (plate_id in names(master_list$data$peakArea$transposed)) {
-    run_order <- extract_run_order(master_list$data$skylineReport[[plate_id]], plate_id)
+    run_order <- extract_run_order(master_list$data$PeakForgeRReport[[plate_id]], plate_id)
     run_order <- assign_sample_type(master_list$project_details$sample_tags, run_order)
     validate_qc_types(run_order, master_list$project_details$sample_tags)
     sorted_data <- sort_and_filter_data(
@@ -484,9 +492,10 @@ qcCheckR_sort_data <- function(master_list) {
       master_list$project_details$sample_tags
     )
     sorted_data$sample_ID <- extract_sample_id(sorted_data$sample_name)
-    sorted_data %>% dplyr::relocate(sample_ID, .after = sample_name)
+    sorted_data <- sorted_data %>% dplyr::relocate(sample_ID, .after = sample_name)
     master_list$project_details$run_orders[[plate_id]] <- run_order
     master_list$data$peakArea$sorted[[plate_id]] <- sorted_data
+    rm(run_order, sorted_data)
   }
 
   master_list <- assess_qc_coverage(master_list)
@@ -497,28 +506,28 @@ qcCheckR_sort_data <- function(master_list) {
 }
 
 ###Sub Functions ----
-#' Extract Run Order from Skyline Report
+#' Extract Run Order from PeakForgeR Report
 #'
-#' This function extracts the run order data from a Skyline report, filtering by plate ID.
+#' This function extracts the run order data from a PeakForgeR report, filtering by plate ID.
 #' @keywords internal
-#' @param report The Skyline report data frame.
+#' @param report The PeakForgeR report data frame.
 #' @param plate_id The ID of the plate to filter by.
 #' @return A data frame containing the sample names, timestamps, and other relevant information.
 extract_run_order <- function(report, plate_id) {
   extracted_data <- report %>%
-    select(contains(c("FileName", "AcquiredTime"))) %>%
-    distinct(FileName, .keep_all = TRUE) %>%
-    mutate(FileName = sub(".mzML", "", FileName)) %>%
-    rename(sample_name = FileName, sample_timestamp = AcquiredTime) %>%
-    filter(!is.na(sample_timestamp) & sample_timestamp != "") %>%
-    arrange(sample_timestamp) %>%
-    mutate(
+    dplyr::select(dplyr::contains(c("FileName", "AcquiredTime"))) %>%
+    dplyr::distinct(FileName, .keep_all = TRUE) %>%
+    dplyr::mutate(FileName = sub(".mzML", "", FileName)) %>%
+    dplyr::rename(sample_name = FileName, sample_timestamp = AcquiredTime) %>%
+    dplyr::filter(!is.na(sample_timestamp) & sample_timestamp != "") %>%
+    dplyr::arrange(sample_timestamp) %>%
+    dplyr::mutate(
       sample_plate_id = plate_id,
-      sample_plate_order = row_number(),
-      sample_matrix = case_when(
-        str_detect(sample_name, "(?i)_SER_") ~ "SER",
-        str_detect(sample_name, "(?i)_PLA_") ~ "PLA",
-        str_detect(sample_name, "(?i)_URI_") ~ "URI",
+      sample_plate_order = dplyr::row_number(),
+      sample_matrix = dplyr::case_when(
+        stringr::str_detect(sample_name, "(?i)_SER_") ~ "SER",
+        stringr::str_detect(sample_name, "(?i)_PLA_") ~ "PLA",
+        stringr::str_detect(sample_name, "(?i)_URI_") ~ "URI",
         TRUE ~ NA_character_
       )
     )
@@ -539,12 +548,12 @@ assign_sample_type <- function(sample_tags, run_order) {
 
   qc_case_expr <- paste(purrr::map_chr(
     sample_tags,
-    ~ paste0("str_detect(sample_name, '(?i)", .x, "') ~ '", .x, "'")
+    ~ paste0("stringr::str_detect(sample_name, '(?i)", .x, "') ~ '", .x, "'")
   ), collapse = ",\n")
   qc_case_expr <- paste(qc_case_expr, "TRUE ~ 'sample'", sep = ",\n")
 
   data <- run_order %>%
-    mutate(sample_type = eval(parse(
+    dplyr::mutate(sample_type = eval(parse(
       text = paste0("dplyr::case_when(", qc_case_expr, ")")
     )))
 
@@ -560,7 +569,7 @@ assign_sample_type <- function(sample_tags, run_order) {
 #' @return NULL if validation passes, otherwise throws an error.
 validate_qc_types <- function(run_order, sample_tags) {
   invalid <- run_order %>%
-    filter(sample_type != "sample" & !sample_type %in% sample_tags)
+    dplyr::filter(sample_type != "sample" & !sample_type %in% sample_tags)
   if (nrow(invalid) > 0) {
     print(invalid)
     stop("Invalid QC sample_type detected.")
@@ -580,9 +589,9 @@ validate_qc_types <- function(run_order, sample_tags) {
 #' @return A data frame containing the sorted and filtered data.
 sort_and_filter_data <- function(run_order, transposed_data, sample_tags) {
   data <- run_order %>%
-    left_join(transposed_data, by = "sample_name") %>%
-    arrange(sample_timestamp) %>%
-    mutate(sample_run_index = row_number())
+    dplyr::left_join(transposed_data, by = "sample_name") %>%
+    dplyr::arrange(sample_timestamp) %>%
+    dplyr::mutate(sample_run_index = dplyr::row_number())
 
   return(data)
 }
@@ -629,9 +638,9 @@ assess_qc_coverage <- function(master_list) {
   for (plate_id in names(master_list$data$peakArea$sorted)) {
     plate_data <- master_list$data$peakArea$sorted[[plate_id]]
     qc_types <- plate_data %>%
-      filter(sample_type != "sample") %>%
-      distinct(sample_type) %>%
-      pull()
+      dplyr::filter(sample_type != "sample") %>%
+      dplyr::distinct(sample_type) %>%
+      dplyr::pull()
 
     for (qc in qc_types) {
       total <- nrow(plate_data)
@@ -709,7 +718,7 @@ finalise_sorted_data <- function(master_list) {
     qc_type <- master_list$project_details$qc_type
 
     sorted <- sorted %>%
-      mutate(
+      dplyr::mutate(
         sample_type_factor = factor(sample_type, levels = unique(
           c("sample", qc_type, "ltr", "pqc", "vltr", "sltr")
         ), ordered = TRUE),
@@ -721,7 +730,7 @@ finalise_sorted_data <- function(master_list) {
         sample_type = ifelse(tolower(sample_type) == tolower(qc_type), "qc", "sample"),
         sample_data_source = ".peakArea"
       ) %>%
-      relocate(sample_type_factor,
+      dplyr::relocate(sample_type_factor,
                sample_type_factor_rev,
                sample_data_source,
                .after = sample_type)
@@ -730,12 +739,27 @@ finalise_sorted_data <- function(master_list) {
     master_list$data$peakArea$sorted[[plate_id]] <- sorted
   }
 
-  all_samples <- bind_rows(master_list$data$peakArea$sorted) %>%
-    arrange(sample_timestamp) %>%
-    mutate(sample_run_index = row_number()) %>%
-    relocate(sample_run_index, .before = sample_name)
+  all_samples <- dplyr::bind_rows(master_list$data$peakArea$sorted) %>%
+    dplyr::arrange(sample_timestamp) %>%
+    dplyr::mutate(sample_run_index = dplyr::row_number()) %>%
+    dplyr::relocate(sample_run_index, .before = sample_name)
 
   master_list$data$peakArea$sorted <- split(all_samples, all_samples$sample_plate_id)
+
+
+  master_list$data$peakArea$sorted <- lapply(
+    master_list$data$peakArea$sorted,
+    function(df) {
+      df %>% dplyr::select(
+        which(
+          !sapply(df, function(col) all(is.na(col))) | grepl("sample", names(df))
+        )
+      )
+    }
+  )
+
+
+
   return(master_list)
 }
 
@@ -778,8 +802,8 @@ qcCheckR_impute_data <- function(master_list) {
 prepare_imputation_matrix <- function(data) {
   rownames(data) <- NULL
   prepped_data <- data %>%
-    column_to_rownames("sample_name") %>%
-    select(-contains("sample")) %>%
+    tibble::column_to_rownames("sample_name") %>%
+    dplyr::select(-dplyr::contains("sample")) %>%
     replace_problematic_values()
   return(prepped_data)
 }
@@ -807,13 +831,13 @@ replace_problematic_values <- function(mat) {
 #' @return A tibble with zero values replaced by half the minimum non-zero value in each column.
 lgw_impute <- function(x) {
   # Validate parameter
-  if (!is_tibble(x)) {
-    as_tibble(x)
+  if (!tibble::is_tibble(x)) {
+    tibble::as_tibble(x)
   }
 
   if (!all(sapply(x, is.numeric))) {
-    x <- x %>% mutate(across(
-      where(is.character) &
+    x <- x %>% dplyr::mutate(dplyr::across(
+      tidyselect::where(is.character) &
         !matches("sample_name"),
       ~ suppressWarnings(as.numeric(.))
     ))
@@ -821,7 +845,7 @@ lgw_impute <- function(x) {
   }
 
   # Calculate min/2 values for each column
-  min_half_values <- map(.x = x, .f = ~ {
+  min_half_values <- purrr::map(.x = x, .f = ~ {
     non_zero_values <- .x[.x > 0]
     if (length(non_zero_values) == 0 ||
         all(is.na(non_zero_values))) {
@@ -833,8 +857,8 @@ lgw_impute <- function(x) {
 
   # Replace NAs with min/2 values
   x %>%
-    mutate_all(~ replace(., . == 0, NA)) %>%
-    replace_na(replace = min_half_values)
+    dplyr::mutate_all(~ replace(., . == 0, NA)) %>%
+    tidyr::replace_na(replace = min_half_values)
 }
 
 #' Apply LGW Imputation
@@ -846,9 +870,9 @@ apply_lgw_imputation <- function(mat) {
   mat %>%
     as.data.frame() %>%
     lgw_impute() %>%
-    rownames_to_column("sample_name") %>%
-    as_tibble() %>%
-    mutate(across(everything(), ~ ifelse(is.infinite(.), 1, .)))
+    tibble::rownames_to_column("sample_name") %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(), ~ ifelse(is.infinite(.), 1, .)))
 }
 
 #'Merge_Metadata
@@ -861,8 +885,8 @@ apply_lgw_imputation <- function(mat) {
 #' @param imputed_data A tibble containing the imputed peak area data with sample names.
 #' @return A tibble with merged metadata and imputed data, including a sample data source column.
 merge_metadata <- function(original_data, imputed_data) {
-  metadata <- select(original_data, contains("sample"))
-  merged <- left_join(metadata, imputed_data, by = "sample_name")
+  metadata <- dplyr::select(original_data, dplyr::contains("sample"))
+  merged <- dplyr::left_join(metadata, imputed_data, by = "sample_name")
   merged$sample_data_source <- ".peakAreaImputed"
   return(merged)
 }
@@ -919,15 +943,15 @@ calculate_plate_response_concentration <- function(master_list,
                                                    template_version) {
   data <- master_list$data$peakArea[[data_type]][[plate_id]]
   sil_notes <- master_list$templates$mrm_guides[[template_version]]$SIL_guide$Note
-  sil_cols <- intersect(colnames(select(data, contains("SIL"))), sil_notes)
+  sil_cols <- dplyr::intersect(colnames(dplyr::select(data, dplyr::contains("SIL"))), sil_notes)
 
   # Reorder columns: non-SIL first, then SIL
-  data <- bind_cols(select(data, -contains("SIL")), select(data, all_of(sil_cols)))
+  data <- dplyr::bind_cols(dplyr::select(data, -dplyr::contains("SIL")), dplyr::select(data, dplyr::all_of(sil_cols)))
   master_list$data$peakArea[[data_type]][[plate_id]] <- data
 
   # Initialise response and concentration lists
-  master_list$data$response[[data_type]][[plate_id]] <- select(data, contains("sample"))
-  master_list$data$concentration[[data_type]][[plate_id]] <- select(data, contains("sample"))
+  master_list$data$response[[data_type]][[plate_id]] <- dplyr::select(data, dplyr::contains("sample"))
+  master_list$data$concentration[[data_type]][[plate_id]] <- dplyr::select(data, dplyr::contains("sample"))
 
   for (sil in sil_cols) {
     master_list <- process_sil_target(master_list, plate_id, data_type, template_version, sil)
@@ -957,7 +981,7 @@ process_sil_target <- function(master_list,
                                template_version,
                                sil) {
   sil_guide <- master_list$templates$mrm_guides[[template_version]]$SIL_guide
-  precursors <- sil_guide %>% filter(Note == sil) %>% pull(`Precursor Name`)
+  precursors <- sil_guide %>% dplyr::filter(Note == sil) %>% dplyr::pull(`Precursor Name`)
 
 
   if (length(precursors) == 0)
@@ -965,7 +989,8 @@ process_sil_target <- function(master_list,
 
   data <- master_list$data$peakArea[[data_type]][[plate_id]]
   sil_values <- data[[sil]]
-  target_data <- select(data, sample_name, any_of(precursors)) %>% column_to_rownames("sample_name")
+  target_data <- dplyr::select(data, sample_name, dplyr::any_of(precursors)) %>%
+                  tibble::column_to_rownames("sample_name")
 
   if (ncol(target_data) == 0)
     return(master_list)
@@ -973,23 +998,23 @@ process_sil_target <- function(master_list,
   # Calculate response
   response <- as.matrix(target_data / sil_values)
   response[is.na(response) | is.infinite(response)] <- 0
-  response_df <- as.data.frame(response) %>% rownames_to_column("sample_name")
+  response_df <- as.data.frame(response) %>% tibble::rownames_to_column("sample_name")
 
-  master_list$data$response[[data_type]][[plate_id]] <- left_join(master_list$data$response[[data_type]][[plate_id]], response_df, by = "sample_name")
+  master_list$data$response[[data_type]][[plate_id]] <- dplyr::left_join(master_list$data$response[[data_type]][[plate_id]], response_df, by = "sample_name")
 
   # Calculate concentration
   conc_factor <- master_list$templates$mrm_guides[[template_version]]$conc_guide %>%
-    filter(SIL_name == sil) %>%
-    pull(concentration_factor)
+    dplyr::filter(SIL_name == sil) %>%
+    dplyr::pull(concentration_factor)
 
 
   if (length(conc_factor) == 1) {
     concentration <- as.matrix(response * conc_factor)
     concentration[is.na(concentration) |
                     is.infinite(concentration)] <- 0
-    concentration_df <- as.data.frame(concentration) %>% rownames_to_column("sample_name")
+    concentration_df <- as.data.frame(concentration) %>% tibble::rownames_to_column("sample_name")
 
-    master_list$data$concentration[[data_type]][[plate_id]] <- left_join(master_list$data$concentration[[data_type]][[plate_id]], concentration_df, by = "sample_name")
+    master_list$data$concentration[[data_type]][[plate_id]] <- dplyr::left_join(master_list$data$concentration[[data_type]][[plate_id]], concentration_df, by = "sample_name")
   }
 
   return(master_list)
@@ -1005,9 +1030,9 @@ process_sil_target <- function(master_list,
 harmonise_lipid_columns <- function(master_list) {
   for (data_type in c("response", "concentration")) {
     for (subtype in names(master_list$data[[data_type]])) {
-      common_lipids <- Reduce(intersect, lapply(master_list$data[[data_type]][[subtype]], colnames))
+      common_lipids <- Reduce(dplyr::intersect, lapply(master_list$data[[data_type]][[subtype]], colnames))
       for (plate_id in names(master_list$data[[data_type]][[subtype]])) {
-        master_list$data[[data_type]][[subtype]][[plate_id]] <- select(master_list$data[[data_type]][[subtype]][[plate_id]], all_of(common_lipids))
+        master_list$data[[data_type]][[subtype]][[plate_id]] <- dplyr::select(master_list$data[[data_type]][[subtype]][[plate_id]], dplyr::all_of(common_lipids))
       }
     }
   }
@@ -1067,13 +1092,13 @@ initialise_statTarget_environment <- function(master_list) {
                                      "all",
                                      "data",
                                      "batch/correction")
-  FUNC_list$master_data <- bind_rows(master_list$data$concentration$imputed)
+  FUNC_list$master_data <- dplyr::bind_rows(master_list$data$concentration$imputed)
 
   FUNC_list$master_data$sample_type <- "sample"
   FUNC_list$master_data$sample_type[tolower(FUNC_list$master_data$sample_type_factor) == tolower(master_list$project_details$statTarget_qc_type)] <- "qc"
 
   FUNC_list$metabolite_list <- FUNC_list$master_data %>%
-    select(-contains("sample")) %>%
+    dplyr::select(-dplyr::contains("sample")) %>%
     names()
 
   FUNC_list <- flag_failed_qc_injections(FUNC_list)
@@ -1090,15 +1115,15 @@ initialise_statTarget_environment <- function(master_list) {
 flag_failed_qc_injections <- function(FUNC_list) {
   qc_fail <- lapply(unique(FUNC_list$master_data$sample_plate_id), function(batch) {
     qc_data <- FUNC_list$master_data %>%
-      filter(sample_type == "qc", sample_plate_id == batch) %>%
-      select(-contains("sample"), -contains("SIL"))
+      dplyr::filter(sample_type == "qc", sample_plate_id == batch) %>%
+      dplyr::select(-dplyr::contains("sample"), -dplyr::contains("SIL"))
 
-    low_signal <- rowSums(qc_data) < median(rowSums(qc_data)) * 0.1
+    low_signal <- rowSums(qc_data) < stats::median(rowSums(qc_data)) * 0.1
 
     # Get the sample names of the low signal QC samples
     failed_samples <- FUNC_list$master_data %>%
-      filter(sample_type == "qc", sample_plate_id == batch) %>%
-      pull(sample_name)
+      dplyr::filter(sample_type == "qc", sample_plate_id == batch) %>%
+      dplyr::pull(sample_name)
 
     failed_samples[low_signal]
   })
@@ -1133,11 +1158,11 @@ prepare_statTarget_files <- function(FUNC_list) {
 #' @return The updated `FUNC_list` with the created phenotype file.
 create_pheno_file <- function(FUNC_list) {
   pheno <- FUNC_list$master_data %>%
-    select(sample_name, sample_plate_id, sample_type, sample_run_index) %>%
-    rename(batch = sample_plate_id,
+    dplyr::select(sample_name, sample_plate_id, sample_type, sample_run_index) %>%
+    dplyr::rename(batch = sample_plate_id,
            class = sample_type,
            order = sample_run_index) %>%
-    arrange(order)
+    dplyr::arrange(order)
 
   # Initialise QC-ordered template
   FUNC_list$PhenoFile$template_qc_order <- NULL
@@ -1148,14 +1173,14 @@ create_pheno_file <- function(FUNC_list) {
 
   # Ensure QC is first and last in each batch
   for (batch_id in batch_ids) {
-    batch_data <- pheno %>% filter(batch == batch_id)
+    batch_data <- pheno %>% dplyr::filter(batch == batch_id)
     qc_positions <- which(batch_data$class == "qc")
 
     # Move first QC to position 1 if needed
     if (length(qc_positions) > 0 && qc_positions[1] > 1) {
       first_qc <- batch_data[qc_positions[1], ]
       batch_data <- batch_data[-qc_positions[1], ]
-      batch_data <- bind_rows(first_qc, batch_data)
+      batch_data <- dplyr::bind_rows(first_qc, batch_data)
     }
 
     # Move last QC to final position if needed
@@ -1164,23 +1189,23 @@ create_pheno_file <- function(FUNC_list) {
         qc_positions[length(qc_positions)] < nrow(batch_data)) {
       last_qc <- batch_data[qc_positions[length(qc_positions)], ]
       batch_data <- batch_data[-qc_positions[length(qc_positions)], ]
-      batch_data <- bind_rows(batch_data, last_qc)
+      batch_data <- dplyr::bind_rows(batch_data, last_qc)
     }
 
     # Store updated batch
     qc_idx <- c(qc_idx, qc_positions)
-    FUNC_list$PhenoFile$template_qc_order <- bind_rows(FUNC_list$PhenoFile$template_qc_order, batch_data)
+    FUNC_list$PhenoFile$template_qc_order <- dplyr::bind_rows(FUNC_list$PhenoFile$template_qc_order, batch_data)
   }
 
   # Assign sample names
   FUNC_list$PhenoFile$template_qc_order <- FUNC_list$PhenoFile$template_qc_order %>%
-    group_by(class) %>%
-    mutate(sample = case_when(
-      class == "qc" ~ paste0("QC", row_number()),
-      class == "sample" ~ paste0("sample", row_number())
+    dplyr::group_by(class) %>%
+    dplyr::mutate(sample = dplyr::case_when(
+      class == "qc" ~ paste0("QC", dplyr::row_number()),
+      class == "sample" ~ paste0("sample", dplyr::row_number())
     )) %>%
-    ungroup() %>%
-    relocate(sample, .after = sample_name)
+    dplyr::ungroup() %>%
+    dplyr::relocate(sample, .after = sample_name)
 
   # Final formatting
   FUNC_list$PhenoFile$template_sample_id <- FUNC_list$PhenoFile$template_qc_order
@@ -1190,7 +1215,7 @@ create_pheno_file <- function(FUNC_list) {
 
   #Final output file for statTarget
   Output <-  FUNC_list$PhenoFile$template_sample_id %>%
-    select(sample, batch, class, order)
+    dplyr::select(sample, batch, class, order)
 
   # Write to CSV
   output_dir <- file.path(FUNC_list$project_dir,
@@ -1211,28 +1236,33 @@ create_pheno_file <- function(FUNC_list) {
 #' @param FUNC_list A list containing the master data, metabolite list, and project directory.
 #' @return The updated `FUNC_list` with the created profile file.
 create_profile_file <- function(FUNC_list) {
+
+  if (length(FUNC_list$metabolite_list) == 0) {
+    stop("metabolite_list cannot be empty")
+  }
+
   profile <- FUNC_list$master_data %>%
-    select(sample_name, all_of(FUNC_list$metabolite_list))
+    dplyr::select(sample_name, dplyr::all_of(FUNC_list$metabolite_list))
 
   ordered <- FUNC_list$PhenoFile$template_sample_id %>%
-    select(sample, sample_name) %>%
-    left_join(profile, by = "sample_name") %>%
-    select(-sample_name)
+    dplyr::select(sample, sample_name) %>%
+    dplyr::left_join(profile, by = "sample_name") %>%
+    dplyr::select(-sample_name)
 
-  profile_matrix <- as_tibble(cbind(nms = names(ordered), t(ordered))) %>%
-    setNames(.[1, ]) %>%
-    rename(name = sample) %>%
-    filter(name != "sample") %>%
-    mutate(across(-name, as.numeric))
+  profile_matrix <- tibble::as_tibble(cbind(nms = names(ordered), t(ordered))) %>%
+    stats::setNames(.[1, ]) %>%
+    dplyr::rename(name = sample) %>%
+    dplyr::filter(name != "sample") %>%
+    dplyr::mutate(dplyr::across(-name, as.numeric))
 
   metabolite_map <- profile_matrix %>%
-    select(name) %>%
-    filter(!str_detect(name, "SIL")) %>%
-    mutate(metabolite_code = paste0("M", row_number()))
+    dplyr::select(name) %>%
+    dplyr::filter(!stringr::str_detect(name, "SIL")) %>%
+    dplyr::mutate(metabolite_code = paste0("M", dplyr::row_number()))
 
-  profile_matrix <- left_join(metabolite_map, profile_matrix, by = "name") %>%
-    select(-name) %>%
-    rename(name = metabolite_code)
+  profile_matrix <- dplyr::left_join(metabolite_map, profile_matrix, by = "name") %>%
+    dplyr::select(-name) %>%
+    dplyr::rename(name = metabolite_code)
 
   FUNC_list$ProfileFile <- list(ProfileFile = profile_matrix, metabolite_list = metabolite_map)
 
@@ -1307,18 +1337,18 @@ run_statTarget_shiftCor <- function(FUNC_list, master_list) {
 clean_statTarget_output <- function(data) {
   if ("sample1" %in% colnames(data)) {
     data <- data %>%
-      filter(sample != "class") %>%
-      rename(name = sample) %>%
-      mutate(across(-name, as.numeric))
+      dplyr::filter(sample != "class") %>%
+      dplyr::rename(name = sample) %>%
+      dplyr::mutate(dplyr::across(-name, as.numeric))
   } else if ("M1" %in% colnames(data)) {
     data <- data %>%
       t() %>%
       data.frame() %>%
-      rownames_to_column() %>%
-      setNames(.[1, ]) %>%
-      filter(sample != "class" & sample != "sample") %>%
-      rename(name = sample) %>%
-      mutate(across(-name, as.numeric))
+      tibble::rownames_to_column() %>%
+      stats::setNames(.[1, ]) %>%
+      dplyr::filter(sample != "class" & sample != "sample") %>%
+      dplyr::rename(name = sample) %>%
+      dplyr::mutate(dplyr::across(-name, as.numeric))
   }
   return(data)
 }
@@ -1332,24 +1362,24 @@ clean_statTarget_output <- function(data) {
 #' @return The updated `FUNC_list` with transposed and merged corrected data.
 transpose_and_merge_corrected <- function(FUNC_list) {
   transposed <- FUNC_list$ProfileFile$metabolite_list %>%
-    rename(lipid = metabolite_code) %>%
-    right_join(FUNC_list$corrected_data$data %>% rename(lipid = name), by = "lipid") %>%
-    select(-lipid) %>%
+    dplyr::rename(lipid = metabolite_code) %>%
+    dplyr::right_join(FUNC_list$corrected_data$data %>% dplyr::rename(lipid = name), by = "lipid") %>%
+    dplyr::select(-lipid) %>%
     as.matrix() %>%
     t() %>%
     data.frame() %>%
-    rownames_to_column() %>%
-    setNames(.[1, ]) %>%
-    filter(name != "name") %>%
-    mutate(across(-name, as.numeric)) %>%
-    rename(sample = name) %>%
-    left_join(FUNC_list$PhenoFile$template_sample_id, by = "sample") %>%
-    left_join(FUNC_list$master_data %>% select(contains("sample")), by = "sample_name") %>%
-    select(-sample, -batch, -class, -order)
+    tibble::rownames_to_column() %>%
+    stats::setNames(.[1, ]) %>%
+    dplyr::filter(name != "name") %>%
+    dplyr::mutate(dplyr::across(-name, as.numeric)) %>%
+    dplyr::rename(sample = name) %>%
+    dplyr::left_join(FUNC_list$PhenoFile$template_sample_id, by = "sample") %>%
+    dplyr::left_join(FUNC_list$master_data %>% dplyr::select(dplyr::contains("sample")), by = "sample_name") %>%
+    dplyr::select(-sample, -batch, -class, -order)
 
   #reorder columns to follow FUNC_list$master_data
   transposed <- transposed %>%
-    select(
+    dplyr::select(
       sample_run_index,
       sample_name,
       sample_timestamp,
@@ -1360,7 +1390,7 @@ transpose_and_merge_corrected <- function(FUNC_list) {
       sample_type_factor,
       sample_type_factor_rev,
       sample_data_source,
-      everything()
+      dplyr::everything()
     )
 
   FUNC_list$corrected_data$data_transposed <- transposed
@@ -1376,14 +1406,25 @@ transpose_and_merge_corrected <- function(FUNC_list) {
 #' @param master_list A list containing the project details and data.
 #' @return The updated `FUNC_list` with adjusted QC means in the corrected data.
 adjust_qc_means <- function(FUNC_list, master_list) {
+
+
+  required_cols <- setdiff(names(FUNC_list$master_data), "sample_type")
+  if (length(required_cols) == 0) {
+    stop("No metabolite columns found in master_data.")
+  }
+
   original_means <- FUNC_list$master_data %>%
-    filter(sample_type == "qc") %>%
-    select(-contains("sample")) %>%
+    dplyr::filter(sample_type == "qc") %>%
+    dplyr::select(-dplyr::contains("sample")) %>%
     colMeans()
 
+  if (any(original_means == 0)) {
+    warning("Original mean contains zero(s), which may lead to invalid correction ratios.")
+  }
+
   corrected_means <- FUNC_list$corrected_data$data_transposed %>%
-    filter(sample_type == "qc") %>%
-    select(-contains("sample")) %>%
+    dplyr::filter(sample_type == "qc") %>%
+    dplyr::select(-dplyr::contains("sample")) %>%
     colMeans()
 
   qc_means <- tibble(
@@ -1398,7 +1439,7 @@ adjust_qc_means <- function(FUNC_list, master_list) {
     adjusted[[met]] <- adjusted[[met]] / qc_means$correction_ratio[qc_means$metabolite == met]
   }
 
-  qc_type <- unique(bind_rows(master_list$data$concentration$imputed)$sample_type_factor[bind_rows(master_list$data$concentration$imputed)$sample_type == "qc"]) %>% as.character()
+  qc_type <- unique(dplyr::bind_rows(master_list$data$concentration$imputed)$sample_type_factor[dplyr::bind_rows(master_list$data$concentration$imputed)$sample_type == "qc"]) %>% as.character()
 
   adjusted$sample_type <- ifelse(adjusted$sample_type_factor == qc_type, "qc", "sample")
   FUNC_list$corrected_data$data_qc_mean_adjusted <- adjusted
@@ -1415,17 +1456,22 @@ adjust_qc_means <- function(FUNC_list, master_list) {
 #' @param FUNC_list A list containing the corrected data from `statTarget`.
 #' @return The updated `master_list` with integrated corrected data.
 integrate_corrected_data <- function(master_list, FUNC_list) {
+  if (!"sample_plate_id" %in% colnames(FUNC_list$corrected_data$data_qc_mean_adjusted)) {
+    stop("Missing required column: sample_plate_id")
+  }
+
   corrected <- FUNC_list$corrected_data$data_qc_mean_adjusted
   master_list$data$concentration$corrected <- split(corrected, corrected$sample_plate_id)
-  lapply(names(master_list$data$concentration$corrected), function(batch) {
+
+  for (batch in names(master_list$data$concentration$corrected)) {
     master_list$data$concentration$corrected[[batch]]$sample_data_source <- ".peakAreaCorrected"
-  })
+  }
 
   master_list$data$peakArea$statTargetProcessed <- list()
   master_list$data$concentration$statTargetProcessed <- list()
   for (batch in unique(corrected$sample_plate_id)) {
-    master_list$data$peakArea$statTargetProcessed[[batch]] <- corrected %>% filter(sample_plate_id == batch)
-    master_list$data$concentration$statTargetProcessed[[batch]] <- corrected %>% filter(sample_plate_id == batch)
+    master_list$data$peakArea$statTargetProcessed[[batch]] <- corrected %>% dplyr::filter(sample_plate_id == batch)
+    master_list$data$concentration$statTargetProcessed[[batch]] <- corrected %>% dplyr::filter(sample_plate_id == batch)
     master_list$data$peakArea$statTargetProcessed[[batch]]$sample_data_source <- "concentration.statTarget"
   }
 
@@ -1438,7 +1484,7 @@ integrate_corrected_data <- function(master_list, FUNC_list) {
 # mising value data filtering is performed on peakArea data from the imported user report.
 # First the filtering is performed per sample to identify failed samples (e.g. injection, extraction, preparation errors, or if sample is missing from well) it will return a high % of missing values
 # Once failed samples have been identified - the filtering then identifies lipids that have >50% missing values
-# note: missing also refers to <limit of detection [<LOD]. This refers to instances of peak areas that are <5000 counts, as skyline will sometimes integrate noise giving a small value.
+# note: missing also refers to <limit of detection [<LOD]. This refers to instances of peak areas that are <5000 counts, as PeakForgeR will sometimes integrate noise giving a small value.
 
 ## Set QC Type for Filtering ----
 ###Primary Function ----
@@ -1515,6 +1561,7 @@ determine_qc_type <- function(master_list) {
 #' Notify QC Type
 #'
 #' This function prints a message indicating the QC type that has been set for filtering.
+#' @keywords internal
 #' @param qc_type A string indicating the QC type (e.g. "pqc" or "ltr").
 #' @return NULL
 notify_qc_type <- function(qc_type) {
@@ -1534,8 +1581,8 @@ notify_qc_type <- function(qc_type) {
 stop_with_qc_error <- function(project_name,
                                global_qc_pass,
                                plate_qc_passed) {
-  global_qc_pass_str <- capture.output(str(global_qc_pass))
-  plate_qc_passed_str <- capture.output(str(plate_qc_passed))
+  global_qc_pass_str <- utils::capture.output(str(global_qc_pass))
+  plate_qc_passed_str <- utils::capture.output(str(plate_qc_passed))
 
   error_message <- paste0(
     "STOPPING SCRIPT\n",
@@ -1575,20 +1622,20 @@ qcCheckR_sample_filter <- function(master_list) {
   for (idx_batch in names(master_list$data$peakArea$sorted)) {
     sample_data <- master_list$data$peakArea$sorted[[idx_batch]]
     sample_meta <- sample_data %>%
-      select(sample_run_index,
+      dplyr::select(sample_run_index,
              sample_name,
              sample_plate_id,
              sample_type_factor)
 
     #Extract lipid data
     lipid_data <- sample_data %>%
-      select(!contains("sample")) %>%
-      select(!contains("SIL")) %>%
+      dplyr::select(!dplyr::contains("sample")) %>%
+      dplyr::select(!dplyr::contains("SIL")) %>%
       as.matrix()
     # Extract SIL data
     sil_data <- sample_data %>%
-      select(!contains("sample")) %>%
-      select(contains("SIL")) %>%
+      dplyr::select(!dplyr::contains("sample")) %>%
+      dplyr::select(dplyr::contains("SIL")) %>%
       as.matrix()
 
     #Flags for missing values and signal intensity
@@ -1616,9 +1663,9 @@ qcCheckR_sample_filter <- function(master_list) {
     flags$totalMissingValues.lipid <- rowSums(do.call(cbind, flags[c("missing.lipid", "na.lipid", "nan.lipid", "inf.lipid")]))
     flags$totalMissingValues.SIL <- rowSums(do.call(cbind, flags[c("missing.SIL", "na.SIL", "nan.SIL", "inf.SIL")]))
 
-    flags$sample.lipid.intensity.flag <- as.integer(flags$summed.lipid.signal < median(flags$summed.lipid.signal) * 0.20)
+    flags$sample.lipid.intensity.flag <- as.integer(flags$summed.lipid.signal < stats::median(flags$summed.lipid.signal) * 0.20)
     flags$sample.SIL.Int.Std.intensity.flag <- as.integer(
-      flags$summed.SIL.Int.Std.signal < median(flags$summed.SIL.Int.Std.signal) * 0.33
+      flags$summed.SIL.Int.Std.signal < stats::median(flags$summed.SIL.Int.Std.signal) * 0.33
     )
 
     lipid_threshold <- ncol(lipid_data) * (master_list$project_details$mv_sample_threshold / 100)
@@ -1642,8 +1689,9 @@ qcCheckR_sample_filter <- function(master_list) {
   }
 
   master_list$filters$samples.missingValues <- do.call(rbind, master_list$filters$samples.missingValues)
-  master_list$filters$failed_samples <- do.call(rbind, master_list$filters$failed_samples)
-  master_list$filters$failed_samples <- unique(master_list$filters$failed_samples[!is.na(master_list$filters$failed_samples)])
+  master_list$filters$failed_samples <- master_list$filters$samples.missingValues %>%
+                                        filter(!is.na(failed_samples)) %>%
+                                        pull(sample_name)
 
   return(master_list)
 }
@@ -1712,14 +1760,14 @@ initialise_sil_summary <- function() {
 #' @return A tibble containing SIL flags for each lipid, including counts of peak areas below a threshold, missing values, and flags for excessive missing values.
 calculate_sil_flags_per_plate <- function(master_list, idx_batch) {
   sil_names <- master_list$data$peakArea$sorted[[idx_batch]] %>%
-    select(contains("SIL")) %>%
+    dplyr::select(dplyr::contains("SIL")) %>%
     names()
 
   sil_matrix <- master_list$data$peakArea$sorted[[idx_batch]] %>%
-    filter(
-      sample_name %in% filter(master_list$filters$samples.missingValues, sample.flag == 0)[["sample_name"]]
+    dplyr::filter(
+      sample_name %in% dplyr::filter(master_list$filters$samples.missingValues, sample.flag == 0)[["sample_name"]]
     ) %>%
-    select(contains("SIL")) %>%
+    dplyr::select(dplyr::contains("SIL")) %>%
     as.matrix()
 
   flags <- tibble(
@@ -1730,7 +1778,7 @@ calculate_sil_flags_per_plate <- function(master_list, idx_batch) {
     infValues = colSums(is.infinite(sil_matrix), na.rm = TRUE)
   )
 
-  flags$totalMissingValues <- rowSums(flags %>% select(-lipid), na.rm = TRUE)
+  flags$totalMissingValues <- rowSums(flags %>% dplyr::select(-lipid), na.rm = TRUE)
 
   #Flag if SIL is missing in greater than 5% of samples
   valid_sample_count <- nrow(sil_matrix)
@@ -1754,26 +1802,31 @@ calculate_sil_flags_per_version <- function(master_list) {
   master_list$filters$sil.intStd.missingValues$PROJECT.flag.SIL.intStd <- list()
   master_list$filters$failed_sil.intStds <- list()
 
+  if (!"template_version" %in% colnames(master_list$filters$sil.intStd.missingValues$summary)) {
+    stop("Missing required column: template_version")
+  }
+
   for (version in unique(master_list$filters$sil.intStd.missingValues$summary$template_version)) {
     version_data <- master_list$filters$sil.intStd.missingValues$summary %>%
-      filter(template_version == version)
+      dplyr::filter(template_version == version)
 
     lipid_list <- unique(version_data$lipid)
     plate_list <- unique(version_data$plateID)
 
     sil_matrix <- master_list$data$peakArea$sorted %>%
-      bind_rows() %>%
-      filter(sample_plate_id %in% plate_list) %>%
-      filter(
-        sample_name %in% filter(
+      dplyr::bind_rows() %>%
+      dplyr::filter(sample_plate_id %in% plate_list) %>%
+      dplyr::select(tidyselect::where(~ !all(is.na(.)))) %>%
+      dplyr::filter(
+        sample_name %in% dplyr::filter(
           master_list$filters$samples.missingValues,
           sample.flag == 0
         )[["sample_name"]]
       ) %>%
-      select(contains("SIL")) %>%
+      dplyr::select(dplyr::contains("SIL")) %>%
       as.matrix()
 
-    version_flags <- tibble(
+    version_flags <- tibble::tibble(
       lipid = colnames(sil_matrix),
       peakArea_5000_LOD = colSums(sil_matrix < 5000, na.rm = TRUE),
       naValues = colSums(is.na(sil_matrix), na.rm = TRUE),
@@ -1781,7 +1834,7 @@ calculate_sil_flags_per_version <- function(master_list) {
       infValues = colSums(is.infinite(sil_matrix), na.rm = TRUE)
     )
 
-    version_flags$totalMissingValues <- rowSums(version_flags %>% select(-lipid), na.rm = TRUE)
+    version_flags$totalMissingValues <- rowSums(version_flags %>% dplyr::select(-lipid), na.rm = TRUE)
     master_list$filters$sil.intStd.missingValues$allPlates[[version]] <- version_flags
 
     valid_sample_count <- nrow(sil_matrix)
@@ -1868,12 +1921,12 @@ initialise_lipid_filter <- function(master_list) {
 
 get_lipid_data <- function(master_list, idx_batch) {
   valid_samples <- master_list$filters$samples.missingValues %>%
-    filter(sample.flag == 0) %>%
-    pull(sample_name)
+    dplyr::filter(sample.flag == 0) %>%
+    dplyr::pull(sample_name)
 
   lipid_data <- master_list$data$peakArea$sorted[[idx_batch]] %>%
-    filter(sample_name %in% valid_samples) %>%
-    select(!contains("sample") & !contains("SIL")) %>%
+    dplyr::filter(sample_name %in% valid_samples) %>%
+    dplyr::select(!dplyr::contains("sample") & !dplyr::contains("SIL")) %>%
     as.matrix()
 
   return(lipid_data)
@@ -1890,18 +1943,42 @@ get_lipid_data <- function(master_list, idx_batch) {
 #' @param lipid_matrix A matrix containing lipid data for the batch.
 #' @return A tibble containing lipid flags, including counts of peak areas below a threshold, missing values, and flags for excessive missing values.
 calculate_lipid_flags <- function(master_list, idx_batch, lipid_matrix) {
+
   lipid_names <- colnames(lipid_matrix)
   SIL_version <- master_list$templates$`Plate SIL version`[[idx_batch]]
   failed_sil <- master_list$filters$failed_sil.intStds
 
-  sil_flag <- as.integer(
-    lipid_names %in% filter(
-      master_list$templates$mrm_guides[[SIL_version]]$SIL_guide,
-      Note %in% failed_sil
-    )[["Precursor Name"]]
-  )
+  if (ncol(lipid_matrix) == 0) {
+    return(tibble::tibble(
+      lipid = character(),
+      silFilter.flag.Lipid = numeric(),
+      peakArea_5000_LOD = numeric(),
+      naValues = numeric(),
+      nanValues = numeric(),
+      infValues = numeric(),
+      totalMissingValues = numeric(),
+      flag.Lipid.Plate = numeric(),
+      template_version = SIL_version,
+      plateID = idx_batch
+    )[0, ])
+  }
 
-  lipid_flags <- tibble(
+  if (is.null(SIL_version)) {
+    stop("Missing template version for batch: ", idx_batch)
+  }
+
+  if (is.null(master_list$templates$mrm_guides[[SIL_version]]$SIL_guide)) {
+    sil_flag <- rep(0, length(lipid_names))
+  } else {
+    sil_flag <- as.integer(
+      lipid_names %in% dplyr::filter(
+        master_list$templates$mrm_guides[[SIL_version]]$SIL_guide,
+        Note %in% failed_sil
+      )[["Precursor Name"]]
+    )
+  }
+
+  lipid_flags <- tibble::tibble(
     lipid = lipid_names,
     silFilter.flag.Lipid = sil_flag,
     peakArea_5000_LOD = colSums(lipid_matrix < 5000, na.rm = TRUE),
@@ -1911,7 +1988,7 @@ calculate_lipid_flags <- function(master_list, idx_batch, lipid_matrix) {
     template_version = SIL_version,
     plateID = idx_batch
   )
-  lipid_flags$totalMissingValues <- rowSums(lipid_flags %>% select(-c(lipid, template_version, plateID)), na.rm = TRUE)
+  lipid_flags$totalMissingValues <- rowSums(lipid_flags %>% dplyr::select(-c(lipid, template_version, plateID)), na.rm = TRUE)
   lipid_flags$flag.Lipid.Plate <- as.integer(lipid_flags$totalMissingValues > (
     nrow(lipid_matrix) * (master_list$project_details$mv_sample_threshold / 100)
   ) |
@@ -1929,24 +2006,25 @@ calculate_lipid_flags <- function(master_list, idx_batch, lipid_matrix) {
 process_lipid_versions <- function(master_list) {
   for (version in unique(master_list$filters$lipid.missingValues$summary$template_version)) {
     version_data <- master_list$filters$lipid.missingValues$summary %>%
-      filter(template_version == version)
+      dplyr::filter(template_version == version)
 
     lipid_list <- unique(version_data$lipid)
     plate_list <- unique(version_data$plateID)
 
     lipid_matrix <- master_list$data$peakArea$sorted %>%
-      bind_rows() %>%
-      filter(sample_plate_id %in% plate_list) %>%
-      filter(
-        sample_name %in% filter(
+      dplyr::bind_rows() %>%
+      dplyr::filter(sample_plate_id %in% plate_list) %>%
+      dplyr::select(tidyselect::where(~ !all(is.na(.)))) %>%
+      dplyr::filter(
+        sample_name %in% dplyr::filter(
           master_list$filters$samples.missingValues,
           sample.flag == 0
         )[["sample_name"]]
       ) %>%
-      select(!contains("sample") & !contains("SIL")) %>%
+      dplyr::select(!dplyr::contains("sample") & !dplyr::contains("SIL")) %>%
       as.matrix()
 
-    version_flags <- tibble(
+    version_flags <- tibble::tibble(
       lipid = colnames(lipid_matrix),
       peakArea_5000_LOD = colSums(lipid_matrix < 5000, na.rm = TRUE),
       naValues = colSums(is.na(lipid_matrix), na.rm = TRUE),
@@ -1954,7 +2032,7 @@ process_lipid_versions <- function(master_list) {
       infValues = colSums(is.infinite(lipid_matrix), na.rm = TRUE)
     )
 
-    version_flags$totalMissingValues <- rowSums(version_flags %>% select(-lipid), na.rm = TRUE)
+    version_flags$totalMissingValues <- rowSums(version_flags %>% dplyr::select(-lipid), na.rm = TRUE)
     master_list$filters$lipid.missingValues$allPlates[[version]] <- version_flags
 
     valid_sample_count <- nrow(lipid_matrix)
@@ -1985,13 +2063,13 @@ process_lipid_versions <- function(master_list) {
 #' master_list <- qcCheckR_RSD_filter(master_list)
 #' }
 qcCheckR_RSD_filter <- function(master_list) {
-  master_list$filters$rsd <- tibble()
+  master_list$filters$rsd <- tibble::tibble()
 
   # Apply RSD filtering for each data source
-  master_list$filters$rsd <- bind_rows(
+  master_list$filters$rsd <- dplyr::bind_rows(
     calculate_rsd(master_list, "peakArea", master_list$data$peakArea$imputed),
     calculate_rsd(master_list, "peakArea", list(
-      allBatches = bind_rows(master_list$data$peakArea$imputed)
+      allBatches = dplyr::bind_rows(master_list$data$peakArea$imputed)
     )),
     calculate_rsd(
       master_list,
@@ -1999,7 +2077,7 @@ qcCheckR_RSD_filter <- function(master_list) {
       master_list$data$concentration$imputed
     ),
     calculate_rsd(master_list, "concentration", list(
-      allBatches = bind_rows(master_list$data$concentration$imputed)
+      allBatches = dplyr::bind_rows(master_list$data$concentration$imputed)
     )),
     calculate_rsd(
       master_list,
@@ -2010,16 +2088,16 @@ qcCheckR_RSD_filter <- function(master_list) {
       master_list,
       "concentration[statTarget]",
       list(
-        allBatches = bind_rows(master_list$data$concentration$statTargetProcessed)
+        allBatches = dplyr::bind_rows(master_list$data$concentration$statTargetProcessed)
       )
     )
   )
 
   # Clean and format RSD table
   master_list$filters$rsd <- master_list$filters$rsd %>%
-    rename(dataSource = V1, dataBatch = V2) %>%
-    mutate(across(!contains("data"), as.numeric)) %>%
-    mutate(across(!contains("data"), round, 2))
+    dplyr::rename(dataSource = V1, dataBatch = V2) %>%
+    dplyr::mutate(dplyr::across(!dplyr::contains("data"), as.numeric)) %>%
+    dplyr::mutate(dplyr::across(!dplyr::contains("data"), round, 2))
 
   # Update script log
   master_list <- update_script_log(master_list,
@@ -2052,10 +2130,10 @@ calculate_rsd <- function(master_list, source_name, data_batches) {
     if (nrow(data) == 0)
       next
 
-    rsd_values <- (apply(data, 2, sd) / apply(data, 2, mean)) * 100
+    rsd_values <- (apply(data, 2, stats::sd) / apply(data, 2, mean)) * 100
     rsd_results[[batch_name]] <- rbind(c(source_name, batch_name, rsd_values)) %>%
-      as_tibble() %>%
-      mutate(across(names(rsd_values), as.numeric))
+      tibble::as_tibble() %>%
+      dplyr::mutate(dplyr::across(names(rsd_values), as.numeric))
   }
 
   bind_rows(rsd_results)
@@ -2079,10 +2157,10 @@ calculate_rsd <- function(master_list, source_name, data_batches) {
 #' }
 qcCheckR_summary_report <- function(master_list) {
   #Create sample metrics
-  sample_tags <- bind_rows(master_list$data$peakArea$sorted) %>%
-    select(sample_type_factor) %>%
+  sample_tags <- dplyr::bind_rows(master_list$data$peakArea$sorted) %>%
+    dplyr::select(sample_type_factor) %>%
     unique() %>%
-    pull(sample_type_factor) %>%
+    dplyr::pull(sample_type_factor) %>%
     as.character() %>%
     .[!grepl("sample", .)]
 
@@ -2097,6 +2175,7 @@ qcCheckR_summary_report <- function(master_list) {
     "studySamples",
     paste0(sample_metrics),
     "lipidTargets",
+    "matchedLipidTargets",
     "SIL.version",
     "SIL.IntStds",
     "missingValueFilterFlags[samples]",
@@ -2114,19 +2193,19 @@ qcCheckR_summary_report <- function(master_list) {
   )
 
   master_list$summary_tables <- list()
-  master_list$summary_tables$projectOverview <- tibble(metric = metrics)
+  master_list$summary_tables$projectOverview <- tibble::tibble(metric = metrics)
 
   # Per-plate summary
   for (idx_batch in names(master_list$data$peakArea$sorted)) {
     plate_summary <- generate_plate_summary(master_list, idx_batch, metrics, sample_tags)
-    master_list$summary_tables$projectOverview <- left_join(master_list$summary_tables$projectOverview,
+    master_list$summary_tables$projectOverview <- dplyr::left_join(master_list$summary_tables$projectOverview,
                                                             plate_summary,
                                                             by = "metric")
   }
 
   # Inter-plate summary
   inter_plate_summary <- generate_inter_plate_summary(master_list, metrics, sample_tags)
-  master_list$summary_tables$projectOverview <- left_join(master_list$summary_tables$projectOverview,
+  master_list$summary_tables$projectOverview <- dplyr::left_join(master_list$summary_tables$projectOverview,
                                                           inter_plate_summary,
                                                           by = "metric")
 
@@ -2156,35 +2235,36 @@ generate_plate_summary <- function(master_list,
                                    metrics,
                                    sample_tags) {
   data <- master_list$data$peakArea$sorted[[idx_batch]]
-  lipid_data <- data %>% select(-contains("sample"), -contains("SIL"))
-  sil_data <- data %>% select(contains("SIL"))
+  lipid_data <- data %>% dplyr::select(-dplyr::contains("sample"), -dplyr::contains("SIL"))
+  sil_data <- data %>% dplyr::select(dplyr::contains("SIL"))
 
   #Create RSD metrics function
   rsd_metrics <- function(source) {
     rsd <- master_list$filters$rsd %>%
-      filter(dataBatch == idx_batch, dataSource == source) %>%
-      select(-contains("data")) %>%
-      select(-any_of(master_list$filters$failed_lipids))
+      dplyr::filter(dataBatch == idx_batch, dataSource == source) %>%
+      dplyr::select(-dplyr::contains("data")) %>%
+      dplyr::select(-dplyr::any_of(master_list$filters$failed_lipids))
     c(sum(rsd < 30, na.rm = TRUE),
       sum(rsd < 20, na.rm = TRUE),
       sum(rsd < 10, na.rm = TRUE))
   }
 
-  plate_summary <- tibble(
+  plate_summary <- tibble::tibble(
     metric = metrics,
     !!idx_batch := c(
       unique(data$sample_matrix),
       nrow(data),
-      nrow(filter(data, sample_type_factor == "sample")),
+      nrow(dplyr::filter(data, sample_type_factor == "sample")),
       sapply(sample_tags, function(tag)
-        nrow(filter(
+        nrow(dplyr::filter(
           data, sample_type_factor == tag
         ))),
+      ncol(lipid_data),
       ncol(lipid_data),
       master_list$templates$`Plate SIL version`[[idx_batch]],
       ncol(sil_data),
       nrow(
-        filter(
+        dplyr::filter(
           master_list$filters$samples.missingValues,
           sample_plate_id == idx_batch,
           sample.flag == 1
@@ -2213,38 +2293,40 @@ generate_plate_summary <- function(master_list,
 #' @param sample_tags A vector of sample type tags to be included in the summary.
 #' @return A tibble containing the inter-plate summary metrics.
 generate_inter_plate_summary <- function(master_list, metrics, sample_tags) {
-  data <- bind_rows(master_list$data$peakArea$sorted)
-  lipid_data <- data %>% select(-contains("sample"), -contains("SIL"))
-  sil_data <- data %>% select(contains("SIL"))
+  data <- dplyr::bind_rows(master_list$data$peakArea$sorted)
+  lipid_data <- data %>% dplyr::select(-dplyr::contains("sample"), -dplyr::contains("SIL"))
+  sil_data <- data %>% dplyr::select(dplyr::contains("SIL"))
 
   rsd_metrics <- function(source) {
     rsd <- master_list$filters$rsd %>%
-      filter(dataBatch == "allBatches", dataSource == source) %>%
-      select(-contains("data")) %>%
-      select(-any_of(master_list$filters$failed_lipids))
+      dplyr::filter(dataBatch == "allBatches", dataSource == source) %>%
+      dplyr::select(-dplyr::contains("data")) %>%
+      dplyr::select(-dplyr::any_of(master_list$filters$failed_lipids))
     c(sum(rsd < 30, na.rm = TRUE),
       sum(rsd < 20, na.rm = TRUE),
       sum(rsd < 10, na.rm = TRUE))
   }
 
-  interplate_summary <- tibble(
+  interplate_summary <- tibble::tibble(
     metric = metrics,
     all_plates = c(
       paste(unique(data$sample_matrix), collapse = ","),
       nrow(data),
-      nrow(filter(data, sample_type_factor == "sample")),
+      nrow(dplyr::filter(data, sample_type_factor == "sample")),
       sapply(sample_tags, function(tag)
-        nrow(filter(
+        nrow(dplyr::filter(
           data, sample_type_factor == tag
         ))),
       ncol(lipid_data),
+      ncol(dplyr::bind_rows(master_list$data$concentration$statTargetProcessed) %>%
+             dplyr::select(-dplyr::contains("sample"))),
       paste(
         unique(master_list$templates$`Plate SIL version`),
         collapse = ","
       ),
       ncol(sil_data),
       nrow(
-        filter(master_list$filters$samples.missingValues, sample.flag == 1)
+        dplyr::filter(master_list$filters$samples.missingValues, sample.flag == 1)
       ),
       length(master_list$filters$failed_sil.intStds),
       length(master_list$filters$failed_lipids),
@@ -2272,17 +2354,16 @@ generate_inter_plate_summary <- function(master_list, metrics, sample_tags) {
 #' master_list <- qcCheckR_plot_options(master_list)
 #' }
 qcCheckR_plot_options <- function(master_list) {
-  library(viridis)
 
   sample_types <- master_list$project_details$sample_tags
-  colors <- viridis(n = length(sample_types))
-  master_list$project_details$plot_fill <- setNames(colors, sample_types)
+  colors <- viridis::viridis(n = length(sample_types))
+  master_list$project_details$plot_fill <- stats::setNames(colors, sample_types)
 
-  master_list$project_details$plot_colour <- set_names(rep("black", length(sample_types)), sample_types)
+  master_list$project_details$plot_colour <- purrr::set_names(rep("black", length(sample_types)), sample_types)
 
-  master_list$project_details$plot_shape <- set_names(rep(21, length(sample_types)), sample_types)
+  master_list$project_details$plot_shape <- purrr::set_names(rep(21, length(sample_types)), sample_types)
 
-  master_list$project_details$plot_size <- set_names(rep(2, length(sample_types)), sample_types)
+  master_list$project_details$plot_size <- purrr::set_names(rep(2, length(sample_types)), sample_types)
 
   qc_type <- tolower(master_list$project_details$qc_type)
 
@@ -2358,27 +2439,33 @@ run_pca_model <- function(master_list, source, preprocessed = FALSE) {
       ))
     }
 
-    data <- bind_rows(master_list$data[[source]][[data_key]])
+    #Here we remove the cols that are not present in all three dataframes
+    cols_to_keep <- colnames(master_list$data$concentration$sorted[[1]])
+    data <- bind_rows(master_list$data[[source]][[data_key]]) %>%
+      select(all_of(cols_to_keep))
+
+
+
 
     if (preprocessed) {
       data <- data %>%
-        filter(!sample_name %in% master_list$filters$failed_samples)
+        dplyr::filter(!sample_name %in% master_list$filters$failed_samples)
 
       failed_lipids <- master_list$filters$failed_lipids
       high_rsd_lipids <- master_list$filters$rsd %>%
-        filter(dataSource == source, dataBatch == "allBatches") %>%
-        select(-contains("data")) %>%
-        summarise(across(everything(), ~ ifelse(. > 30, TRUE, FALSE))) %>%
-        select(where(~ any(., na.rm = TRUE))) %>%
+        dplyr::filter(dataSource == source, dataBatch == "allBatches") %>%
+        dplyr::select(-dplyr::contains("data")) %>%
+        dplyr::summarise(dplyr::across(dplyr::everything(), ~ ifelse(. > 30, TRUE, FALSE))) %>%
+        dplyr::select(tidyselect::where(~ any(., na.rm = TRUE))) %>%
         names()
 
       data <- data %>%
-        select(-any_of(c(failed_lipids, high_rsd_lipids)))
+        dplyr::select(-dplyr::any_of(c(failed_lipids, high_rsd_lipids)))
     }
 
     pca_matrix <- data %>%
-      column_to_rownames("sample_name") %>%
-      select(-contains("sample"), -contains("SIL")) %>%
+      tibble::column_to_rownames("sample_name") %>%
+      dplyr::select(-dplyr::contains("sample"), -dplyr::contains("SIL")) %>%
       as.matrix()
 
     model_name <- if (preprocessed)
@@ -2399,10 +2486,10 @@ run_pca_model <- function(master_list, source, preprocessed = FALSE) {
     )
 
     scores <- master_list$pca$models[[model_name]]@scoreMN %>%
-      as_tibble() %>%
-      rename(PC1 = p1, PC2 = p2, PC3 = p3) %>%
-      add_column(sample_name = rownames(pca_matrix), .before = 1) %>%
-      left_join(data %>% select(contains("sample")), by = "sample_name")
+      tibble::as_tibble() %>%
+      dplyr::rename(PC1 = p1, PC2 = p2, PC3 = p3) %>%
+      tibble::add_column(sample_name = rownames(pca_matrix), .before = 1) %>%
+      dplyr::left_join(data %>% dplyr::select(dplyr::contains("sample")), by = "sample_name")
 
     scores$sample_data_source <- paste0(
       if (preprocessed)
@@ -2430,7 +2517,7 @@ run_pca_model <- function(master_list, source, preprocessed = FALSE) {
 #' @param fill_var The variable to color the points by (e.g., "sample_type_factor", "sample_plate_id").
 #' @return A `ggplot` object representing the PCA scores.
 generate_pca_ggplot <- function(master_list, fill_var) {
-  all_scores <- bind_rows(master_list$pca$scores)
+  all_scores <- dplyr::bind_rows(master_list$pca$scores)
 
   #Factor and arrange to ensure consistent ordering in the plot
   all_scores$source_prefix <- sub(":.*", "", all_scores$sample_data_source) %>%
@@ -2444,15 +2531,15 @@ generate_pca_ggplot <- function(master_list, fill_var) {
         "concentration.statTargetProcessed.preProcessed"
       )
     )
-  all_scores <- all_scores %>% arrange(source_prefix)
+  all_scores <- all_scores %>% dplyr::arrange(source_prefix)
   all_scores$source_suffix <- sub(".*: ", "", all_scores$sample_data_source)
   all_scores$facet_label <- paste0(all_scores$source_prefix, ":", all_scores$source_suffix)
   all_scores$facet_label <- factor(all_scores$facet_label, levels = unique(all_scores$facet_label))
 
-  plot <- ggplotly(
-    ggplot(
+  plot <- plotly::ggplotly(
+    ggplot2::ggplot(
       data = all_scores,
-      aes(
+      ggplot2::aes(
         x = PC1,
         y = PC2,
         group = sample_name,
@@ -2462,26 +2549,26 @@ generate_pca_ggplot <- function(master_list, fill_var) {
         size = sample_type_factor
       )
     ) +
-      geom_vline(xintercept = 0, colour = "darkgrey") +
-      geom_hline(yintercept = 0, color = "darkgrey") +
-      geom_point() +
-      theme_bw() +
-      scale_shape_manual(values = master_list$project_details$plot_shape) +
-      scale_color_manual(values = master_list$project_details$plot_colour) +
-      scale_size_manual(values = master_list$project_details$plot_size) +
-      guides(
+      ggplot2::geom_vline(xintercept = 0, colour = "darkgrey") +
+      ggplot2::geom_hline(yintercept = 0, color = "darkgrey") +
+      ggplot2::geom_point() +
+      ggplot2::theme_bw() +
+      ggplot2::scale_shape_manual(values = master_list$project_details$plot_shape) +
+      ggplot2::scale_color_manual(values = master_list$project_details$plot_colour) +
+      ggplot2::scale_size_manual(values = master_list$project_details$plot_size) +
+      ggplot2::guides(
         shape = "none",
         size = "none",
         color = "none",
-        fill = guide_legend(title = fill_var)
+        fill = ggplot2::guide_legend(title = fill_var)
       ) +
-      facet_wrap(
+      ggplot2::facet_wrap(
         facets = vars(facet_label),
         scales = "free",
         ncol = 2,
         nrow = 3
       ) +
-      labs(
+      ggplot2::labs(
         title = paste0(
           "PCA scores; coloured by ",
           fill_var,
@@ -2509,26 +2596,26 @@ generate_pca_ggplot <- function(master_list, fill_var) {
 #' }
 qcCheckR_run_order_plots <- function(master_list) {
   #Get plate boundaries and labels
-  boundary_data <- bind_rows(master_list$pca$scores) %>%
-    select(sample_run_index, sample_plate_id) %>%
-    distinct()
+  boundary_data <- dplyr::bind_rows(master_list$pca$scores) %>%
+    dplyr::select(sample_run_index, sample_plate_id) %>%
+    dplyr::distinct()
 
   boundaries <- c(0.5)
   labels <- c()
 
   for (plate in unique(boundary_data$sample_plate_id)) {
-    plate_data <- boundary_data %>% filter(sample_plate_id == plate)
+    plate_data <- boundary_data %>% dplyr::filter(sample_plate_id == plate)
     boundaries <- c(
       boundaries,
       min(plate_data$sample_run_index) - 0.5,
       max(plate_data$sample_run_index) + 0.5
     )
-    labels <- c(labels, median(plate_data$sample_run_index))
+    labels <- c(labels, stats::median(plate_data$sample_run_index))
   }
 
   boundaries <- unique(boundaries)
 
-  run_order_labels <- tibble(
+  run_order_labels <- tibble::tibble(
     sample_data_source = "plate_boundaries",
     sample_plate_id = rep(unique(boundary_data$sample_plate_id), each = 1),
     sample_run_index = labels,
@@ -2542,7 +2629,7 @@ qcCheckR_run_order_plots <- function(master_list) {
 
   for (pc in c("PC1", "PC2", "PC3")) {
     master_list$pca$scoresRunOrder[[pc]] <- plot_run_order(
-      scores = bind_rows(master_list$pca$scores),
+      scores = dplyr::bind_rows(master_list$pca$scores),
       pc = pc,
       boundaries = boundaries,
       annotations = run_order_labels,
@@ -2570,10 +2657,10 @@ plot_run_order <- function(scores,
                            boundaries,
                            annotations,
                            plot_settings) {
-  ggplotly(
-    ggplot(
+  plotly::ggplotly(
+    ggplot2::ggplot(
       scores,
-      aes(
+      ggplot2::aes(
         x = sample_run_index,
         y = .data[[pc]],
         group = sample_name,
@@ -2583,39 +2670,39 @@ plot_run_order <- function(scores,
         size = sample_type_factor
       )
     ) +
-      geom_vline(xintercept = boundaries, linetype = "dashed") +
-      geom_point() +
-      geom_text(
+      ggplot2::geom_vline(xintercept = boundaries, linetype = "dashed") +
+      ggplot2::geom_point() +
+      ggplot2::geom_text(
         data = annotations,
-        aes(x = sample_run_index, y = .data[[pc]], label = sample_plate_id),
+        ggplot2::aes(x = sample_run_index, y = .data[[pc]], label = sample_plate_id),
         inherit.aes = FALSE,
         color = "black"
       ) +
-      theme_bw() +
-      scale_shape_manual(values = plot_settings$plot_shape) +
-      scale_fill_manual(values = plot_settings$plot_fill) +
-      scale_color_manual(values = plot_settings$plot_colour) +
-      scale_size_manual(values = plot_settings$plot_size) +
-      ylab(pc) +
-      guides(
+      ggplot2::theme_bw() +
+      ggplot2::scale_shape_manual(values = plot_settings$plot_shape) +
+      ggplot2::scale_fill_manual(values = plot_settings$plot_fill) +
+      ggplot2::scale_color_manual(values = plot_settings$plot_colour) +
+      ggplot2::scale_size_manual(values = plot_settings$plot_size) +
+      ggplot2::ylab(pc) +
+      ggplot2::guides(
         shape = "none",
         size = "none",
         color = "none",
-        fill = guide_legend(title = "sample_type_factor")
+        fill = ggplot2::guide_legend(title = "sample_type_factor")
       ) +
-      facet_wrap(
+      ggplot2::facet_wrap(
         facets = vars(sample_data_source),
         ncol = 1,
         scales = "free_y"
       ) +
-      labs(
+      ggplot2::labs(
         title = paste0(
           pc,
           "; run order (x) vs PCA scores (y); ",
           plot_settings$project_name
         )
       ) +
-      theme(text = element_text(size = 12))
+      ggplot2::theme(text = ggplot2::element_text(size = 12))
   )
 }
 
@@ -2671,7 +2758,7 @@ get_common_control_metabolites <- function(master_list) {
     sil_guide <- master_list$templates$mrm_guides[[ver]]$SIL_guide
     precursor_lists[[ver]] <- sil_guide$`Precursor Name`[sil_guide$control_chart == TRUE]
   }
-  Reduce(intersect, precursor_lists)
+  Reduce(dplyr::intersect, precursor_lists)
 }
 
 #' Get Plate Boundaries
@@ -2682,13 +2769,13 @@ get_common_control_metabolites <- function(master_list) {
 #' @param master_list A list containing project details and PCA scores.
 #' @return A vector of unique boundaries for the plates.
 get_plate_boundaries <- function(master_list) {
-  boundary_data <- bind_rows(master_list$pca$scores) %>%
-    select(sample_run_index, sample_plate_id) %>%
-    distinct()
+  boundary_data <- dplyr::bind_rows(master_list$pca$scores) %>%
+    dplyr::select(sample_run_index, sample_plate_id) %>%
+    dplyr::distinct()
 
   boundaries <- c(0.5)
   for (plate in unique(boundary_data$sample_plate_id)) {
-    plate_data <- boundary_data %>% filter(sample_plate_id == plate)
+    plate_data <- boundary_data %>% dplyr::filter(sample_plate_id == plate)
     boundaries <- c(
       boundaries,
       min(plate_data$sample_run_index) - 0.5,
@@ -2706,15 +2793,15 @@ get_plate_boundaries <- function(master_list) {
 #' @param master_list A list containing project details and PCA scores.
 #' @return A tibble containing plate annotations with median run indices.
 get_plate_annotations <- function(master_list) {
-  boundary_data <- bind_rows(master_list$pca$scores) %>%
-    select(sample_run_index, sample_plate_id) %>%
-    distinct()
+  boundary_data <- dplyr::bind_rows(master_list$pca$scores) %>%
+    dplyr::select(sample_run_index, sample_plate_id) %>%
+    dplyr::distinct()
 
   coords <- sapply(unique(boundary_data$sample_plate_id), function(plate) {
-    median(boundary_data$sample_run_index[boundary_data$sample_plate_id == plate])
+    stats::median(boundary_data$sample_run_index[boundary_data$sample_plate_id == plate])
   })
 
-  tibble(
+  tibble::tibble(
     sample_data_source = "x.plateID",
     sample_plate_id = names(coords),
     sample_run_index = coords,
@@ -2747,38 +2834,38 @@ plot_control_chart <- function(master_list,
                  guide$control_chart == TRUE]
   })))
 
-  data_combined <- bind_rows(
-    bind_rows(master_list$data$peakArea$imputed) %>%
-      select(contains("sample"), any_of(metabolite)) %>%
-      mutate(sample_data_source = ".peakArea"),
+  data_combined <- dplyr::bind_rows(
+    dplyr::bind_rows(master_list$data$peakArea$imputed) %>%
+      dplyr::select(dplyr::contains("sample"), dplyr::any_of(metabolite)) %>%
+      dplyr::mutate(sample_data_source = ".peakArea"),
 
-    bind_rows(master_list$data$peakArea$imputed) %>%
-      select(contains("sample"), any_of(sil_notes)) %>%
-      rowwise() %>%
-      mutate(SIL = paste(na.omit(
-        c_across(contains("SIL"))
+    dplyr::bind_rows(master_list$data$peakArea$imputed) %>%
+      dplyr::select(dplyr::contains("sample"), dplyr::any_of(sil_notes)) %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(SIL = paste(stats::na.omit(
+        dplyr::c_across(dplyr::contains("SIL"))
       ), collapse = " ")) %>%
-      ungroup() %>%
-      mutate(SIL = as.numeric(SIL)) %>%
-      rename(!!metabolite := SIL) %>%
-      select(-contains("SIL")) %>%
-      mutate(sample_data_source = ".SIL.peakArea"),
+      dplyr::ungroup() %>%
+      dplyr::mutate(SIL = as.numeric(SIL)) %>%
+      dplyr::rename(!!metabolite := SIL) %>%
+      dplyr::select(-dplyr::contains("SIL")) %>%
+      dplyr::mutate(sample_data_source = ".SIL.peakArea"),
 
-    bind_rows(master_list$data$concentration$imputed) %>%
-      select(contains("sample"), any_of(metabolite)) %>%
-      mutate(sample_data_source = "concentration.preprocessed"),
+    dplyr::bind_rows(master_list$data$concentration$imputed) %>%
+      dplyr::select(dplyr::contains("sample"), dplyr::any_of(metabolite)) %>%
+      dplyr::mutate(sample_data_source = "concentration.preprocessed"),
 
-    bind_rows(master_list$data$concentration$statTargetProcessed) %>%
-      select(contains("sample"), any_of(metabolite)) %>%
-      mutate(sample_data_source = "statTargetConcentration.preprocessed")
+    dplyr::bind_rows(master_list$data$concentration$statTargetProcessed) %>%
+      dplyr::select(dplyr::contains("sample"), dplyr::any_of(metabolite)) %>%
+      dplyr::mutate(sample_data_source = "statTargetConcentration.preprocessed")
   ) %>%
-    rename(value = !!metabolite)
+    dplyr::rename(value = !!metabolite)
 
 
-  ggplotly(
-    ggplot(
+  plotly::ggplotly(
+    ggplot2::ggplot(
       data_combined,
-      aes(
+      ggplot2::aes(
         x = sample_run_index,
         y = value,
         group = sample_name,
@@ -2788,32 +2875,32 @@ plot_control_chart <- function(master_list,
         size = sample_type_factor,
       )
     ) +
-      geom_vline(xintercept = plate_boundaries, linetype = "dashed") +
-      geom_point() +
-      geom_text(
+      ggplot2::geom_vline(xintercept = plate_boundaries, linetype = "dashed") +
+      ggplot2::geom_point() +
+      ggplot2::geom_text(
         data = annotate_label,
-        aes(x = sample_run_index, y = value, label = sample_plate_id),
+        ggplot2::aes(x = sample_run_index, y = value, label = sample_plate_id),
         inherit.aes = FALSE,
         color = "black"
       ) +
-      theme_bw() +
-      scale_shape_manual(values = master_list$project_details$plot_shape) +
-      scale_fill_manual(values = master_list$project_details$plot_fill) +
-      scale_color_manual(values = master_list$project_details$plot_colour) +
-      scale_size_manual(values = master_list$project_details$plot_size) +
-      ylab(metabolite) +
-      guides(
+      ggplot2::theme_bw() +
+      ggplot2::scale_shape_manual(values = master_list$project_details$plot_shape) +
+      ggplot2::scale_fill_manual(values = master_list$project_details$plot_fill) +
+      ggplot2::scale_color_manual(values = master_list$project_details$plot_colour) +
+      ggplot2::scale_size_manual(values = master_list$project_details$plot_size) +
+      ggplot2::ylab(metabolite) +
+      ggplot2::guides(
         shape = "none",
         size = "none",
         color = "none",
-        fill = guide_legend(title = "sample_type")
+        fill = ggplot2::guide_legend(title = "sample_type")
       ) +
-      facet_wrap(
+      ggplot2::facet_wrap(
         facets = vars(sample_data_source),
         ncol = 1,
         scales = "free_y"
       ) +
-      labs(
+      ggplot2::labs(
         title = paste0(
           metabolite,
           "; control chart; ",
@@ -2875,14 +2962,14 @@ export_xlsx_file <- function(master_list) {
       "userGuide" = master_list$summary_tables$odsAreaOverview,
       "QC.platePerformance" = master_list$summary_tables$projectOverview,
       "QC.sampleMV" = master_list$filters$samples.missingValues,
-      "QC.lipidsMV" = bind_rows(master_list$filters$lipid.missingValues$allPlates),
+      "QC.lipidsMV" = dplyr::bind_rows(master_list$filters$lipid.missingValues$allPlates),
       "QC.lipidQcRsd" = format_rsd_table(master_list),
-      "DATA.peakArea" = bind_rows(master_list$data$peakArea$sorted) %>% select(-contains("SIL")),
-      "DATA.silPeakArea" = bind_rows(master_list$data$peakArea$sorted) %>% select(contains("sample") |
-                                                                                    contains("SIL")),
-      "DATA.all.concentration" = bind_rows(master_list$data$concentration$sorted),
+      "DATA.peakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(-dplyr::contains("SIL")),
+      "DATA.silPeakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(dplyr::contains("sample") |
+                                                                                                  dplyr::contains("SIL")),
+      "DATA.all.concentration" = dplyr::bind_rows(master_list$data$concentration$sorted),
       "DATA.preProcessed.concentration" = filter_concentration(master_list, "concentration"),
-      "DATA.all.concentration.S.T." = bind_rows(master_list$data$concentration$statTargetProcessed),
+      "DATA.all.concentration.S.T." = dplyr::bind_rows(master_list$data$concentration$statTargetProcessed),
       "DATA.preProcessed.conc.S.T." = filter_concentration(master_list, "concentration[statTarget]")
     ),
     file = output_path,
@@ -2922,7 +3009,7 @@ export_html_report <- function(master_list) {
       "#### ",
       i,
       "\n",
-      "```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=7}\n",
+      "```{r ",i,", echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=7}\n",
       "master_list$control_charts[['",
       i,
       "']]\n",
@@ -2954,7 +3041,7 @@ export_html_report <- function(master_list) {
     output_file = basename(output_file)
   )
 
-  browseURL(output_file)
+  utils::browseURL(output_file)
   unlink(temp_file)
 
   return(master_list)
@@ -3001,10 +3088,10 @@ export_master_list_rda <- function(master_list) {
 #' @return A tibble containing the user guide with key metrics and descriptions.
 create_user_guide <- function(master_list) {
   #Create sample metrics
-  sample_tags <- bind_rows(master_list$data$peakArea$sorted) %>%
-    select(sample_type_factor) %>%
+  sample_tags <- dplyr::bind_rows(master_list$data$peakArea$sorted) %>%
+    dplyr::select(sample_type_factor) %>%
     unique() %>%
-    pull(sample_type_factor) %>%
+    dplyr::pull(sample_type_factor) %>%
     as.character() %>%
     .[!grepl("sample", .)]
 
@@ -3019,6 +3106,7 @@ create_user_guide <- function(master_list) {
       "studySamples",
       paste0(sample_tags),
       "total.LipidFeatures",
+      "total.MatchedLipidFeatures",
       "total.SIL.Int.Stds",
       "",
       "TAB_DESCRIPTION:",
@@ -3041,25 +3129,28 @@ create_user_guide <- function(master_list) {
         collapse = ","
       ),
       length(unique(
-        bind_rows(master_list$data$peakArea$sorted)$sample_plate_id
+        dplyr::bind_rows(master_list$data$peakArea$sorted)$sample_plate_id
       )),
-      nrow(bind_rows(master_list$data$peakArea$sorted)),
-      nrow(filter(
-        bind_rows(master_list$data$peakArea$sorted),
+      nrow(dplyr::bind_rows(master_list$data$peakArea$sorted)),
+      nrow(dplyr::filter(
+        dplyr::bind_rows(master_list$data$peakArea$sorted),
         sample_type_factor == "sample"
       )),
       sapply(sample_tags, function(tag)
         nrow(
-          filter(
-            bind_rows(master_list$data$peakArea$sorted),
+          dplyr::filter(
+            dplyr::bind_rows(master_list$data$peakArea$sorted),
             sample_type_factor == tag
           )
         )),
       ncol(
-        bind_rows(master_list$data$peakArea$sorted) %>% select(-contains("sample"), -contains("SIL"))
+        dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(-dplyr::contains("sample"), -dplyr::contains("SIL"))
       ),
       ncol(
-        bind_rows(master_list$data$peakArea$sorted) %>% select(contains("SIL"))
+        dplyr::bind_rows(master_list$data$concentration$statTargetProcessed) %>% dplyr::select(-dplyr::contains("sample"))
+      ),
+      ncol(
+        dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(dplyr::contains("SIL"))
       ),
       "",
       "",
@@ -3067,8 +3158,8 @@ create_user_guide <- function(master_list) {
       "detailed overview of sample quality (missing values)",
       "detailed overview of lipid quality (missing values)",
       "detailed overview of lipid quality (% RSD in QC samples)",
-      "lipid target peak area integrals (skylineMS)",
-      "stable isotope labelled internal standard peak area integrals (skylineMS)",
+      "lipid target peak area integrals (PeakForgeR)",
+      "stable isotope labelled internal standard peak area integrals (PeakForgeR)",
       "peakArea >> imputed >> SIL ratio >> concentration factor adjusted",
       "peakArea >> imputed >> SIL ratio >> concentration factor adjusted >> statTarget correction",
       "same as above, but filtered"
@@ -3086,17 +3177,17 @@ create_user_guide <- function(master_list) {
 #' @return A tibble containing the formatted RSD table with rounded values and transposed structure.
 format_rsd_table <- function(master_list) {
   master_list$filters$rsd %>%
-    mutate(across(!contains("data"), round, 2)) %>%
-    add_column(data = paste0(.$dataSource, ".", .$dataBatch),
+    dplyr::mutate(dplyr::across(!dplyr::contains("data"), round, 2)) %>%
+    tibble::add_column(data = paste0(.$dataSource, ".", .$dataBatch),
                .before = 1) %>%
-    select(-dataSource, -dataBatch) %>%
+    dplyr::select(-dataSource, -dataBatch) %>%
     t() %>%
     as.data.frame() %>%
-    rownames_to_column() %>%
-    setNames(.[1, ]) %>%
-    filter(data != "data") %>%
-    as_tibble() %>%
-    mutate(across(!contains("data"), as.numeric))
+    tibble::rownames_to_column() %>%
+    stats::setNames(.[1, ]) %>%
+    dplyr::filter(data != "data") %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(dplyr::across(!dplyr::contains("data"), as.numeric))
 }
 
 #' Filter Concentration Data
@@ -3108,19 +3199,19 @@ format_rsd_table <- function(master_list) {
 #' @param source The data source to filter (e.g., "concentration").
 #' @return A tibble containing the filtered concentration data.
 filter_concentration <- function(master_list, source) {
-  data <- bind_rows(master_list$data$concentration[[if (source == "concentration")
+  data <- dplyr::bind_rows(master_list$data$concentration[[if (source == "concentration")
     "imputed"
     else
       "statTargetProcessed"]])
   rsd_filter <- master_list$filters$rsd %>%
-    filter(dataSource == source, dataBatch == "allBatches") %>%
-    select(-contains("data")) %>%
-    summarise(across(everything(), ~ ifelse(. > 30, TRUE, FALSE))) %>%
-    select(where(~ any(., na.rm = TRUE))) %>%
+    dplyr::filter(dataSource == source, dataBatch == "allBatches") %>%
+    dplyr::select(-dplyr::contains("data")) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), ~ ifelse(. > 30, TRUE, FALSE))) %>%
+    dplyr::select(tidyselect::where(~ any(., na.rm = TRUE))) %>%
     names()
 
   data %>%
-    filter(!sample_name %in% master_list$filters$failed_samples) %>%
-    select(-any_of(master_list$filters$failed_lipids)) %>%
-    select(-any_of(rsd_filter))
+    dplyr::filter(!sample_name %in% master_list$filters$failed_samples) %>%
+    dplyr::select(-dplyr::any_of(master_list$filters$failed_lipids)) %>%
+    dplyr::select(-dplyr::any_of(rsd_filter))
 }

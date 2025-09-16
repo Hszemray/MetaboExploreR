@@ -1145,3 +1145,984 @@ test_that("initialise_statTarget_environment sets up environment and returns cor
 })
 
 
+test_that("create_pheno_file works with typical input", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2", "S3", "S4"),
+    sample_plate_id = c("A", "A", "B", "B"),
+    sample_type = c("qc", "sample", "sample", "qc"),
+    sample_run_index = c(2, 1, 3, 4)
+  )
+
+  FUNC_list <- list(
+    master_data = master_data,
+    project_dir = tempdir(),
+    PhenoFile = list()
+  )
+
+  result <- create_pheno_file(FUNC_list)
+
+  expect_true("PhenoFile" %in% names(result))
+  expect_true("template_qc_order" %in% names(result$PhenoFile))
+  expect_true("template_sample_id" %in% names(result$PhenoFile))
+  expect_equal(nrow(result$PhenoFile$template_sample_id), 4)
+  expect_true(file.exists(file.path(result$project_dir, paste0(Sys.Date(), "_signal_correction_results"), "PhenoFile.csv")))
+})
+
+test_that("create_pheno_file handles edge case: no QC samples", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2"),
+    sample_plate_id = c("A", "A"),
+    sample_type = c("sample", "sample"),
+    sample_run_index = c(1, 2)
+  )
+
+  FUNC_list <- list(
+    master_data = master_data,
+    project_dir = tempdir(),
+    PhenoFile = list()
+  )
+
+  result <- create_pheno_file(FUNC_list)
+
+  expect_equal(sum(is.na(result$PhenoFile$template_sample_id$class)), 0)
+  expect_equal(nrow(result$PhenoFile$template_sample_id), 2)
+})
+
+test_that("create_pheno_file handles edge case: all QC samples", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2"),
+    sample_plate_id = c("A", "A"),
+    sample_type = c("qc", "qc"),
+    sample_run_index = c(1, 2)
+  )
+
+  FUNC_list <- list(
+    master_data = master_data,
+    project_dir = tempdir(),
+    PhenoFile = list()
+  )
+
+  result <- create_pheno_file(FUNC_list)
+
+  expect_equal(sum(is.na(result$PhenoFile$template_sample_id$class)), 2)
+  expect_equal(nrow(result$PhenoFile$template_sample_id), 2)
+})
+
+test_that("create_pheno_file throws error with missing required columns", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2"),
+    sample_plate_id = c("A", "A"),
+    sample_run_index = c(1, 2)
+    # Missing sample_type
+  )
+
+  FUNC_list <- list(
+    master_data = master_data,
+    project_dir = tempdir(),
+    PhenoFile = list()
+  )
+
+  expect_error(create_pheno_file(FUNC_list), "Column `sample_type` doesn't exist")
+})
+
+test_that("create_pheno_file throws error with non-dataframe master_data", {
+  FUNC_list <- list(
+    master_data = "not a dataframe",
+    project_dir = tempdir(),
+    PhenoFile = list()
+  )
+
+  expect_error(create_pheno_file(FUNC_list))
+})
+
+
+test_that("create_profile_file works with typical input", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2", "S3", "S4"),
+    Met1 = c(1.1, 2.2, 3.3, 4.4),
+    Met2 = c(5.5, 6.6, 7.7, 8.8),
+    SIL_Met = c(9.9, 10.1, 11.2, 12.3)
+  )
+
+  metabolite_list <- c("Met1", "Met2", "SIL_Met")
+
+  pheno <- tibble(
+    sample_name = c("S1", "S2", "S3", "S4"),
+    sample = c("sample1", "sample2", "sample3", "sample4")
+  )
+
+  FUNC_list <- list(
+    master_data = master_data,
+    metabolite_list = metabolite_list,
+    project_dir = tempdir(),
+    PhenoFile = list(template_sample_id = pheno)
+  )
+
+  result <- create_profile_file(FUNC_list)
+
+  expect_true("ProfileFile" %in% names(result))
+  expect_true("ProfileFile" %in% names(result$ProfileFile))
+  expect_true("metabolite_list" %in% names(result$ProfileFile))
+  expect_equal(nrow(result$ProfileFile$ProfileFile), 2) # SIL metabolite excluded
+  expect_true(file.exists(file.path(result$project_dir, paste0(Sys.Date(), "_signal_correction_results"), "ProfileFile.csv")))
+})
+
+test_that("create_profile_file handles empty metabolite list", {
+  master_data <- tibble(sample_name = c("S1", "S2"))
+  metabolite_list <- character(0)
+  pheno <- tibble(sample_name = c("S1", "S2"), sample = c("sample1", "sample2"))
+
+  FUNC_list <- list(
+    master_data = master_data,
+    metabolite_list = metabolite_list,
+    project_dir = tempdir(),
+    PhenoFile = list(template_sample_id = pheno)
+  )
+
+  expect_error(create_profile_file(FUNC_list), "metabolite_list cannot be empty")
+})
+
+test_that("create_profile_file errors with missing sample_name in master_data", {
+  master_data <- tibble(Met1 = c(1, 2), Met2 = c(3, 4))
+  metabolite_list <- c("Met1", "Met2")
+  pheno <- tibble(sample_name = c("S1", "S2"), sample = c("sample1", "sample2"))
+
+  FUNC_list <- list(
+    master_data = master_data,
+    metabolite_list = metabolite_list,
+    project_dir = tempdir(),
+    PhenoFile = list(template_sample_id = pheno)
+  )
+
+  expect_error(create_profile_file(FUNC_list), "object 'sample_name' not found")
+})
+
+test_that("create_profile_file errors with non-existent metabolite columns", {
+  master_data <- tibble(sample_name = c("S1", "S2"), Met1 = c(1, 2))
+  metabolite_list <- c("Met1", "MetX") # MetX does not exist
+  pheno <- tibble(sample_name = c("S1", "S2"), sample = c("sample1", "sample2"))
+
+  FUNC_list <- list(
+    master_data = master_data,
+    metabolite_list = metabolite_list,
+    project_dir = tempdir(),
+    PhenoFile = list(template_sample_id = pheno)
+  )
+
+  expect_error(create_profile_file(FUNC_list), "Element `MetX` doesn't exist")
+
+})
+
+test_that("create_profile_file errors with malformed PhenoFile", {
+  master_data <- tibble(
+    sample_name = c("S1", "S2"),
+    Met1 = c(1.1, 2.2),
+    Met2 = c(3.3, 4.4)
+  )
+
+  metabolite_list <- c("Met1", "Met2")
+
+  FUNC_list <- list(
+    master_data = master_data,
+    metabolite_list = metabolite_list,
+    project_dir = tempdir(),
+    PhenoFile = list(template_sample_id = NULL) # Missing template_sample_id
+  )
+
+  expect_error(create_profile_file(FUNC_list))
+})
+
+
+test_that("clean_statTarget_output handles sample1 column correctly", {
+  input <- tibble(
+    sample = c("class", "M1", "M2"),
+    sample1 = c("not_numeric", "1.1", "2.2"),
+    sample2 = c("not_numeric", "3.3", "4.4")
+  )
+
+  result <- clean_statTarget_output(input)
+
+  expect_equal(colnames(result), c("name", "sample1", "sample2"))
+  expect_false(any(result$name == "class"))
+  expect_true(all(sapply(result[-1], is.numeric)))
+})
+
+test_that("clean_statTarget_output handles M1 column correctly", {
+  input <- data.frame(
+    M1 = c("class", "sample", "5.5"),
+    M2 = c("class", "sample", "6.6"),
+    row.names = c("class", "sample", "Met1")
+  )
+
+  result <- clean_statTarget_output(input)
+
+  expect_true("name" %in% colnames(result))
+  expect_false(any(result$name %in% c("class", "sample")))
+})
+
+test_that("clean_statTarget_output returns unchanged data if no matching columns", {
+  input <- tibble(
+    A = c("x", "y"),
+    B = c("1", "2")
+  )
+
+  result <- clean_statTarget_output(input)
+
+  expect_equal(result, input)
+})
+
+test_that("transpose_and_merge_corrected returns expected structure", {
+  FUNC_list <- list(
+    corrected_data = list(data = tibble(name = "M1", sample1 = "1.1")),
+    ProfileFile = list(metabolite_list = tibble(name = "M1", metabolite_code = "M1")),
+    PhenoFile = list(template_sample_id = tibble(
+        sample = "sample1",
+        sample_name = "S1",
+        batch = 1,
+        class = "qc",
+        order = 1
+      )),
+    master_data = tibble(
+      sample_name = "S1",
+      sample_run_index = 1,
+      sample_timestamp = "2025-09-08 10:00:00",
+      sample_plate_id = "A",
+      sample_plate_order = 1,
+      sample_matrix = "plasma",
+      sample_type = "qc",
+      sample_type_factor = "qc",
+      sample_type_factor_rev = "rev_qc",
+      sample_data_source = "internal"
+    )
+  )
+
+  result <- transpose_and_merge_corrected(FUNC_list)
+
+  expect_true("data_transposed" %in% names(result$corrected_data))
+  expect_equal(nrow(result$corrected_data$data_transposed), 1)
+  expect_equal(colnames(result$corrected_data$data_transposed)[1], "sample_run_index")
+})
+
+test_that("transpose_and_merge_corrected errors with missing master_data columns", {
+  FUNC_list <- list(
+    corrected_data = list(data = tibble(name = "M1", sample1 = "1.1")),
+    ProfileFile = list(metabolite_list = tibble(name = "M1", metabolite_code = "M1")),
+    PhenoFile = list(template_sample_id = tibble(
+      sample = "sample1",
+      sample_name = "S1",
+      batch = 1,
+      class = "qc",
+      order = 1
+    )),
+    master_data = tibble(sample_name = "S1") # missing required columns
+  )
+
+  expect_error(transpose_and_merge_corrected(FUNC_list), "Can't select columns that don't exist")
+})
+
+test_that("transpose_and_merge_corrected handles empty corrected data", {
+  FUNC_list <- list(
+    corrected_data = list(data = tibble()),
+    ProfileFile = list(metabolite_list = tibble(name = "M1", metabolite_code = "M1")),
+    PhenoFile = list(template_sample_id = tibble(sample = "sample1", sample_name = "S1")),
+    master_data = tibble(sample_name = "S1")
+  )
+
+  expect_error(transpose_and_merge_corrected(FUNC_list), "Column `name` doesn't exist")
+
+})
+
+test_that("transpose_and_merge_corrected converts values to numeric", {
+  FUNC_list <- list(
+    corrected_data = list(data = tibble(name = "M1", sample1 = "1.1")),
+    ProfileFile = list(metabolite_list = tibble(name = "M1", metabolite_code = "M1")),
+    PhenoFile = list(template_sample_id = tibble(sample = "sample1",
+                                                 sample_name = "S1",
+                                                 batch = 1,
+                                                 class = "qc",
+                                                 order = 1)),
+    master_data = tibble(
+      sample_name = "S1",
+      sample_run_index = 1,
+      sample_timestamp = "2025-09-08 10:00:00",
+      sample_plate_id = "A",
+      sample_plate_order = 1,
+      sample_matrix = "plasma",
+      sample_type = "qc",
+      sample_type_factor = "qc",
+      sample_type_factor_rev = "rev_qc",
+      sample_data_source = "internal"
+    )
+  )
+
+  result <- transpose_and_merge_corrected(FUNC_list)
+  numeric_cols <- result$corrected_data$data_transposed %>% select(!contains("sample"))
+  expect_true(all(sapply(numeric_cols, function(x) all(!is.na(as.numeric(x))))))
+
+})
+
+test_that("adjust_qc_means correctly adjusts QC means with typical input", {
+  FUNC_list <- list(
+    master_data = tibble(
+      sample_type = c("qc", "qc", "sample"),
+      metabolite1 = c(10, 20, 30),
+      metabolite2 = c(5, 15, 25)
+    ),
+    corrected_data = list(
+      data_transposed = tibble(
+        sample_type = c("qc", "qc", "sample"),
+        sample_type_factor = c("QC", "QC", "Sample"),
+        metabolite1 = c(12, 24, 36),
+        metabolite2 = c(6, 18, 30)
+      )
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(
+        imputed = list(
+          tibble(sample_type = c("qc", "qc", "sample"),
+                 sample_type_factor = c("QC", "QC", "Sample"))
+        )
+      )
+    )
+  )
+
+  result <- adjust_qc_means(FUNC_list, master_list)
+
+  expect_true("data_qc_mean_adjusted" %in% names(result$corrected_data))
+  expect_equal(result$corrected_data$data_qc_mean_adjusted$metabolite1[1], 10)
+  expect_equal(result$corrected_data$data_qc_mean_adjusted$metabolite2[1], 5)
+  expect_equal(result$corrected_data$data_qc_mean_adjusted$sample_type[1], "qc")
+})
+
+test_that("adjust_qc_means handles edge case with zero original mean", {
+  FUNC_list <- list(
+    master_data = tibble(
+      sample_type = c("qc", "qc"),
+      metabolite1 = c(0, 0),
+      metabolite2 = c(10, 20)
+    ),
+    corrected_data = list(
+      data_transposed = tibble(
+        sample_type = c("qc", "qc"),
+        sample_type_factor = c("QC", "QC"),
+        metabolite1 = c(1, 2),
+        metabolite2 = c(12, 24)
+      )
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(
+        imputed = list(
+          tibble(sample_type = c("qc", "qc"),
+                 sample_type_factor = c("QC", "QC"))
+        )
+      )
+    )
+  )
+
+  expect_warning(adjust_qc_means(FUNC_list, master_list))
+})
+
+test_that("adjust_qc_means throws error with missing required columns", {
+  FUNC_list <- list(
+    master_data = tibble(sample_type = c("qc", "qc")),
+    corrected_data = list(
+      data_transposed = tibble(sample_type = c("qc", "qc"),
+                               sample_type_factor = c("QC", "QC"))
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(
+        imputed = list(
+          tibble(sample_type = c("qc", "qc"),
+                 sample_type_factor = c("QC", "QC"))
+        )
+      )
+    )
+  )
+
+  expect_error(adjust_qc_means(FUNC_list, master_list))
+})
+
+
+test_that("integrate_corrected_data integrates corrected data by sample_plate_id", {
+  corrected_data <- tibble(
+    sample_plate_id = c("plate1", "plate1", "plate2"),
+    sample_type = c("qc", "sample", "qc"),
+    sample_type_factor = c("QC", "Sample", "QC"),
+    metabolite1 = c(1, 2, 3)
+  )
+
+  FUNC_list <- list(
+    corrected_data = list(
+      data_qc_mean_adjusted = corrected_data
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(),
+      peakArea = list()
+    )
+  )
+
+  result <- integrate_corrected_data(master_list, FUNC_list)
+
+  expect_named(result$data$concentration$corrected, c("plate1", "plate2"))
+  expect_equal(result$data$concentration$corrected$plate1$sample_data_source[1], ".peakAreaCorrected")
+  expect_equal(result$data$peakArea$statTargetProcessed$plate1$sample_data_source[1], "concentration.statTarget")
+  expect_equal(result$data$concentration$statTargetProcessed$plate2$sample_plate_id[1], "plate2")
+})
+
+test_that("integrate_corrected_data handles missing sample_plate_id column", {
+  FUNC_list <- list(
+    corrected_data = list(
+      data_qc_mean_adjusted = tibble(
+        sample_type = c("qc", "sample"),
+        metabolite1 = c(1, 2)
+      )
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(),
+      peakArea = list()
+    )
+  )
+
+  expect_error(integrate_corrected_data(master_list, FUNC_list), "sample_plate_id")
+})
+
+test_that("integrate_corrected_data handles empty corrected data", {
+  FUNC_list <- list(
+    corrected_data = list(
+      data_qc_mean_adjusted = tibble(
+        sample_plate_id = character(),
+        sample_type = character(),
+        sample_type_factor = character(),
+        metabolite1 = numeric()
+      )
+    )
+  )
+
+  master_list <- list(
+    data = list(
+      concentration = list(),
+      peakArea = list()
+    )
+  )
+
+  result <- integrate_corrected_data(master_list, FUNC_list)
+
+  expect_equal(length(result$data$concentration$corrected), 0)
+  expect_equal(length(result$data$peakArea$statTargetProcessed), 0)
+  expect_equal(length(result$data$concentration$statTargetProcessed), 0)
+})
+
+test_that("integrate_corrected_data throws error with NULL inputs", {
+  expect_error(integrate_corrected_data(NULL, NULL))
+  expect_error(integrate_corrected_data(list(), NULL))
+  expect_error(integrate_corrected_data(NULL, list()))
+})
+
+#Data Filtering set qc----
+test_that("qcCheckR_set_qc sets QC type when one valid QC is present", {
+  master_list <- list(
+    project_details = list(
+      project_name = "TestProject",
+      global_qc_pass = c(pqc = "pass"),
+      qc_passed = list()
+    )
+  )
+  result <- suppressMessages(qcCheckR_set_qc(master_list))
+  expect_equal(result$project_details$qc_type, "pqc")
+  expect_type(result$filters, "list")
+})
+
+test_that("qcCheckR_set_qc uses user-supplied QC when multiple valid QCs exist", {
+  master_list <- list(
+    project_details = list(
+      project_name = "TestProject",
+      global_qc_pass = c(pqc = "pass", ltr = "pass"),
+      qc_type = "ltr",
+      qc_passed = list()
+    )
+  )
+
+  result <- suppressMessages(qcCheckR_set_qc(master_list))
+  expect_equal(result$project_details$qc_type, "ltr")
+})
+
+test_that("qcCheckR_set_qc errors when multiple QCs pass but user-supplied QC is invalid", {
+  master_list <- list(
+    project_details = list(
+      project_name = "TestProject",
+      global_qc_pass = c(pqc = "pass", ltr = "pass"),
+      qc_type = "invalid_qc",
+      qc_passed = list()
+    )
+  )
+
+  expect_error(suppressMessages(qcCheckR_set_qc(master_list)), "STOPPING SCRIPT")
+})
+
+test_that("qcCheckR_set_qc errors when no valid QC types are present", {
+  master_list <- list(
+    project_details = list(
+      project_name = "TestProject",
+      global_qc_pass = c(pqc = "fail", ltr = "fail"),
+      qc_passed = list()
+    )
+  )
+  expect_error(suppressMessages(qcCheckR_set_qc(master_list)), "STOPPING SCRIPT")
+})
+
+test_that("qcCheckR_set_qc errors when global_qc_pass is NULL", {
+  master_list <- list(
+    project_details = list(
+      project_name = "TestProject",
+      global_qc_pass = NULL,
+      qc_passed = list()
+    )
+  )
+  expect_error(suppressMessages(qcCheckR_set_qc(master_list)), "STOPPING SCRIPT")
+})
+
+#Sample Filtering ----
+test_that("qcCheckR_sample_filter flags samples correctly with valid input", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 20),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = data.frame(
+            sample_run_index = 1:3,
+            sample_name = c("S1", "S2", "S3"),
+            sample_plate_id = rep("plate1", 3),
+            sample_type_factor = rep("Sample", 3),
+            lipid1 = c(10000, 2000, 3000),
+            lipid2 = c(12000, 1000, 4000),
+            SIL1 = c(8000, 1000, 2000),
+            SIL2 = c(9000, 500, 1000)
+          )
+        )
+      )
+    )
+  )
+  result <- qcCheckR_sample_filter(master_list)
+
+  expect_true("samples.missingValues" %in% names(result$filters))
+  expect_true("failed_samples" %in% names(result$filters))
+  expect_type(result$filters$failed_samples, "character")
+  expect_gt(length(result$filters$failed_samples), 0)
+})
+
+test_that("qcCheckR_sample_filter returns no failed samples when all values are good", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 20),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = data.frame(
+            sample_run_index = 1:2,
+            sample_name = c("S1", "S2"),
+            sample_plate_id = rep("plate1", 2),
+            sample_type_factor = rep("Sample", 2),
+            lipid1 = c(10000, 11000),
+            lipid2 = c(12000, 13000),
+            SIL1 = c(8000, 9000),
+            SIL2 = c(9000, 9500)
+          )
+        )
+      )
+    )
+  )
+  result <- qcCheckR_sample_filter(master_list)
+  expect_equal(length(result$filters$failed_samples), 0)
+})
+
+test_that("qcCheckR_sample_filter throws error with missing columns", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 20),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = data.frame(
+            sample_name = c("S1", "S2"),
+            lipid1 = c(10000, 2000)
+          )
+        )
+      )
+    )
+  )
+  expect_error(qcCheckR_sample_filter(master_list), "Column `sample_run_index` doesn't exist")
+})
+
+test_that("qcCheckR_sample_filter handles empty batch gracefully", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 20),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = data.frame()
+        )
+      )
+    )
+  )
+  expect_error(qcCheckR_sample_filter(master_list), "Column `sample_run_index` doesn't exist")
+})
+
+#SIL Filter ----
+test_that("qcCheckR_sil_IntStd_filter correctly flags SIL internal standards", {
+  master_list <- list(
+    project_details = list(),
+    templates = list(`Plate SIL version` = list(batch1 = "v1")),
+    filters = list(
+      samples.missingValues = tibble(
+        sample_name = c("S1", "S2", "S3"),
+        sample.flag = c(0, 0, 1)
+      )
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2", "S3"),
+            sample_plate_id = c("plate1", "plate1", "plate1"),
+            SIL_A = c(6000, 4000, 3000),
+            SIL_B = c(7000, NA, Inf)
+          )
+        )
+      )
+    )
+  )
+
+  result <- qcCheckR_sil_IntStd_filter(master_list)
+
+  expect_true("sil.intStd.missingValues" %in% names(result$filters))
+  expect_true("summary" %in% names(result$filters$sil.intStd.missingValues))
+  expect_true("failed_sil.intStds" %in% names(result$filters))
+  expect_type(result$filters$failed_sil.intStds, "character")
+})
+
+test_that("qcCheckR_sil_IntStd_filter handles absence of SIL columns gracefully", {
+  master_list <- list(
+    project_details = list(),
+    templates = list(`Plate SIL version` = list(batch1 = "v1")),
+    filters = list(
+      samples.missingValues = tibble(
+        sample_name = c("S1", "S2"),
+        sample.flag = c(0, 0)
+      )
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            lipid1 = c(10000, 12000)
+          )
+        )
+      )
+    )
+  )
+
+  result <- qcCheckR_sil_IntStd_filter(master_list)
+
+  expect_true(nrow(result$filters$sil.intStd.missingValues$summary) == 0)
+  expect_equal(length(result$filters$failed_sil.intStds), 0)
+})
+
+test_that("qcCheckR_sil_IntStd_filter handles all samples flagged", {
+  master_list <- list(
+    project_details = list(),
+    templates = list(`Plate SIL version` = list(batch1 = "v1")),
+    filters = list(
+      samples.missingValues = tibble(
+        sample_name = c("S1", "S2"),
+        sample.flag = c(1, 1)
+      )
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            SIL_A = c(6000, 4000),
+            SIL_B = c(7000, 3000)
+          )
+        )
+      )
+    )
+  )
+  result <- qcCheckR_sil_IntStd_filter(master_list)
+
+  expect_true(all(result$filters$sil.intStd.missingValues$summary$totalMissingValues == 0))
+  expect_equal(length(result$filters$failed_sil.intStds), 0)
+})
+
+test_that("qcCheckR_sil_IntStd_filter throws error with missing template version", {
+  master_list <- list(
+    project_details = list(),
+    templates = list(),
+    filters = list(
+      samples.missingValues = tibble(
+        sample_name = c("S1", "S2"),
+        sample.flag = c(0, 0)
+      )
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            SIL_A = c(6000, 4000),
+            SIL_B = c(7000, 3000)
+          )
+        )
+      )
+    )
+  )
+
+  expect_error(qcCheckR_sil_IntStd_filter(master_list), "Missing required column: template_version")
+})
+
+
+#Lipid Filter ----
+test_that("qcCheckR_lipid_filter flags lipids correctly with valid input", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 50),
+    templates = list(
+      `Plate SIL version` = list(batch1 = "v1"),
+      mrm_guides = list(v1 = list(SIL_guide = tibble(Note = "SIL_A", `Precursor Name` = "lipid1")))
+    ),
+    filters = list(
+      samples.missingValues = tibble(sample_name = c("S1", "S2"), sample.flag = c(0, 0)),
+      failed_sil.intStds = "SIL_A"
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            lipid1 = c(4000, 3000),
+            lipid2 = c(6000, NA)
+          )
+        )
+      )
+    )
+  )
+
+  result <- qcCheckR_lipid_filter(master_list)
+
+  expect_true("lipid.missingValues" %in% names(result$filters))
+  expect_true("failed_lipids" %in% names(result$filters))
+  expect_type(result$filters$failed_lipids, "character")
+  expect_true(any(result$filters$lipid.missingValues$summary$flag.Lipid.Plate == 1))
+
+})
+
+test_that("qcCheckR_lipid_filter handles all samples flagged", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 50),
+    templates = list(`Plate SIL version` = list(batch1 = "v1")),
+    filters = list(
+      samples.missingValues = tibble(sample_name = c("S1", "S2"), sample.flag = c(1, 1)),
+      failed_sil.intStds = character()
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            lipid1 = c(4000, 3000),
+            lipid2 = c(6000, NA)
+          )
+        )
+      )
+    )
+  )
+
+  result <- qcCheckR_lipid_filter(master_list)
+
+
+  expect_true("lipid.missingValues" %in% names(result$filters))
+  expect_true(nrow(result$filters$lipid.missingValues$summary) >= 0)
+  expect_true(all(result$filters$lipid.missingValues$summary$silFilter.flag.Lipid == 0))
+
+})
+
+test_that("qcCheckR_lipid_filter throws error with missing template version", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 50),
+    templates = list(),
+    filters = list(
+      samples.missingValues = tibble(sample_name = c("S1", "S2"), sample.flag = c(0, 0)),
+      failed_sil.intStds = character()
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            lipid1 = c(4000, 3000),
+            lipid2 = c(6000, NA)
+          )
+        )
+      )
+    )
+  )
+
+  expect_error(qcCheckR_lipid_filter(master_list), "Missing template version")
+
+})
+
+test_that("qcCheckR_lipid_filter handles absence of lipid columns gracefully", {
+  master_list <- list(
+    project_details = list(mv_sample_threshold = 50),
+    templates = list(`Plate SIL version` = list(batch1 = "v1")),
+    filters = list(
+      samples.missingValues = tibble(sample_name = c("S1", "S2"), sample.flag = c(0, 0)),
+      failed_sil.intStds = character()
+    ),
+    data = list(
+      peakArea = list(
+        sorted = list(
+          batch1 = tibble(
+            sample_name = c("S1", "S2"),
+            sample_plate_id = c("plate1", "plate1"),
+            SIL_A = c(4000, 3000),
+            SIL_B = c(6000, NA)
+          )
+        )
+      )
+    )
+  )
+  result <- qcCheckR_lipid_filter(master_list)
+
+  expect_true("lipid.missingValues" %in% names(result$filters))
+  expect_equal(nrow(result$filters$lipid.missingValues$summary), 0)
+  expect_equal(length(result$filters$failed_lipids), 0)
+})
+
+#RSD Filter----
+test_that("qcCheckR_RSD_filter calculates RSDs correctly for valid QC data", {
+  master_list <- list(
+    filters = list(failed_samples = c(0)),
+    data = list(
+      peakArea = list(
+        imputed = list(
+            sample_name = c("QC1", "QC2","QC3"),
+            sample_type = c("qc", "qc", "qc"),
+            feature1 = c(100, 110, 120),
+            feature2 = c(200, 190, 180)
+          )
+        ),
+      concentration = list(
+        imputed = list(
+            sample_name = c("QC1", "QC2","QC3"),
+            sample_type = c("qc", "qc", "qc"),
+            feature1 = c(10, 12, 14),
+            feature2 = c(20, 18, 16)
+            )
+          ),
+        statTargetProcessed = list(
+          imputed = list(
+              sample_name = c("QC1", "QC2","QC3"),
+              sample_type = c("qc", "qc", "qc"),
+              feature1 = c(10, 11, 12),
+              feature2 = c(19, 18, 17)
+        )
+      )
+    )
+  )
+
+
+  result <- qcCheckR_RSD_filter(master_list)
+
+  expect_true("rsd" %in% names(result$filters))
+  expect_s3_class(result$filters$rsd, "tbl_df")
+  expect_true(all(c("dataSource", "dataBatch") %in% names(result$filters$rsd)))
+  expect_true(all(sapply(result$filters$rsd[-c(1, 2)], is.numeric)))
+})
+
+test_that("qcCheckR_RSD_filter skips batches with no QC samples", {
+  master_list <- list(
+    filters = list(failed_samples = character()),
+    data = list(
+      peakArea = list(
+        imputed = list(
+          batch1 = tibble::tibble(
+            sample_name = c("S1", "S2"),
+            sample_type = c("sample", "sample"),
+            feature1 = c(100, 110)
+          )
+        )
+      ),
+      concentration = list(imputed = list()),
+      statTargetProcessed = list()
+    )
+  )
+
+  result <- qcCheckR_RSD_filter(master_list)
+
+  expect_true(nrow(result$filters$rsd) == 0)
+})
+
+test_that("qcCheckR_RSD_filter skips failed QC samples", {
+  master_list <- list(
+    filters = list(failed_samples = c("QC1", "QC2")),
+    data = list(
+      peakArea = list(
+        imputed = list(
+          batch1 = tibble::tibble(
+            sample_name = c("QC1", "QC2"),
+            sample_type = c("qc", "qc"),
+            feature1 = c(100, 110)
+          )
+        )
+      ),
+      concentration = list(imputed = list()),
+      statTargetProcessed = list()
+    )
+  )
+
+  result <- qcCheckR_RSD_filter(master_list)
+
+  expect_equal(nrow(result$filters$rsd), 0)
+})
+
+test_that("qcCheckR_RSD_filter throws error if required columns are missing", {
+  master_list <- list(
+    filters = list(failed_samples = character()),
+    data = list(
+      peakArea = list(
+        imputed = list(
+          batch1 = tibble::tibble(
+            feature1 = c(100, 110)
+          )
+        )
+      ),
+      concentration = list(imputed = list()),
+      statTargetProcessed = list()
+    )
+  )
+
+  expect_error(qcCheckR_RSD_filter(master_list), "object 'sample_name' not found")
+})
+
+

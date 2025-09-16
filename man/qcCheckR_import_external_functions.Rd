@@ -6,3 +6,4 @@
 \description{
 Import specific functions from packages
 }
+\keyword{internal}

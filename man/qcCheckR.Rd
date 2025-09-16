@@ -14,7 +14,7 @@ qcCheckR(
 )
 }
 \arguments{
-\item{user_name}{A character string specifying the name of the user running the QC checks.}
+\item{user_name}{A character string specifying the name of the user.}
 
 \item{project_directory}{A character string specifying the path to the project directory.}
 
@@ -22,16 +22,67 @@ qcCheckR(
 
 \item{QC_sample_label}{A character string containing the key tags to filter QC samples from file names.  E.g. "qc".}
 
-\item{sample_tags}{A character vector specifying the tags to filter sample types from file names. E.g. c("sample","control","blank", "qc").}
+\item{sample_tags}{A character vector specifying the tags to filter sample types from file names. E.g. c("sample","control", "qc").}
 
-\item{mv_threshold}{A numeric value  between 0 and 100 specifying the threshold for missing values in the data. Default is 0.5 (50\%).}
+\item{mv_threshold}{A numeric value  between 0 and 100 specifying the threshold for missing values in the data. Default is 50(50\%).}
 }
 \value{
 A list containing the processed data and generated reports.
 }
 \description{
 This function performs a series of quality control checks on the data within a specified project directory.
-If you have not used the SkylineR function to generate reports please ensure your report file names contain "\emph{skylineR_1}" to ensure the function can correctly identify the files in your project directory.
+}
+\details{
+Capable of combining multiple cohort and methods if a common long term reference sample has been used throughout and target metabolite naming conventions have been preserved.
+To allow this feature all methods must be included in the mrm_template_list.
+Please note only matching metabolite feature names across cohorts/methods will be processed.
+
+If you have not used the MetaboExploreR::PeakForgeR function to generate reports please ensure your report file names contains ""\emph{PeakForgeR}"" to ensure the function can correctly identify the files in your project directory.
+
+\itemize{
+\item \strong{Input Validation:}
+\itemize{
+\item Validate user_name
+\item Validate project_directory
+\item Validate mrm_template_list
+\item Validate QC_sample_label
+\item Validate sample_tags
+\item Validate mv_threshold
+}
+\item \strong{Project Setup:}
+\itemize{
+\item Initialise project structure
+\item Load and organise input data
+}
+\item \strong{Data Preparation:}
+\itemize{
+\item Transpose data
+\item Sort data
+\item Impute missing values
+\item Calculate response concentrations
+\item Apply batch correction using statTarget
+}
+\item \strong{Filtering:}
+\itemize{
+\item Set QC samples
+\item Filter samples
+\item Filter SIL internal standards
+\item Apply lipid-specific filters
+\item Filter based on RSD thresholds
+}
+\item \strong{Reporting and Visualisation:}
+\itemize{
+\item Generate summary report
+\item Create optional plots
+\item Perform PCA analysis
+\item Generate run order plots
+\item Create target control charts
+}
+\item \strong{Export:}
+\itemize{
+\item Export all processed data and reports
+}
+}
 }
 \examples{
 \dontrun{
@@ -39,15 +90,24 @@ If you have not used the SkylineR function to generate reports please ensure you
 library(MetaboExploreR)
 
 #Load example mrm_template_list
-  file_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+  file_path <- system.file("extdata",
+                           "LGW_lipid_mrm_template_v1.tsv",
+                           package = "MetaboExploreR")
+
   sample_metadata_example <- read_tsv(file_path)
 
 #Load example conc_guide
-  file_path <- system.file("extdata", "LGW_SIL_batch_Ultimate_2023_03_06.tsv", package = "MetaboExploreR")
+  file_path <- system.file("extdata",
+                           "LGW_SIL_batch_Ultimate_2023_03_06.tsv",
+                           package = "MetaboExploreR")
+
   sample_metadata_example <- read_tsv(file_path)
 
 #Load example report file
-  file_path <- system.file("extdata", "Example_xskylineR_report.csv", package = "MetaboExploreR")
+  file_path <- system.file("extdata",
+                           "Example_xskylineR_report.csv",
+                           package = "MetaboExploreR")
+
   report_file <- read.csv(file_path)
 
 #Run qcCheckR function
@@ -64,4 +124,5 @@ qcCheckR(user_name = "user1",
          sample_tags = c("sample","control","blank", "qc"),
          mv_threshold = 0.5) #default is 50\% missing values
 }
+
 }

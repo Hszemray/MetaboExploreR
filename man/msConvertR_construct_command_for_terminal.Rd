@@ -19,7 +19,8 @@ This function constructs the command for terminal to convert files to mzML forma
 }
 \examples{
 \dontrun{
-command <- msConvertR_construct_command_for_terminal(path/to/input/directory, "path/to/output_directory")
+command <- msConvertR_construct_command_for_terminal(path/to/input/directory,
+                                                     "path/to/output_directory")
 }
 }
 \keyword{internal}

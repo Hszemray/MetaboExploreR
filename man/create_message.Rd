@@ -19,3 +19,4 @@ None
 \description{
 This function creates a message for the log.
 }
+\keyword{internal}

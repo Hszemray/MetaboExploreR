@@ -6,7 +6,7 @@
 #' Update Script Log
 #'
 #' This function updates the script log in the `master_list` object by capturing the current time, calculating the runtime for the current section, and creating a message for the log.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #' @param previous_section_name A string representing the name of the previous section.
@@ -14,8 +14,18 @@
 #' @return The updated `master_list` object with the new log information.
 #' @examples
 #' \dontrun{
-#' master_list <- list(project_details = list(script_log = list(timestamps = list(start_time = Sys.time()),
-#'                     runtimes = list(), messages = list())))
+#' master_list <- list(
+#'                 project_details = list(
+#'                   script_log = list(
+#'                     timestamps = list(
+#'                       start_time = Sys.time()
+#'                     ),
+#'                     runtimes = list(),
+#'                     messages = list()
+#'                    )
+#'                  )
+#'                )
+#'
 #' update_script_log(master_list, "section_1", "start_time", "section_2")
 #' }
 update_script_log <- function(master_list,
@@ -35,7 +45,7 @@ update_script_log <- function(master_list,
 #' Validate Previous Section
 #'
 #' This function validates the previous section name.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param previous_section_name A string representing the name of the previous section.
 #'
@@ -50,7 +60,7 @@ validate_previous_section <- function(master_list, previous_section_name) {
 #' Capture Current Time
 #'
 #' This function captures the current time for the given section.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #'
@@ -63,7 +73,7 @@ capture_current_time <- function(master_list, section_name) {
 #' Calculate Runtime
 #'
 #' This function calculates the runtime for the given section.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #' @param previous_section_name A string representing the name of the previous section.
@@ -84,7 +94,7 @@ calculate_runtime <- function(master_list,
 #' Calculate Total Runtime
 #'
 #' This function calculates the total runtime from the start.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #'
@@ -101,7 +111,7 @@ calculate_total_runtime <- function(master_list, section_name) {
 #' Create Message
 #'
 #' This function creates a message for the log.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #' @param next_section_name A string representing the name of the next section.
@@ -140,7 +150,7 @@ create_message <- function(master_list,
 #' Print Message
 #'
 #' This function prints the message for the log.
-#'
+#' @keywords internal
 #' @param master_list A list containing project details and script log information.
 #' @param section_name A string representing the name of the current section.
 #'
@@ -161,7 +171,7 @@ print_message <- function(master_list, section_name) {
 #' Validate Project Directory
 #'
 #' This function checks if the `project_directory` parameter is a single string and if the specified directory exists.
-#'
+#' @keywords internal
 #' @param project_directory A character string representing the path to the project directory.
 #' @return TRUE if the validation is successful, otherwise an error is thrown.
 #' @examples
@@ -186,6 +196,7 @@ validate_project_directory <- function(project_directory) {
 
 #' validate_master_list_project_directory
 #' This function validates the existence of the project directory specified in the master list.
+#' @keywords internal
 #' @param master_list A list containing project details.
 #' @return Stops execution if the project directory does not exist.
 #' @examples
@@ -209,7 +220,7 @@ validate_master_list_project_directory <- function(master_list) {
 #' Validate MRM Template List
 #'
 #' This function checks if the `mrm_template_list` parameter is valid and contains required columns.
-#'
+#' @keywords internal
 #' @param mrm_template_list A list of character strings or a named list of data frames representing MRM templates.
 #' @param user_name A character string identifying the user.
 #' @return NULL or an ANPC mrm_template_list if mrm_template_list is NULL and user_name is ANPC
@@ -283,7 +294,7 @@ validate_mrm_template_list <- function(mrm_template_list, user_name) {
 #' Log Error to File
 #'
 #' This function logs error messages to a file named `error_log.txt`.
-#'
+#' @keywords internal
 #' @param error_message A character string representing the error message to be logged.
 #' @return None. The function writes the error message to the log file.
 #' @examples
@@ -299,7 +310,7 @@ log_error <- function(error_message) {
 #' Validate qcCheckR mrm template list
 #'
 #' This function validates the mrm_template_list list by checking the column headers and ensuring there are no NA or NULL values in the SIL_guide and conc_guide files.
-#'
+#' @keywords internal
 #' @param master_list A list containing all project details and data
 #' @return TRUE if validation passes. Stops execution if validation fails.
 #' @examples
@@ -375,10 +386,15 @@ validate_qcCheckR_mrm_template_list <- function(master_list) {
         # Subset the data to only include the filtered check columns
         data_to_check <- data[, check_cols, drop = FALSE]
 
-
         # Check for NA or NULL values
         if (any(is.na(data_to_check))) {
           stop(paste("NA values found in", guide, "for version", version))
+        }
+
+        transition_result <- transition_checkR(data)
+        if (is.data.frame(transition_result)) {
+          stop(paste("Non-unique transitions found in version", version, "\n",
+                     paste(capture.output(print(transition_result)), collapse = "\n")))
         }
 
       } else if (guide == "conc_guide") {
@@ -387,15 +403,18 @@ validate_qcCheckR_mrm_template_list <- function(master_list) {
         data <- mrm_template_list[[version]][[guide]]
 
         if (!all(required_columns %in% colnames(data))) {
-          #store missing columns
           missing_columns <- setdiff(required_columns, colnames(data))
           stop(paste(
-            guide,
-            "for version",
-            version,
+            guide,"for version",version,
             "\n Missing required columns: ",
             paste(missing_columns, collapse = "\n")
           ))
+        }
+        sil_guide <- version_list[["SIL_guide"]]
+        compare_result <- compare_mrm_template_with_guide(sil_guide, data)
+        if (is.character(compare_result)) {
+          stop(paste("Unmatched Note values in version", version, "\n",
+                     paste(compare_result, collapse = "\n")))
         }
       }
     }
@@ -462,7 +481,8 @@ check_docker <- function() {
 # Validate Raw files----
 #' Validate Raw files
 #'
-#' This function checks project directories contains wiff files and associated wiff.scan files.
+#' This function checks project directories contains vendor files.
+#' @keywords internal
 #' @param input_directory directory path for vendor file locations
 #' @return validated paths and returns message on outcome of check.
 #' @examples
@@ -537,6 +557,28 @@ validate_file_types <- function(input_directory) {
 
 }
 
+# special character replacement for mrm_templates----
+#' replace_precursor_symbols
+#'
+#' This function replaces forward or backwards slashes in 'Precursor Name' while preserving the original naming convention
+#' This is due to skyline cmd being unable to handle the special character
+#' @keywords internal
+#' @param mrm_template dataframe of transitions (mrm_template) for SkylineR or qcCheckR
+#' @return Updated mrm_template with special characters replaced in 'Precursor Name' and 'Note', while the original names are preserved for the columns in original_col
+#' @examples
+#' \dontrun{
+#' replace_precursor_symbols(mrm_template, columns = c("Precursor Name", "Note"))
+#' }
+replace_precursor_symbols <- function(mrm_template, columns = c("Precursor Name", "Note")) {
+  for (col in columns) {
+    original_col <- paste0("original_", gsub(" ", "_", col))
+    mrm_template[[original_col]] <- mrm_template[[col]]
+
+    # Replace / and \ with underscores
+    mrm_template[[col]] <- gsub("[/\\\\]", "_", mrm_template[[col]])
+  }
+  return(mrm_template)
+}
 
 # Functions for tests ----
 

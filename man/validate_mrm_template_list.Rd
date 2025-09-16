@@ -22,3 +22,4 @@ This function checks if the \code{mrm_template_list} parameter is valid and cont
 validate_mrm_template_list(list("path/to/template1.csv", "path/to/template2.csv"), "user")
 }
 }
+\keyword{internal}

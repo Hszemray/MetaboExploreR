@@ -1,3 +1,0 @@
-Error during project QC : object 'mv_threshold' not found
-Error during project QC : attempt to select less than one element in get1index
-Error during project QC : attempt to select less than one element in get1index

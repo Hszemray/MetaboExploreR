@@ -20,3 +20,4 @@ This function logs error messages to a file named \code{error_log.txt}.
 log_error("An error occurred while processing the data.")
 }
 }
+\keyword{internal}

@@ -17,3 +17,4 @@ None
 \description{
 This function calculates the total runtime from the start.
 }
+\keyword{internal}

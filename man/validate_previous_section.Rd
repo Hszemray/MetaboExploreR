@@ -17,3 +17,4 @@ updated master list
 \description{
 This function validates the previous section name.
 }
+\keyword{internal}

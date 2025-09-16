@@ -4,5 +4,6 @@
 \alias{import_external_functions}
 \title{msConvertR}
 \description{
-#' Import specific functions from packages
+Import specific functions from packages
 }
+\keyword{internal}

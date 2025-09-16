@@ -1,8 +1,9 @@
-#' msConvertR_Utils
-#'
-#' sub functions for msConvertR function
-#'
+# msConvertR_Utils ----
+# sub functions for msConvertR function
+
+
 #' Import specific functions from packages
+#' @keywords internal
 #' @name msConvertR_import_external_functions
 #' @importFrom stringr str_subset
 
@@ -39,7 +40,7 @@ validate_input_directory <- function(input_directory) {
 #' msConvertR_mzml_conversion
 #'
 #' This function converts raw vendor files to mzML format using ProteoWizard's msconvert tool, restructures directories, and updates the script log.
-#'
+#' @keywords internal
 #' @param input_directory Directory path for project folder
 #' @param output_directory Directory path for project folder if different from
 #' input directory.
@@ -138,7 +139,8 @@ msConvertR_set_working_directory <- function(output_directory) {
 #' @return The constructed command string.
 #' @examples
 #' \dontrun{
-#' command <- msConvertR_construct_command_for_terminal(path/to/input/directory, "path/to/output_directory")
+#' command <- msConvertR_construct_command_for_terminal(path/to/input/directory,
+#'                                                      "path/to/output_directory")
 #' }
 msConvertR_construct_command_for_terminal <- function(input_directory, output_directory) {
   # Normalise directory
@@ -196,7 +198,9 @@ msConvertR_execute_command <- function(command) {
 #' @return The updated master list object with mzML file paths.
 #' @examples
 #' \dontrun{
-#' master_list <- msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
+#' master_list <- msConvertR_restructure_directory(output_directory,
+#'                                                 plateIDs,
+#'                                                 vendor_extension_patterns)
 #' }
 msConvertR_restructure_directory <- function(output_directory,
                                              plateIDs,
@@ -245,7 +249,7 @@ msConvertR_restructure_directory <- function(output_directory,
     mzml_files <- list.files(path = mzml_output_dir,
                              pattern = "\\.mzML$",
                              full.names = TRUE)
-    mzml_files <- mzml_files[!grepl("COND|Blank|ISTDs", mzml_files)]
+    mzml_files <- mzml_files[!grepl("cond|blank||istds", mzml_files, ignore.case = TRUE)]
     matched_mzml <- str_subset(mzml_files, plateID)
     file.copy(from = matched_mzml,
               to = mzml_dest,

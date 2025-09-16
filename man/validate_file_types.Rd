@@ -13,10 +13,11 @@ validate_file_types(input_directory)
 validated paths and returns message on outcome of check.
 }
 \description{
-This function checks project directories contains wiff files and associated wiff.scan files.
+This function checks project directories contains vendor files.
 }
 \examples{
 \dontrun{
 all_file_paths <- validate_file_types(input_directory)
 }
 }
+\keyword{internal}

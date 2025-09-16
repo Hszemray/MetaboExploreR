@@ -12,3 +12,4 @@ notify_qc_type(qc_type)
 \description{
 This function prints a message indicating the QC type that has been set for filtering.
 }
+\keyword{internal}

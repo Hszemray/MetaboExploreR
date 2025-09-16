@@ -28,8 +28,19 @@ This function updates the script log in the \code{master_list} object by capturi
 }
 \examples{
 \dontrun{
-master_list <- list(project_details = list(script_log = list(timestamps = list(start_time = Sys.time()),
-                    runtimes = list(), messages = list())))
+master_list <- list(
+                project_details = list(
+                  script_log = list(
+                    timestamps = list(
+                      start_time = Sys.time()
+                    ),
+                    runtimes = list(),
+                    messages = list()
+                   )
+                 )
+               )
+
 update_script_log(master_list, "section_1", "start_time", "section_2")
 }
 }
+\keyword{internal}

@@ -19,3 +19,4 @@ None
 \description{
 This function calculates the runtime for the given section.
 }
+\keyword{internal}

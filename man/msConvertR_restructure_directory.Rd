@@ -25,7 +25,9 @@ This function restructures the directory by moving raw_data and mzML files to co
 }
 \examples{
 \dontrun{
-master_list <- msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
+master_list <- msConvertR_restructure_directory(output_directory,
+                                                plateIDs,
+                                                vendor_extension_patterns)
 }
 }
 \keyword{internal}

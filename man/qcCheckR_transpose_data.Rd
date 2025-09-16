@@ -2,7 +2,7 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{qcCheckR_transpose_data}
 \alias{qcCheckR_transpose_data}
-\title{Transpose Skyline Report Data}
+\title{Transpose PeakForgeR Report Data}
 \usage{
 qcCheckR_transpose_data(master_list)
 }
@@ -13,7 +13,7 @@ qcCheckR_transpose_data(master_list)
 The updated \code{master_list} object with transposed peak area data.
 }
 \description{
-This function transposes Skyline report data for each plate in the master list.
+This function transposes PeakForgeR report data for each plate in the master list.
 It reshapes the data, cleans sample names, converts values to numeric, and stores the result.
 }
 \examples{

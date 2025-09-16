@@ -32,3 +32,4 @@ This function converts raw vendor files to mzML format using ProteoWizard's msco
 msConvertR_mzml_conversion(input_directory, output_directory, plateIDs)
 }
 }
+\keyword{internal}

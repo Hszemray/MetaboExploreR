@@ -37,3 +37,4 @@ This function sets up the project by initialising the master list, setting up pr
 qcCheckR_setup_project(user_name, project_directory, QC_sample_label, sample_tags, mv_threshold)
 }
 }
+\keyword{internal}

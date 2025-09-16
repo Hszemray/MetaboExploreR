@@ -1,5 +1,5 @@
 ---
-title: "Targeted Lipid ExploreR QC Report"
+title: "MetaboExploreR Quality Control Report"
 author: "Australian National Phenome Centre"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
@@ -20,46 +20,44 @@ body {
 
 ### projectOverview
 #### Overall Summary
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r Overall-Summary, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 
 target_index <- which(master_list$summary_tables$odsAreaOverview$key == "total.SIL.Int.Stds")
-
-# Step 3: Subset all rows before that index
 summary_table <- master_list$summary_tables$odsAreaOverview[1:(target_index), ]
 
 knitr::kable(summary_table)
 ```
 
 #### Data Summary
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r Data-Summary, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 knitr::kable(master_list$summary_tables$projectOverview)
 ```
 
 ### Data QC PCA Scores Plots {.tabset}
 #### Coloured by sample_type
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r PCA-sample-type, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 master_list$pca$plot$sample_type_factor
 ```
 
 #### Coloured by plateID
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r PCA-plateID, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 master_list$pca$plot$sample_plate_id
 ```
 
 ### PCA scores run order {.tabset}
 #### PC1
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r PC1, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 master_list$pca$scoresRunOrder$PC1
 ```
 
 #### PC2
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+```{r PC2, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
 master_list$pca$scoresRunOrder$PC2
 ```
 
 #### PC3
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
-master_list$pca$scoresRunOrder$PC2
+```{r PC3, echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=9}
+master_list$pca$scoresRunOrder$PC3
 ```
 
 ### Target Lipid Control Charts {.tabset .tabset-fade .tabset-dropdown}
@@ -68,16 +66,16 @@ control_charts_custom_code_placeholder
 
 ### Environment Summary
 #### R version
-```{r echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
+```{r R-version, echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
 print(master_list$environment$r_version)
 ```
 
 #### Base packages
-```{r echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
+```{r Base-packages, echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
 print(master_list$environment$base_packages)
 ```
 
 ####User packages
-```{r echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
+```{r User-packages, echo=FALSE, message=FALSE, warning=FALSE,  fig.width=14, fig.height=7} 
 print(master_list$environment$user_packages)
 ```

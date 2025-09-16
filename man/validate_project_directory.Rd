@@ -20,3 +20,4 @@ This function checks if the \code{project_directory} parameter is a single strin
 validate_project_directory("path/to/project_directory")
 }
 }
+\keyword{internal}

@@ -2,12 +2,12 @@
 % Please edit documentation in R/qcCheckR_Utils.R
 \name{extract_run_order}
 \alias{extract_run_order}
-\title{Extract Run Order from Skyline Report}
+\title{Extract Run Order from PeakForgeR Report}
 \usage{
 extract_run_order(report, plate_id)
 }
 \arguments{
-\item{report}{The Skyline report data frame.}
+\item{report}{The PeakForgeR report data frame.}
 
 \item{plate_id}{The ID of the plate to filter by.}
 }
@@ -15,6 +15,6 @@ extract_run_order(report, plate_id)
 A data frame containing the sample names, timestamps, and other relevant information.
 }
 \description{
-This function extracts the run order data from a Skyline report, filtering by plate ID.
+This function extracts the run order data from a PeakForgeR report, filtering by plate ID.
 }
 \keyword{internal}

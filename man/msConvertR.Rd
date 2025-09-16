@@ -19,9 +19,44 @@ None. The function performs the conversion and restructures directories.
 This function is used to convert vendor files to \code{.mzml} files
 using the \code{msconvert} tool from ProteoWizard.
 }
+\details{
+\itemize{
+\item \strong{Input Validation:}
+\itemize{
+\item Validate input_directory
+\item Validate presence of supported vendor file types
+}
+\item \strong{Plate Identification:}
+\itemize{
+\item Extract plateIDs from vendor file names
+\item Remove vendor-specific extensions
+}
+\item \strong{Docker Setup:}
+\itemize{
+\item Check Docker installation and running status
+}
+\item \strong{File Conversion:}
+\itemize{
+\item Convert vendor files to mzML format using ProteoWizard's msconvert
+\item Handle errors gracefully with tryCatch
+}
+\item \strong{Directory Structuring:}
+\itemize{
+\item Create project structure for converted files
+\item Relocate vendor files based on input/output directory configuration
+}
+\item \strong{User Messaging:}
+\itemize{
+\item Notify user of conversion status and file locations
+\item Provide guidance on directory structure
+}
+}
+}
 \examples{
 \dontrun{
 # example code
- msConvertR(input_directory = "path/to/input_directory", output_directory = "path/to/output_directory")
+ msConvertR(input_directory = "path/to/input_directory",
+            output_directory = "path/to/output_directory")
  }
+
 }

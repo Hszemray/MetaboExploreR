@@ -7,13 +7,13 @@
 transpose_plate_data(data)
 }
 \arguments{
-\item{data}{The Skyline report data frame for a specific plate.}
+\item{data}{The PeakForgeR report data frame for a specific plate.}
 }
 \value{
 A transposed tibble with sample names as rows and molecule names as columns.
 }
 \description{
-This function transposes the plate data from the Skyline report, reshaping it into a wide format.
+This function transposes the plate data from the PeakForgeR report, reshaping it into a wide format.
 It cleans the sample names by removing the file extension and converts area values to numeric.
 }
 \keyword{internal}

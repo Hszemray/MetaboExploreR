@@ -1,18 +1,60 @@
 Package: MetaboExploreR
-Title: Convert LC-MS vendor files into preprocessed concentration data
-Version: 0.0.0.9000
-Authors@R: 
-    person("Harrison", "Szemray", , "Hszemray@live.com.au", role = c("aut", "cre"))
-    person("Luke", "Whiley", ,"luke.whiley@murdoch.edu.au" , role = c("aut", "cre"))
-Description: Provides tools to take a user from raw vendor files to concentration data.
+Title: MetaboExploreR
+Version: 1.0.0
+Description: An R package to explore targeted MRM mass spectrometry data.
+Keywords:
+    liquid chromatography
+    targeted mass spectrometry
+    data analysis
+    quality control
+    software package
+Type: Package
+URL: https://github.com/Hszemray/MetaboExploreR#readme, https://github.com/Hszemray/MetaboExploreR
+BugReports: https://github.com/Hszemray/MetaboExploreR/issues
 License: MIT + file LICENSE
+Authors@R: c(
+    person(
+      "Harrison", "Szemray",
+      email = "Hszemray@live.com.au",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "https://orcid.org/0009-0008-5829-540X")
+    ),
+    person(
+      "Vimalnath", "Nambiar",
+      email = "vimalnath.nambiar@murdoch.edu.au",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0001-5384-6788")
+    ),
+    person(
+      "Nathan", "Lawler",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-6713-1705")
+    ),
+    person(
+      "Julien", "Wist",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-3416-2572")
+    ),
+    person(
+      "Samantha", "Lodge",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0001-9193-0462")
+    ),
+    person(
+      "Luke", "Whiley",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-9088-4799")
+    )
+  )
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
+Config/testthat/edition: 3
 Imports: 
+    BiocManager,
     data.table,
     dplyr,
-    fs,
     ggplot2,
     janitor,
     magrittr,
@@ -22,10 +64,15 @@ Imports:
     purrr,
     readr,
     ropls,
+    rmarkdown,
     statTarget,
     stringr,
-    testthat,
     tibble,
     tidyr,
-    tidyselect
-Config/testthat/edition: 3
+    tidyselect,
+    viridis
+Suggests: 
+    testthat (>= 3.0.0),
+    mockery,
+    mockr,
+    withr

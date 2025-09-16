@@ -1,0 +1,53 @@
+bibentry(
+  title = "MetaboExploreR",
+  version = "1.0.0",
+  abstract = "An R package to to explore targeted MRM mass spectrometry data",
+  keywords = c(
+    "liquid chromatography",
+    "targeted mass spectrometry",
+    "data analysis",
+    "quality control",
+    "software package"
+  ),
+  bibtype = "Manual",
+  url = "https://github.com/Hszemray/MetaboExploreR#readme",
+  repository = "https://github.com/Hszemray/MetaboExploreR",
+  license = "MIT",
+  author = c(
+    person(
+      "Harrison", "Szemray",
+      email = "Hszemray@live.com.au",
+      role = c("aut", "cre"),
+      comment = c(ORCID = "https://orcid.org/0009-0008-5829-540X")
+    ),
+    person(
+      "Vimalnath", "Nambiar",
+      email = "vimalnath.nambiar@murdoch.edu.au",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0001-5384-6788")
+    ),
+    person(
+      "Nathan", "Lawler",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-6713-1705")
+    ),
+    person(
+      "Julien", "Wist",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-3416-2572")
+    ),
+    person(
+      "Samantha", "Lodge",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0001-9193-0462")
+    ),
+    person(
+      "Luke", "Whiley",
+      role = c("aut"),
+      comment = c(ORCID = "https://orcid.org/0000-0002-9088-4799")
+    )
+  ),
+  publisher = "Zenodo",
+  doi = "10.5281/zenodo.14996218",
+  year = "2025"
+)

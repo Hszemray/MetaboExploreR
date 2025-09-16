@@ -2,10 +2,8 @@
 % Please edit documentation in R/msConvertR_Utils.R
 \name{msConvertR_import_external_functions}
 \alias{msConvertR_import_external_functions}
-\title{msConvertR_Utils}
+\title{Import specific functions from packages}
 \description{
-sub functions for msConvertR function
-}
-\details{
 Import specific functions from packages
 }
+\keyword{internal}
