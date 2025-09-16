@@ -64,7 +64,6 @@ Imports:
     purrr,
     readr,
     ropls,
-    rmarkdown,
     statTarget,
     stringr,
     tibble,
@@ -76,4 +75,7 @@ Suggests:
     mockery,
     mockr,
     remotes,
-    withr
+    rmarkdown,
+    withr,
+    knitr
+VignetteBuilder: knitr, rmarkdown

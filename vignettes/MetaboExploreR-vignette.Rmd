@@ -1,0 +1,148 @@
+
+title: "Introduction to MetaboExploreR"
+author: "Harrison_Szemray"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to MetaboExploreR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+`MetaboExploreR` is an R package that provides a streamlined workflow for the processing and quality control of targeted mass spectrometry data. It is designed to take raw vendor files and produce concentration values ready for statistical analysis. The package is built to be cross-platform compatible through the use of Docker.
+
+The main workflow of the package is centred around three core functions:
+
+*   `msConvertR()`: Converts raw mass spectrometry vendor files into the open-source mzML format.
+*   `PeakForgeR()`: Performs retention time correction, peak picking, and integration.
+*   `qcCheckR()`: Handles quality control, batch correction, and generates summary reports.
+
+This vignette will guide you through a complete example workflow using the sample data provided with the package.
+
+# Installation
+
+Before installing `MetaboExploreR`, you need to have Docker Desktop installed on your system. You can download it from the official Docker website: <https://www.docker.com/get-started/>
+
+Once Docker is installed and running, you can install `MetaboExploreR` from GitHub using the following commands in R:
+
+```r
+if (!requireNamespace("devtools", quietly = TRUE)) {
+    install.packages("devtools")
+}
+devtools::install_github("Hszemray/MetaboExploreR")
+```
+
+After installation, load the package into your R session:
+
+```{r}
+library(MetaboExploreR)
+```
+
+# Workflow
+
+The `MetaboExploreR` workflow consists of three main steps. We will use the example data included in the package to demonstrate the workflow.
+
+## 1. Project Setup
+
+First, you need to set up a project directory with a specific structure. The raw data files should be placed in a subdirectory named `raw_data`.
+
+For this vignette, we will use the example files provided with the package. We will create a temporary directory for our project and copy the necessary files into it.
+
+```{r, eval=FALSE}
+# Create a temporary directory for the project
+project_dir <- tempdir()
+
+# Create the raw_data subdirectory
+raw_data_dir <- file.path(project_dir, "raw_data")
+dir.create(raw_data_dir, recursive = TRUE)
+
+# For the purpose of this vignette, we assume that the raw files are in the raw_data_dir.
+# In a real analysis, you would place your vendor-specific raw files (e.g., .wiff) here.
+# Since we don't have raw files in this example, we will proceed with the mzML files.
+```
+
+## 2. `msConvertR()`
+
+The `msConvertR` function is used to convert vendor-specific raw mass spectrometry files into the open-standard mzML format. This step is crucial for ensuring that the data can be processed by the downstream tools.
+
+Since we don't have access to vendor raw files in this example, we will skip this step. In a real-world scenario, you would run the following command:
+
+```{r, eval=FALSE}
+msConvertR(input_directory = project_dir, output_directory = project_dir)
+```
+
+This would create mzML files in the appropriate directory structure.
+
+## 3. `PeakForgeR()`
+
+The `PeakForgeR` function is the core of the peak picking and integration workflow. It takes the mzML files and an MRM transition list as input and produces a report with the integrated peak areas.
+
+### MRM Transition List
+
+The MRM transition list is a tab-separated file that contains information about the molecules to be quantified. An example file, `LGW_lipid_mrm_template_v1.tsv`, is included in the package. Let's inspect its contents.
+
+```{r}
+mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+mrm_template <- read.delim(mrm_template_path)
+head(mrm_template)
+```
+
+### Running `PeakForgeR`
+
+For this example, we will use the pre-computed `PeakForgeR` report that is included in the package. In a real analysis, you would run the `PeakForgeR` function as follows:
+
+```{r, eval=FALSE}
+# Path to the project directory
+project_directory <- "path/to/your/project"
+
+# List of MRM template files
+mrm_template_list <- list(system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"))
+
+PeakForgeR(
+  user_name = "jules",
+  project_directory = project_directory,
+  mrm_template_list = mrm_template_list,
+  QC_sample_label = "QC"
+)
+```
+
+The output of `PeakForgeR` is a CSV file containing the integrated peak information for each sample and molecule. Let's look at the example report provided in the package.
+
+```{r}
+peakforger_report_path <- system.file("extdata", "Example_PeakForgeR_report.csv", package = "MetaboExploreR")
+peakforger_report <- read.csv(peakforger_report_path)
+head(peakforger_report)
+```
+
+## 4. `qcCheckR()`
+
+The final step in the workflow is to perform quality control and batch correction using the `qcCheckR` function. This function takes the output from `PeakForgeR` and generates various plots and reports to assess the quality of the data.
+
+```{r, eval=FALSE}
+# In a real analysis, you would use the project directory where the PeakForgeR output is located.
+# For this example, we will use the example data provided with the package.
+
+qcCheckR(
+  project_directory = project_directory,
+  mrm_template_list = mrm_template_list,
+  QC_sample_label = "QC",
+  user_name = "USER"
+)
+```
+
+The `qcCheckR` function generates an HTML report with interactive plots, such as PCA plots and control charts, as well as an Excel file with the final concentration data (contains a guide for navigation).
+
+# Session Information
+
+```{r}
+sessionInfo()
+```

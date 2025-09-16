@@ -1,5 +1,5 @@
-
-# MetaboExploreR: Targeted Mass Spectrometry Processing Pipeline
+MetaboExploreR
+================
 
 ## Overview
 
@@ -10,8 +10,8 @@ through Docker.
 
 The toolkit consists of three main functions:
 
-**`msConvertR()`** Processes raw mass spectrometry vendor files into
-open source mzml files. Utilising Proteowizards MSconvert.
+**`msConvertR()`** Processes mass spectrometry vendor files into open
+source mzml files.
 
 **`PeakForgeR()`** Performs retention time and peak boundary
 optimisation, peak picking and integration.
