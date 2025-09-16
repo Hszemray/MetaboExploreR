@@ -193,7 +193,7 @@ rsconnect/
 .DS_Store
 
 # .quarto
-inst/doc
+#inst/doc
 
 #Readme.rmd
 ^README\.Rmd$

@@ -1,0 +1,249 @@
+---
+title: "Introduction to MetaboExploreR"
+author: "Harrison_Szemray"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to MetaboExploreR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+`MetaboExploreR` is an R package that provides a streamlined workflow for the processing and quality control of targeted mass spectrometry data. It is designed to take raw vendor files and produce concentration values ready for statistical analysis. The package is built to be cross-platform compatible through the use of Docker.
+
+The main workflow of the package is centred around three core functions:
+
+*   `msConvertR()`: Converts raw mass spectrometry vendor files into the open-source mzML format.
+*   `PeakForgeR()`: Performs retention time correction, peak picking, and integration.
+*   `qcCheckR()`: Handles quality control, batch correction, and generates summary reports.
+
+This vignette will guide you through a complete example workflow using the sample data provided with the package.
+
+# Installation
+
+Before installing `MetaboExploreR`, you need to have Docker Desktop installed on your system. You can download it from the official Docker website: <https://www.docker.com/get-started/>
+
+Once Docker is installed and running, you can install `MetaboExploreR` from GitHub using the following commands in R:
+
+```{r install assistant, eval=FALSE}
+source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
+install_MetaboExplorer()
+```
+
+After installation, load the package into your R session:
+
+```{r load_library, eval=FALSE}
+library(MetaboExploreR)
+```
+
+# Workflow
+
+The `MetaboExploreR` workflow consists of four main steps. We will use the example data included in the package to demonstrate the workflow.
+
+## 1. Project Setup
+
+First, you need to set up a project directory with a specific structure. The raw data files should be placed in a subdirectory named `raw_data`.
+
+For this vignette, we will use the example files provided with the package. We will create a temporary directory for our project and copy the necessary files into it.
+
+```{r project_setup, eval=FALSE}
+# Create a temporary directory for the project
+project_dir <- tempdir()
+
+# Create the raw_data subdirectory
+raw_data_dir <- file.path(project_dir, "raw_data")
+dir.create(raw_data_dir, recursive = TRUE)
+
+# For the purpose of this vignette, we assume that the raw files are in the raw_data_dir.
+# In a real analysis, you would place your vendor-specific raw files (e.g., .wiff) here.
+```
+
+## 2. `msConvertR()`
+
+The `msConvertR` function is used to convert vendor-specific raw mass spectrometry files into the open-standard mzML format. This step is crucial for ensuring that the data can be processed by the downstream tools. Input and output locations can be different. 
+
+Since we don't have access to vendor raw files in this example, we will skip this step. In a real-world scenario, you would run the following command:
+
+```{r msConvertR, eval=FALSE}
+msConvertR(input_directory = project_dir, output_directory = project_dir)
+```
+
+This would create mzML files in the appropriate directory structure.
+
+## 3. `PeakForgeR()`
+
+The `PeakForgeR` function is the core of the peak picking and integration workflow. It takes the mzML files and an MRM transition list as input and produces a report with the integrated peak areas.
+
+The MRM transition list is a tab-separated file that contains information about the molecules to be quantified. An example file, `LGW_lipid_mrm_template_v1.tsv`, is included in the package. Let's inspect its contents.
+
+```{r mrm_example}
+mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+mrm_template <- read.delim(mrm_template_path)
+head(mrm_template)
+```
+
+For this example, we will use the pre-computed `PeakForgeR` report that is included in the package. In a real analysis, you would run the `PeakForgeR` function as follows:
+
+```{r PeakForgeR, eval=FALSE}
+# Path to the project directory
+project_directory <- "path/to/your/project"
+
+# List of MRM template files
+mrm_template_list <- list(system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"))
+
+PeakForgeR(
+  user_name = "User",
+  project_directory = project_directory,
+  mrm_template_list = mrm_template_list,
+  QC_sample_label = "QC", 
+  plateID_outputs = NULL
+)
+```
+
+The output of `PeakForgeR` is a CSV file containing the integrated peak information for each sample and molecule. Let's look at the example report provided in the package.
+
+```{r PeakForgeR_output_example}
+peakforger_report_path <- system.file("extdata", "Example_PeakForgeR_report.csv", package = "MetaboExploreR")
+peakforger_report <- read.csv(peakforger_report_path)
+head(peakforger_report)
+```
+
+## 4. `qcCheckR()`
+
+The final step in the workflow is to perform quality control and batch correction using the `qcCheckR` function. This function takes the output from `PeakForgeR` and generates various plots and reports to assess the quality of the data.
+
+```{r qcCheckR, eval=FALSE}
+# In a real analysis, you would use the project directory where the PeakForgeR output is located.
+# qcCheckR can handle tsv and csv data inputs
+# See documentation ??MetaboExploreR::qcCheckR for further information.
+
+library(MetaboExploreR)
+
+#Load example mrm_template_list
+  file_path <- system.file("extdata",
+                           "LGW_lipid_mrm_template_v1.tsv",
+                           package = "MetaboExploreR")
+
+  sample_metadata_example <- read_tsv(file_path)
+
+#Load example conc_guide
+  file_path <- system.file("extdata",
+                           "LGW_SIL_batch_Ultimate_2023_03_06.tsv",
+                           package = "MetaboExploreR")
+
+  sample_metadata_example <- read_tsv(file_path)
+
+#Load example report file
+  file_path <- system.file("extdata",
+                           "Example_PeakForgeR_report.csv",
+                           package = "MetaboExploreR")
+
+  report_file <- read.csv(file_path)
+
+#Run qcCheckR function
+qcCheckR(user_name = "user1",
+         project_directory = "path/to/project_directory",
+         mrm_template_list = list(v1 = list(
+                                    SIL_guide = path to/mrm_guide1.tsv,
+                                    conc_guide = path to/SIL_concentration_guide1.tsv),
+                                  ),
+         QC_sample_label = "qc",
+         sample_tags = c("sample","control", "qc"),
+         mv_threshold = 0.5) #default is  0.5 for 50\% missing values
+```
+
+The `qcCheckR` function generates an HTML report with interactive plots, such as PCA plots and control charts, as well as an Excel file with the final concentration data (contains a guide for navigation).
+
+# Transition List and conc guide development
+
+Although these functions are already inbuilt into the workflows. We thought it would be helpful if users could check templates prior to running the core functions to save time. There are two assistive functions:
+
+1. `transition_checkR` 
+Checks Q1 and Q3 transitions to ensure all transitions are unique.
+```{r transition_checkR, eval = FALSE}
+mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+mrm_template_df <- read_tsv(mrm_template_path)
+transition_checkR(mrm_template_df)
+```
+
+2. `compare_mrm_template_with_guide` 
+Checks if all internal standards from the `Note` column in the transition list has a match in `SIL_name` of the concentration guide.
+```{r compare_mrm_template_with_guide, eval = FALSE}
+mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
+  mrm_template_df <- read_tsv(mrm_template_path)
+
+conc_guide_path <- system.file("extdata","LGW_SIL_batch_103.tsv", package = "MetaboExploreR")
+  conc_guide_df <- read_tsv(file_path)
+
+compare_mrm_template_with_guide(mrm_template_df, conc_guide_df)  
+```
+
+
+# Multi Cohort Project Setup 
+Previously, we demonstrated how to set up MetaboExploreR for a single cohort. However, the package also supports multi cohort analysis provided that a consistent long-term reference material (LTR) has been used across all cohorts. 
+To enable this functionality, users must supply the appropriate transition lists and concentration guides for each cohort.
+
+
+We know this may sound obvious, but it’s crucial to emphasise:
+The same long-term reference material must be used across all plates.
+If not, the results will be invalid due to inconsistencies in signal correction.
+
+
+Once PeakForgeR has completed its processing, qcCheckR will automatically gather all reports from the project directory. 
+Each plate’s concentration data is processed using its respective transition list and concentration guide.
+During signal drift and batch correction, qcCheckR identifies plates run on different versions and aligns target features across them.
+Signal drift and batch correction is first applied to the long-term reference materials within each plate, and then across all plates collectively.
+```{r Multicohort, eval = FALSE}
+# Path to the project directory
+project_directory <- "path/to/your/project"
+
+# Create the raw_data subdirectory
+raw_data_dir <- file.path(project_dir, "raw_data")
+dir.create(raw_data_dir, recursive = TRUE)
+
+# In a real analysis, you would place your vendor-specific raw files (e.g., .wiff and .wiff.scan) here. 
+
+#Convert vendor files to mzml
+msConvertR(input_directory = project_dir, output_directory = project_dir)
+
+#Provide transition list paths to PeakForgeR
+#It will cycle test each transition list on a plate until the match is found
+PeakForgeR(
+  user_name = "User",
+  project_directory = project_directory,
+  mrm_template_list = list(v1 = "path to/mrm_guide1.tsv",
+                           v2 = "path to/mrm_guide2.tsv"
+                          ),
+  QC_sample_label = "LTR", 
+  
+)
+
+# Provide transition lists and their respective concentration guide paths to qcCheckR
+qcCheckR(user_name = "user",
+         project_directory = "path/to/project_directory",
+         mrm_template_list = list(v1 = list(
+                                    SIL_guide = path to/mrm_guide1.tsv,
+                                    conc_guide = path to/SIL_concentration_guide1.tsv),
+                                  v2 = list(
+                                    SIL_guide = path to/mrm_guide2.tsv,
+                                    conc_guide = path to/SIL_concentration_guide2.tsv)
+                                 ),
+         QC_sample_label = "qc",
+         sample_tags = c("sample","control", "qc"),
+         mv_threshold = 0.5) #default is  0.5 for 50\% missing values
+```
+
+# Session Info
+```{r}
+sessionInfo()
+```
+
