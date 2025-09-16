@@ -63,7 +63,6 @@ Imports:
     plotly,
     purrr,
     readr,
-    remotes,
     ropls,
     rmarkdown,
     statTarget,
@@ -76,4 +75,5 @@ Suggests:
     testthat (>= 3.0.0),
     mockery,
     mockr,
+    remotes,
     withr
