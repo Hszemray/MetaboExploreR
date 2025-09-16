@@ -63,6 +63,7 @@ Imports:
     plotly,
     purrr,
     readr,
+    remotes,
     ropls,
     rmarkdown,
     statTarget,
