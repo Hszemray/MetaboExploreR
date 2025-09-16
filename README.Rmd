@@ -1,54 +1,56 @@
+---
+output: github_document
+---
 
 # MetaboExploreR: Targeted Mass Spectrometry Processing Pipeline
 
 ## Overview
 
-MetaboExploreR provides tools for processing and quality control of
-targeted mass spectrometry vendor files to concentration outputs ready
-for further analysis. The package allows for cross platform usage
-through Docker.
+MetaboExploreR provides tools for processing and quality control of targeted 
+mass spectrometry vendor files to concentration outputs ready for further analysis.
+The package allows for cross platform usage through Docker.
 
 The toolkit consists of three main functions:
 
-**`msConvertR()`** Processes raw mass spectrometry vendor files into
-open source mzml files. Utilising Proteowizards MSconvert.
+**`msConvertR()`**
+Processes raw mass spectrometry vendor files into open source mzml files.
+Utilising Proteowizards MSconvert. 
 
-**`PeakForgeR()`** Performs retention time and peak boundary
-optimisation, peak picking and integration.
-
-**`qcCheckR()`** Performs quality control, batch/signal drift
-correction, and generates analytical reports.
+**`PeakForgeR()`**
+Performs retention time and peak boundary optimisation, peak picking and integration.
+    
+**`qcCheckR()`**
+Performs quality control, batch/signal drift correction, and generates analytical reports.
 
 ## Installation
+**`Docker Desktop`**
+Users are required to install Docker in order to run MetaboExploreR::msConvertR and MetaboExploreR::PeakForgeR.  
+Please visit https://www.docker.com/get-started/ for installation process.
 
-**`Docker Desktop`** Users are required to install Docker in order to
-run MetaboExploreR::msConvertR and MetaboExploreR::PeakForgeR.  
-Please visit <https://www.docker.com/get-started/> for installation
-process.
 
-Note: Please ensure Docker Application is running in the background when
-using MetaboExploreR if you are using a Mac or Windows OS.
+Note: Please ensure Docker Application is running in the background when using MetaboExploreR if you are using a Mac or Windows OS.
 
-**`MetaboExploreR`** Installation is effortless with the below helper
-function
-
+**`MetaboExploreR`**
+Installation is effortless with the below helper function
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExplorer/main/install.R")
 install_MetaboExplorer()
 ```
-
-## Project Setup
+    
+## Project Setup 
 
 Create this project folder structure before execution:
-
+    
     User/specified/directory
     └── raw_data #Store vendor files here
+    
+For example: "C:/User/Desktop/Project1/raw_data"
 
-For example: “C:/User/Desktop/Project1/raw_data”
-
-- Project1 is the name of the project
+- Project1 is the name of the project 
 
 - raw_data is a subfolder where I keep the vendor files for the project
+
+
 
 ## Main User Functions
 
@@ -58,7 +60,7 @@ For example: “C:/User/Desktop/Project1/raw_data”
 msConvertR(input_directory, output_directory)
 ```
 
-#### Workflow:
+####  Workflow:
 
 1.  Converts vendor files → .mzML via ProteoWizard msConvert.
 2.  Organises mzml outputs into file structure for each vendor file
@@ -102,7 +104,8 @@ qcCheckeR(project_directory,
     - Interactive PCA and control chart plots  
     - Quality summary tables  
     - HTML/Excel reports
-
+    
+    
 ## Output Structure
 
 Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
@@ -126,7 +129,6 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
 ## Usage Example
 
 ### Single project
-
 ``` r
 project_path <- USER/PATH/TO/PROJECT/DIRECTORY
 #Convert vendor files to mzml with msConvert
@@ -146,10 +148,12 @@ qcCheckR(project_directory = "project_path", mrm_template_list = mrm_template_li
 
 ### Multiproject pipeline
 
+
+
 ## Technical Notes
 
 1.  **Dependencies**:
-    - Docker Desktop (<https://www.docker.com/get-started/>)
+    - Docker Desktop (https://www.docker.com/get-started/) 
 2.  **Memory Management**:
     - Process large datasets plate-by-plate
     - Offload processed plate data before processing next plate
@@ -157,7 +161,7 @@ qcCheckR(project_directory = "project_path", mrm_template_list = mrm_template_li
     - Run R as systems administrator
     - Docker Application is installed and up to date
     - Ensure your R, Rstudio and package versions are all up to date
-    - Check vendor files/mzml conversions for corruption
+    - Check vendor files/mzml conversions for corruption 
     - Ensure sufficient disk space
     - Minimum of 8GB RAM required
 
@@ -165,3 +169,4 @@ qcCheckR(project_directory = "project_path", mrm_template_list = mrm_template_li
 
 For technical assistance, please open an issue at:  
 <https://github.com/Hszemray/MetaboExploreR>
+
