@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <views>
-  <view name="YYYY-MM-DD_xskylineR_1_project_name" rowsource="pwiz.Skyline.Model.Databinding.Entities.Transition" sublist="Results!*" uimode="small_molecules">
+  <view name="YYYY-MM-DD_PeakForgeR_project_name" rowsource="pwiz.Skyline.Model.Databinding.Entities.Transition" sublist="Results!*" uimode="small_molecules">
     <column name="Results!*.Value.PrecursorResult.PeptideResult.ResultFile.FileName" />
     <column name="Precursor.Peptide.Protein.Name" />
     <column name="Precursor.Peptide.MoleculeName" />

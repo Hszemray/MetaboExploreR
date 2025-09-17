@@ -925,7 +925,7 @@ peak_picking <- function(plateID, master_list) {
           plate_idx,
           "data",
           "PeakForgeR",
-          "PeakForgeR_output.txt"
+          "CMD_output.txt"
         )
 
         run_system_command(PeakForgeR_command, output_file)
@@ -1130,7 +1130,6 @@ export_files <- function(master_list, plate_idx) {
     system(cmd, intern = FALSE, ignore.stdout = TRUE)
     PeakForgeR_path <- "C:/PeakForgeR_short"
   } else {
-    # Use full path directly on macOS/Linux
     PeakForgeR_path <- long_path
   }
 
@@ -1151,12 +1150,12 @@ export_files <- function(master_list, plate_idx) {
   )
 
   file.copy(
-    from = system.file("templates", "default_PeakForgeR_file.sky", package = "MetaboExploreR"),
+    from = system.file("templates", "default_skyline_file.sky", package = "MetaboExploreR"),
     to = paste0(PeakForgeR_path)
   )
 
   file.rename(
-    from = file.path(PeakForgeR_path, "default_PeakForgeR_file.sky"),
+    from = file.path(PeakForgeR_path, "default_skyline_file.sky"),
     to = file.path(PeakForgeR_path, paste0(Sys.Date(), "_", plate_idx, ".sky"))
   )
   file.copy(

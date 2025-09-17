@@ -1,5 +1,5 @@
 ---
-title: "Introduction to MetaboExploreR"
+title: "MetaboExploreR <img src='man/figures/logo.png' style='float: right; height:100px;' />"
 author: "Harrison_Szemray"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -36,7 +36,7 @@ Once Docker is installed and running, you can install `MetaboExploreR` from GitH
 
 ```{r install assistant, eval=FALSE}
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
-install_MetaboExplorer()
+install_MetaboExploreR()
 ```
 
 After installation, load the package into your R session:

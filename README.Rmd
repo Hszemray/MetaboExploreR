@@ -31,7 +31,7 @@ Note: Please ensure Docker Application is running in the background when using M
 Installation is effortless with the below helper function
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
-install_MetaboExplorer()
+install_MetaboExploreR()
 ```
     
 ## Project Setup 
@@ -98,7 +98,7 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
 ## Vignette
 For a more detailed guide please refer to vignette
 ``` r
-vignette(package = "MetaboExploreR")
+browseVignettes(package = "MetaboExploreR")
 ```
 
 

@@ -35,7 +35,7 @@ function
 
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
-install_MetaboExplorer()
+install_MetaboExploreR()
 ```
 
 ## Project Setup
@@ -101,7 +101,7 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
 For a more detailed guide please refer to vignette
 
 ``` r
-vignette(package = "MetaboExploreR")
+browseVignettes(package = "MetaboExploreR")
 ```
 
 ## Technical Notes
