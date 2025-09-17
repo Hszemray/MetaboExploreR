@@ -73,6 +73,7 @@ Imports:
 Suggests: 
     testthat (>= 3.0.0),
     mockery,
+    devtools,
     mockr,
     remotes,
     rmarkdown,

@@ -1,5 +1,5 @@
 ---
-title: "MetaboExploreR"
+title: "MetaboExploreR <img src='man/figures/logo.png' style='float:right; height:100px;' />"
 output: github_document
 ---
 

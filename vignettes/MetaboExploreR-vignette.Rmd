@@ -113,7 +113,7 @@ The output of `PeakForgeR` is a CSV file containing the integrated peak informat
 
 ```{r PeakForgeR_output_example}
 peakforger_report_path <- system.file("extdata", "Example_PeakForgeR_report.csv", package = "MetaboExploreR")
-peakforger_report <- read.csv(peakforger_report_path)
+peakforger_report <- read.csv(peakforger_report_path, check.names = FALSE)
 head(peakforger_report)
 ```
 
@@ -147,7 +147,7 @@ library(MetaboExploreR)
                            "Example_PeakForgeR_report.csv",
                            package = "MetaboExploreR")
 
-  report_file <- read.csv(file_path)
+  report_file <- read_csv(file_path)
 
 #Run qcCheckR function
 qcCheckR(user_name = "user1",
@@ -168,22 +168,28 @@ The `qcCheckR` function generates an HTML report with interactive plots, such as
 Although these functions are already inbuilt into the workflows. We thought it would be helpful if users could check templates prior to running the core functions to save time. There are two assistive functions:
 
 1. `transition_checkR` 
-Checks Q1 and Q3 transitions to ensure all transitions are unique.
-```{r transition_checkR, eval = FALSE}
+Checks Q1 and Q3 transitions to ensure all transitions are unique. Please use the below example to test it out!
+```{r transition_checkR, eval= FALSE}
 mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
-mrm_template_df <- read_tsv(mrm_template_path)
+mrm_template_df <- read.delim(mrm_template_path, check.names = FALSE)
+head(mrm_template_df)
+
+#Now lets run the function and see the output
 transition_checkR(mrm_template_df)
 ```
 
 2. `compare_mrm_template_with_guide` 
-Checks if all internal standards from the `Note` column in the transition list has a match in `SIL_name` of the concentration guide.
+Checks if all internal standards from the `Note` column in the transition list has a match in `SIL_name` of the concentration guide. Please use the below example to test it out!
 ```{r compare_mrm_template_with_guide, eval = FALSE}
 mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
-  mrm_template_df <- read_tsv(mrm_template_path)
+  mrm_template_df <- read.delim(mrm_template_path, check.names = FALSE)
+  head(mrm_template_df)
 
 conc_guide_path <- system.file("extdata","LGW_SIL_batch_103.tsv", package = "MetaboExploreR")
-  conc_guide_df <- read_tsv(file_path)
+  conc_guide_df <- read.delim(conc_guide_path, check.names = FALSE)
+  head(conc_guide_df)
 
+#Now lets run the function and see the output
 compare_mrm_template_with_guide(mrm_template_df, conc_guide_df)  
 ```
 
@@ -243,7 +249,7 @@ qcCheckR(user_name = "user",
 ```
 
 # Session Info
-```{r}
+```{r session info}
 sessionInfo()
 ```
 
