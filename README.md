@@ -1,6 +1,8 @@
 MetaboExploreR
-<img src='man/figures/logo.png' style='float:centre; height:80px;' />
+<img src='man/figures/logo.png' style='float: right; height:100px;' />
 ================
+
+## 
 
 ## Overview
 

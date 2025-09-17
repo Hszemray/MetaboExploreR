@@ -1,8 +1,8 @@
 ---
-title: "MetaboExploreR <img src='man/figures/logo.png' style='float:centre; height:80px;' />"
+title: "MetaboExploreR <img src='man/figures/logo.png' style='float: right; height:100px;' />"
 output: github_document
 ---
-
+##
 ## Overview
 
 MetaboExploreR provides a pipeline for processing and quality control of targeted 
