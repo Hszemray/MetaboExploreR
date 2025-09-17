@@ -2,8 +2,6 @@ MetaboExploreR
 <img src='man/figures/logo.png' style='float: right; height:100px;' />
 ================
 
-## 
-
 ## Overview
 
 MetaboExploreR provides a pipeline for processing and quality control of
