@@ -2,6 +2,11 @@
 title: "MetaboExploreR <img src='man/figures/logo.png' style='float: right; height:100px;' />"
 output: github_document
 ---
+
+[![license][license-badge]][license]
+[![semantic-release][semantic-release-badge]][semantic-release]
+[![doi-zenodo][doi-zenodo-badge]][doi-zenodo]
+
 ## Overview
 
 MetaboExploreR provides a pipeline for processing and quality control of targeted 
@@ -60,17 +65,19 @@ For example: "C:/User/Desktop/Project1/raw_data"
 
 Process iterates by plate to:
 
-1.  Perform retention time optimisation based on QC samples
-2.  Generate PeakForgeR input files
-3.  Execute PeakForgeR peak picking and integration
-4.  Organise output into plate-specific folders
+1.  Optimise retention times based on QC samples
+2.  Optimise peak boundaries
+3.  Generate PeakForgeR input files
+4.  Execute PeakForgeR peak picking and integration
+5.  Organise output into plate-specific folders
 
 ### 3. qcCheckR() Workflow:
 
-1.  Batch / signal drift correction using statTarget  
-2.  Sample and feature filtering  
-3.  Quality metric calculation (RSD, missing values)  
-4.  Generation of:
+1.  Imputation of missing values
+2.  Batch / signal drift correction
+3.  Sample and feature filtering  
+4.  Quality metric calculation (RSD, missing values)  
+5.  Generation of:
     - Interactive PCA and control chart plots  
     - Quality summary tables  
     - HTML/Excel reports
@@ -84,7 +91,7 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
     ├── Archive #Archive of all mzml and wiff files for backup
     ├── ALL
     │   ├── data
-    │   │   ├── batch_correction
+    │   │   ├── batch_correction # batch  and singnal drift correction outputs
     │   │   ├── rda # saved rda from qcCheckR 
     │   └── html_report #Summary of project, PCA, and control charts
     │   └── xlsx_report # Data for further user analysis
@@ -95,12 +102,8 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
             ├── raw_data #original vendor files
             └── PeakForgeR #input and output files of PeakForgeR processing
 
-## Vignette
-For a more detailed guide please refer to vignette
-``` r
-browseVignettes(package = "MetaboExploreR")
-```
-
+## User Guide
+For a more detailed guide please visit the following link [here][user-guide]
 
 ## Technical Notes
 
@@ -122,3 +125,19 @@ browseVignettes(package = "MetaboExploreR")
 For technical assistance, please open an issue at:  
 <https://github.com/Hszemray/MetaboExploreR>
 
+## License
+Please refer to license information [here][license]
+
+## Citation
+If you use this software in your work, please cite it using the following metadata:
+
+Szemray, H., Nambiar, V., Lawler, N., Lodge, S., Wist, J.,&  Whiley, L. (2025). MetaboExploreR (Version 1.0.0) [Computer software]. Zenodo.(zenodo link)
+
+<!-- Links -->
+[license]: LICENSE
+[license-badge]: https://img.shields.io/github/license/vimalnathnambiar/exfilms.svg?color=%23A31F34
+[semantic-release]: https://github.com/semantic-release/semantic-release
+[semantic-release-badge]: https://img.shields.io/badge/semantic--release-angular-E10079.svg?logo=semantic-release&logoColor=%23E10079
+[doi-zenodo]: https://doi.org/10.5281/zenodo.10976761
+[doi-zenodo-badge]: https://img.shields.io/badge/zenodo-10.5281/zenodo.10976761-blue.svg?logo=doi&logoColor=blue
+[user-guide]: inst/doc/MetaboExploreR-vignette.html
