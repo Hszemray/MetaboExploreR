@@ -1234,7 +1234,7 @@ execute_PeakForgeR_command <- function(master_list, plate_idx) {
   #--instrument-method-mz-tolerance=0.0006 \
 
   docker_command <- sprintf(
-    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
+    'docker run --rm  --platform linux/amd64 -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
       --dir=/data \
       --in=%s \
       --instrument-method-mz-tolerance=0.055 \

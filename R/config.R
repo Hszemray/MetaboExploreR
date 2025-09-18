@@ -459,15 +459,27 @@ check_docker <- function() {
 
   if (docker_container_status == 0) {
     message("Docker is installed, running, and able to execute containers successfully.")
+
+    message("Pulling emulation docker...  ")
+    emulation_status <- system("
+      docker run --privileged --rm tonistiigi/binfmt --install all"
+    )
+    if (emulation_status == 0) {
+      message("Successfully pulled emulation docker!")
+    } else{
+      stop("Awwww snap an error occured during pull!")
+    }
+
     message("Pulling proteowizard docker...  ")
-    pull_status <- system(
+    proteowizard_status <- system(
       "docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
     )
-    if (pull_status == 0) {
+    if (proteowizard_status == 0) {
       message("Successfully pulled proteowizard docker!")
     } else{
       stop("Awwww snap an error occured during pull!")
     }
+
   } else{
     stop(
       "\n!!!Execution halted!!!
