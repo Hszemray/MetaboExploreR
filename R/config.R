@@ -461,7 +461,7 @@ check_docker <- function() {
     message("Docker is installed, running, and able to execute containers successfully.")
     message("Pulling proteowizard docker...  ")
     pull_status <- system(
-      "docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:skyline_25.1.0.224-519d29b"
+      "docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
     )
     if (pull_status == 0) {
       message("Successfully pulled proteowizard docker!")
