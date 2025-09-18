@@ -194,9 +194,9 @@ compare_mrm_template_with_guide(mrm_template_df, conc_guide_df)
 ```
 
 
-# Multi Cohort Project Setup 
-Previously, we demonstrated how to set up MetaboExploreR for a single cohort. However, the package also supports multi cohort analysis provided that a consistent long-term reference material (LTR) has been used across all cohorts. 
-To enable this functionality, users must supply the appropriate transition lists and concentration guides for each cohort.
+# Multi Method Project Setup 
+Previously, we demonstrated how to set up MetaboExploreR for a single method. However, the package also supports multi method analysis provided that a consistent long-term reference material (LTR) has been used across all methods 
+To enable this functionality, users must supply the appropriate transition lists and concentration guides for each method.
 
 
 We know this may sound obvious, but it’s crucial to emphasise:
