@@ -469,7 +469,7 @@ check_docker <- function() {
     }
 
     message("Pulling proteowizard docker...  ")
-    proteowizard_status <- system("docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
+    proteowizard_status <- system("docker pull --platform linux/amd64 proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
     if (proteowizard_status == 0) {
       message("Successfully pulled proteowizard docker!")
     } else{
