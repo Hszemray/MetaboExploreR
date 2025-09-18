@@ -29,6 +29,17 @@ Performs quality control, batch/signal drift correction, and generates analytica
 Users are required to install Docker in order to run MetaboExploreR::msConvertR and MetaboExploreR::PeakForgeR.  
 Please visit https://www.docker.com/get-started/ for installation process.
 
+Additional Mac OS Setup: Enabling Rosetta in Docker
+If you're using a Mac with Apple Silicon (M1, M2, M3 etc.), you may need to enable Rosetta 2 in Docker to support x86/amd64 emulation. Follow these steps to configure Docker Desktop properly:
+- Open Docker Desktop.
+- Go to Settings.
+- In the General tab:
+  - Ensure "Use Apple Virtualisation framework" is enabled.
+  - Navigate to the Features in development section (location may vary depending on your Docker version):
+    - Enable "Use Rosetta for x86/amd64 emulation on Apple Silicon".
+    - Click Apply & Restart if prompted.
+This set-up allows Docker to run containers built for Intel architecture on Apple Silicon Macs.
+
 
 Note: Please ensure Docker Application is running in the background when using MetaboExploreR if you are using a Mac or Windows OS.
 
