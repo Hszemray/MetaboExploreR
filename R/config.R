@@ -461,9 +461,7 @@ check_docker <- function() {
     message("Docker is installed, running, and able to execute containers successfully.")
 
     message("Pulling emulation docker...  ")
-    emulation_status <- system("
-      docker run --privileged --rm tonistiigi/binfmt --install all"
-    )
+    emulation_status <- system("docker run --privileged --rm tonistiigi/binfmt --install all")
     if (emulation_status == 0) {
       message("Successfully pulled emulation docker!")
     } else{
@@ -471,9 +469,7 @@ check_docker <- function() {
     }
 
     message("Pulling proteowizard docker...  ")
-    proteowizard_status <- system(
-      "docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
-    )
+    proteowizard_status <- system("docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
     if (proteowizard_status == 0) {
       message("Successfully pulled proteowizard docker!")
     } else{
