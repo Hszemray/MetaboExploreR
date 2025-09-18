@@ -93,7 +93,7 @@ msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
       recursive = TRUE
     )
     dir.create(
-      file.path(base_path, "data", "skyline"),
+      file.path(base_path, "data", "PeakForgeR"),
       showWarnings = FALSE,
       recursive = TRUE
     )
