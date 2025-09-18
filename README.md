@@ -1,5 +1,5 @@
 MetaboExploreR
-<img src='man/figures/logo.png' style='float: right; height:100px;' />
+<img src='man/figures/logo.png' style='float: right; height:50px;' />
 ================
 
 [![license](https://img.shields.io/github/license/vimalnathnambiar/exfilms.svg?color=%23A31F34)](LICENSE)
