@@ -140,4 +140,4 @@ Szemray, H., Nambiar, V., Lawler, N., Lodge, S., Wist, J.,&  Whiley, L. (2025). 
 [semantic-release-badge]: https://img.shields.io/badge/semantic--release-angular-E10079.svg?logo=semantic-release&logoColor=%23E10079
 [doi-zenodo]: https://doi.org/10.5281/zenodo.10976761
 [doi-zenodo-badge]: https://img.shields.io/badge/zenodo-10.5281/zenodo.10976761-blue.svg?logo=doi&logoColor=blue
-[user-guide]: inst/doc/MetaboExploreR-vignette.html
+[user-guide]: https://Hszemray.github.io/MetaboExploreR/MetaboExploreR-vignette.html

@@ -105,7 +105,7 @@ Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
 ## User Guide
 
 For a more detailed guide please visit the following link
-[here](inst/doc/MetaboExploreR-vignette.html)
+[here](https://Hszemray.github.io/MetaboExploreR/MetaboExploreR-vignette.html)
 
 ## Technical Notes
 
