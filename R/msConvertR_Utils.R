@@ -150,7 +150,7 @@ msConvertR_construct_command_for_terminal <- function(input_directory, output_di
                               mustWork = FALSE)
 
   # Docker image name
-  docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses"
+  docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:3.0.25114-e35aac0"
 
   # Mount point inside container
   container_data_path <- "/data"
@@ -161,7 +161,7 @@ msConvertR_construct_command_for_terminal <- function(input_directory, output_di
 
   # Construct Docker command
   docker_command <- sprintf(
-    'docker run --rm --platform linux/amd64 -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
+    'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
     input_path,
     container_data_path ,
     output_dir,

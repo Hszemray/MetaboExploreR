@@ -458,18 +458,8 @@ check_docker <- function() {
   docker_container_status <- system("docker run hello-world")
 
   if (docker_container_status == 0) {
-    message("Docker is installed, running, and able to execute containers successfully.")
-
-    message("Pulling emulation docker...  ")
-    emulation_status <- system("docker run --privileged --rm tonistiigi/binfmt --install all")
-    if (emulation_status == 0) {
-      message("Successfully pulled emulation docker!")
-    } else{
-      stop("Awwww snap an error occured during pull!")
-    }
-
-    message("Pulling proteowizard docker...  ")
-    proteowizard_status <- system("docker pull --platform linux/amd64 proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses")
+       message("Pulling proteowizard docker...  ")
+    proteowizard_status <- system("docker pull proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:3.0.25114-e35aac0")
     if (proteowizard_status == 0) {
       message("Successfully pulled proteowizard docker!")
     } else{
