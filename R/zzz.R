@@ -58,47 +58,52 @@ utils::globalVariables(
   )
 )
 
-.onAttach <- function(libname, pkgname) {
-  user <- NULL
+if (require("MetaboExploreR", quietly = TRUE)) {
+  .onAttach <- function(libname, pkgname) {
+    user <- NULL
 
-  if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-    user <- rstudioapi::showPrompt("Login", "Enter your username:", "")
-  }
-
-
-  if (is.null(user) || identical(user, "")) {
-    if (requireNamespace("tcltk", quietly = TRUE)) {
-      tt <- tcltk::tktoplevel()
-      tcltk::tkwm.title(tt, "Enter Username")
-
-      user_var <- tcltk::tclVar("")
-      entry <- tcltk::tkentry(tt, textvariable = user_var)
-      tcltk::tkpack(tcltk::tklabel(tt, text = "Username:"), entry)
-
-      done <- tcltk::tclVar(0)
-      onOK <- function() tcltk::tclvalue(done) <- 1
-      ok_button <- tcltk::tkbutton(tt, text = "OK", command = onOK)
-      tcltk::tkpack(ok_button)
-
-      tcltk::tkwait.variable(done)
-      user <- tcltk::tclvalue(user_var)
-      tcltk::tkdestroy(tt)
+    if (requireNamespace("rstudioapi", quietly = TRUE) &&
+        rstudioapi::isAvailable()) {
+      user <- rstudioapi::showPrompt("Login", "Enter your username:", "")
     }
-  }
 
-  if (identical(user, "ANPC")) {
-    package_name <- "MetaboExploreR"
-    message("Welcome, ANPC! Opening workflow R Markdown...")
 
-    rmd_file <- system.file("rmd", "workflow.Rmd", package = package_name)
+    if (is.null(user) || identical(user, "")) {
+      if (requireNamespace("tcltk", quietly = TRUE)) {
+        tt <- tcltk::tktoplevel()
+        tcltk::tkwm.title(tt, "Enter Username")
 
-    if (rmd_file != "") {
-      if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-        rstudioapi::navigateToFile(rmd_file)
-      } else {
-        out_html <- tempfile(fileext = ".html")
-        rmarkdown::render(rmd_file, output_file = out_html, quiet = TRUE)
-        browseURL(out_html)
+        user_var <- tcltk::tclVar("")
+        entry <- tcltk::tkentry(tt, textvariable = user_var)
+        tcltk::tkpack(tcltk::tklabel(tt, text = "Username:"), entry)
+
+        done <- tcltk::tclVar(0)
+        onOK <- function()
+          tcltk::tclvalue(done) <- 1
+        ok_button <- tcltk::tkbutton(tt, text = "OK", command = onOK)
+        tcltk::tkpack(ok_button)
+
+        tcltk::tkwait.variable(done)
+        user <- tcltk::tclvalue(user_var)
+        tcltk::tkdestroy(tt)
+      }
+    }
+
+    if (identical(user, "ANPC")) {
+      package_name <- "MetaboExploreR"
+      message("Welcome, ANPC! Opening workflow R Markdown...")
+
+      rmd_file <- system.file("rmd", "workflow.Rmd", package = package_name)
+
+      if (rmd_file != "") {
+        if (requireNamespace("rstudioapi", quietly = TRUE) &&
+            rstudioapi::isAvailable()) {
+          rstudioapi::navigateToFile(rmd_file)
+        } else {
+          out_html <- tempfile(fileext = ".html")
+          rmarkdown::render(rmd_file, output_file = out_html, quiet = TRUE)
+          browseURL(out_html)
+        }
       }
     }
   }
