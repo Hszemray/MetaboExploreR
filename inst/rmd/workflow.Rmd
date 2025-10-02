@@ -13,7 +13,7 @@ output:
 # User parameters:
 project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
 qc_label <- "PQC"   # Options: LTR, PQC, VLTR, etc.
-missing_val_threshold <- 50 
+missing_val_threshold <- 50 #default for ANPC methods
 
 message("Step 1: Converting raw vendor files to mzml...")
 MetaboExploreR::msConvertR(

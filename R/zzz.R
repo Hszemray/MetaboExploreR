@@ -58,18 +58,28 @@ utils::globalVariables(
   )
 )
 
-if (require("MetaboExploreR", quietly = TRUE)) {
-  .onAttach <- function(libname, pkgname) {
-    user <- NULL
+.onAttach <- function(libname, pkgname) {
+  # Don't run in non-interactive sessions (e.g., R CMD check, CI, tests)
+  if (!interactive()) return()
 
-    if (requireNamespace("rstudioapi", quietly = TRUE) &&
-        rstudioapi::isAvailable()) {
-      user <- rstudioapi::showPrompt("Login", "Enter your username:", "")
-    }
+  # Don't run during install or test environments
+  if (Sys.getenv("R_METABOEXPORER_SKIP_ONATTACH", "false") == "true") return()
 
+  user <- NULL
 
-    if (is.null(user) || identical(user, "")) {
-      if (requireNamespace("tcltk", quietly = TRUE)) {
+  # Try prompting with rstudioapi
+  if (requireNamespace("rstudioapi", quietly = TRUE) &&
+      rstudioapi::isAvailable()) {
+    user <- tryCatch(
+      rstudioapi::showPrompt("Login", "Enter your username:", ""),
+      error = function(e) NULL
+    )
+  }
+
+  # Fallback to tcltk
+  if (is.null(user) || identical(user, "")) {
+    if (requireNamespace("tcltk", quietly = TRUE)) {
+      try({
         tt <- tcltk::tktoplevel()
         tcltk::tkwm.title(tt, "Enter Username")
 
@@ -86,25 +96,26 @@ if (require("MetaboExploreR", quietly = TRUE)) {
         tcltk::tkwait.variable(done)
         user <- tcltk::tclvalue(user_var)
         tcltk::tkdestroy(tt)
-      }
+      }, silent = TRUE)
     }
+  }
 
-    if (identical(user, "ANPC")) {
-      package_name <- "MetaboExploreR"
-      message("Welcome, ANPC! Opening workflow R Markdown...")
+  # If user is ANPC, show the R Markdown
+  if (identical(user, "ANPC")) {
+    rmd_file <- system.file("rmd", "workflow.Rmd", package = pkgname)
 
-      rmd_file <- system.file("rmd", "workflow.Rmd", package = package_name)
-
-      if (rmd_file != "") {
-        if (requireNamespace("rstudioapi", quietly = TRUE) &&
-            rstudioapi::isAvailable()) {
-          rstudioapi::navigateToFile(rmd_file)
-        } else {
-          out_html <- tempfile(fileext = ".html")
+    if (nzchar(rmd_file)) {
+      if (requireNamespace("rstudioapi", quietly = TRUE) &&
+          rstudioapi::isAvailable()) {
+        try(rstudioapi::navigateToFile(rmd_file), silent = TRUE)
+      } else if (requireNamespace("rmarkdown", quietly = TRUE)) {
+        out_html <- tempfile(fileext = ".html")
+        try({
           rmarkdown::render(rmd_file, output_file = out_html, quiet = TRUE)
           browseURL(out_html)
-        }
+        }, silent = TRUE)
       }
     }
   }
 }
+
