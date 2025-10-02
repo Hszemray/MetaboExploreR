@@ -1,0 +1,44 @@
+---
+title: "MetaboExploreR Workflow"
+author: "Harrison Szemray"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+---
+
+```{r workflow, include=FALSE}
+# User parameters:
+project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
+qc_label <- "PQC"   # Options: LTR, PQC, VLTR, etc.
+missing_val_threshold <- 50 
+
+message("Step 1: Converting raw vendor files to mzml...")
+MetaboExploreR::msConvertR(
+  input_directory  = project_path,
+  output_directory = project_path
+)
+
+message("Step 2: Running PeakForgeR...")
+MetaboExploreR::PeakForgeR(
+  user_name = "ANPC",
+  project_directory = project_path,
+  mrm_template_list = NULL,
+  QC_sample_label = "PQC",
+  plateID_outputs = NULL
+)
+
+message("Step 3: Running QC check...")
+MetaboExploreR::qcCheckR(
+  user_name = "ANPC",
+  project_directory = project_path,
+  mrm_template_list = NULL,
+  QC_sample_label = qc_label,
+  sample_tags = NULL,
+  mv_threshold = missing_val_threshold
+)
+
+sessionInfo()
+```
