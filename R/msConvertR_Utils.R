@@ -249,7 +249,7 @@ msConvertR_restructure_directory <- function(output_directory,
     mzml_files <- list.files(path = mzml_output_dir,
                              pattern = "\\.mzML$",
                              full.names = TRUE)
-    mzml_files <- mzml_files[!grepl("cond|blank|istds", mzml_files, ignore.case = TRUE)]
+    mzml_files <- mzml_files[!grepl("-COND\\d+_|-BLANK\\d+_|-BLANK_\\d+|-ISTDs_\\d+", mzml_files, ignore.case = TRUE)]
     matched_mzml <- str_subset(mzml_files, plateID)
     file.copy(from = matched_mzml,
               to = mzml_dest,
