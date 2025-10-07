@@ -44,6 +44,7 @@ function
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
 install_MetaboExploreR()
+library(MetaboExploreR)
 ```
 
 ## Project Setup
