@@ -15,6 +15,8 @@ project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
 qc_label <- "PQC"   # Options: LTR, PQC, VLTR, etc.
 missing_val_threshold <- 50 #default for ANPC methods
 
+
+
 message("Step 1: Converting raw vendor files to mzml...")
 MetaboExploreR::msConvertR(
   input_directory  = project_path,
@@ -26,7 +28,7 @@ MetaboExploreR::PeakForgeR(
   user_name = "ANPC",
   project_directory = project_path,
   mrm_template_list = NULL,
-  QC_sample_label = "PQC",
+  QC_sample_label = qc_label,
   plateID_outputs = NULL
 )
 
