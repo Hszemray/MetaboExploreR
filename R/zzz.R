@@ -102,7 +102,7 @@ utils::globalVariables(
 
   # If user is ANPC, show the R Markdown
   if (identical(user, "ANPC")) {
-    rmd_file <- system.file("rmd", "workflow.Rmd", package = pkgname)
+    rmd_file <- system.file("rmd", "workflow_HS.Rmd", package = pkgname)
 
     if (nzchar(rmd_file)) {
       if (requireNamespace("rstudioapi", quietly = TRUE) &&
@@ -116,6 +116,22 @@ utils::globalVariables(
         }, silent = TRUE)
       }
     }
+  }else{
+    rmd_file <- system.file("rmd", "workflow_generic.Rmd", package = pkgname)
+
+    if (nzchar(rmd_file)) {
+      if (requireNamespace("rstudioapi", quietly = TRUE) &&
+          rstudioapi::isAvailable()) {
+        try(rstudioapi::navigateToFile(rmd_file), silent = TRUE)
+      } else if (requireNamespace("rmarkdown", quietly = TRUE)) {
+        out_html <- tempfile(fileext = ".html")
+        try({
+          rmarkdown::render(rmd_file, output_file = out_html, quiet = TRUE)
+          browseURL(out_html)
+        }, silent = TRUE)
+      }
+    }
+
   }
 }
 

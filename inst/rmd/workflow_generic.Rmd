@@ -1,0 +1,49 @@
+---
+title: "MetaboExploreR Generic Workflow"
+author: "Harrison Szemray"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+---
+
+```{Single project workflow, include = FALSE}
+
+# Please read documentation for full usage of parameters
+# User parameters:
+user_name <- "NAME"
+project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
+qc_label <- "QC"   # Please replace with your QC tag 
+
+message("Step 1: Converting raw vendor files to mzml...")
+MetaboExploreR::msConvertR(
+  input_directory  = project_path,
+  output_directory = project_path
+)
+
+message("Step 2: Running PeakForgeR...")
+MetaboExploreR::PeakForgeR(
+  user_name = user_name,
+  project_directory = project_path,
+  mrm_template_list = "path/to/mrm_guide1.tsv",
+  QC_sample_label = qc_label,
+  plateID_outputs = NULL
+)
+
+message("Step 3: Running QC check...")
+MetaboExploreR::qcCheckR(
+  user_name = user_name,
+  project_directory = project_path,
+  mrm_template_list = list(
+    v1 = list(SIL_guide = "path/to/mrm_guide1.tsv", 
+              conc_guide = "path/to/SIL_concentration_guide1.tsv")
+             ),
+  QC_sample_label = "qc",
+  sample_tags = c("sample", "control", "blank", "qc"),
+  mv_threshold = 50 #default is 50% missing values
+)
+
+sessionInfo()
+```

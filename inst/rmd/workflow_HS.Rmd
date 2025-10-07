@@ -1,5 +1,5 @@
 ---
-title: "MetaboExploreR Workflow"
+title: "MetaboExploreR CCSM Workflow"
 author: "Harrison Szemray"
 date: "`r Sys.Date()`"
 output: 
