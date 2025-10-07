@@ -9,7 +9,7 @@ output:
     theme: cosmo
 ---
 
-```{Single project workflow, include = FALSE}
+```{r Single project workflow, include = FALSE}
 # User parameters:
 project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
 qc_label <- "PQC"   # Options: LTR, PQC, VLTR, etc.

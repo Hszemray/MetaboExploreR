@@ -9,7 +9,7 @@ output:
     theme: cosmo
 ---
 
-```{Single project workflow, include = FALSE}
+```{r Single project workflow, include = FALSE}
 
 # Please read documentation for full usage of parameters
 # User parameters:
