@@ -53,6 +53,7 @@ RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Imports: 
     BiocManager,
+    callr,
     data.table,
     dplyr,
     future,
