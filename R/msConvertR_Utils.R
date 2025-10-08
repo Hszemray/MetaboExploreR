@@ -57,8 +57,8 @@ msConvertR_mzml_conversion <- function(input_directory,
                                        vendor_extension_patterns) {
   msConvertR_set_working_directory(input_directory)
   msConvertR_setup_project_directories(output_directory, plateIDs)
-  command <- msConvertR_construct_command_for_terminal(input_directory, output_directory)
-  msConvertR_execute_command(command)
+  commands <- msConvertR_construct_command_for_terminal(input_directory, output_directory, plateIDs)
+  msConvertR_execute_command(commands, output_directory, plateIDs)
   msConvertR_restructure_directory(output_directory, plateIDs, vendor_extension_patterns)
 }
 
@@ -130,62 +130,113 @@ msConvertR_set_working_directory <- function(output_directory) {
   setwd(output_directory)
 }
 
-#' msConvertR_construct_command_for_terminal
+#' msConvertR_construct_commands_for_terminal
 #'
 #' This function constructs the command for terminal to convert files to mzML format.
 #' @keywords internal
 #' @param input_directory path to input directory containing vendor files
 #' @param output_directory path to output directory.
+#' @param plateIDs The names of vendor files to convert
 #' @return The constructed command string.
 #' @examples
 #' \dontrun{
 #' command <- msConvertR_construct_command_for_terminal(path/to/input/directory,
 #'                                                      "path/to/output_directory")
 #' }
-msConvertR_construct_command_for_terminal <- function(input_directory, output_directory) {
-  # Normalise directory
-  input_path <- normalizePath(file.path(input_directory, "raw_data"), mustWork = FALSE)
-  # Normalise output directory
-  output_dir <- normalizePath(file.path(output_directory, "msConvert_mzml_output"),
-                              mustWork = FALSE)
+msConvertR_construct_command_for_terminal <- function(input_directory, output_directory, plateIDs) {
 
-  # Docker image name
-  docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:3.0.25114-e35aac0"
+  commands <- lapply(plateIDs, function(plateID) {
+    input_path <- normalizePath(file.path(input_directory, "raw_data"), mustWork = FALSE)
+    output_dir <- normalizePath(file.path(output_directory, plateID, "data", "mzml"), mustWork = FALSE)
 
-  # Mount point inside container
-  container_data_path <- "/data"
-  output_data_path <- "/output"
+    docker_image <- "proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:skyline_daily_25.1.1.270-67f3e15"
+    container_data_path <- "/data"
+    output_data_path <- "/output"
 
-  # Extract filename from full path
-  file_name <- "**" #Runs all files in directory
+    file_name <- paste0(plateID, ".wiff")
 
-  # Construct Docker command
-  docker_command <- sprintf(
-    'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
-    input_path,
-    container_data_path ,
-    output_dir,
-    output_data_path,
-    docker_image,
-    file.path(container_data_path, file_name),
-    output_data_path
-  )
+    sprintf(
+      'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
+      input_path,
+      container_data_path,
+      output_dir,
+      output_data_path,
+      docker_image,
+      file.path(container_data_path, file_name),
+      output_data_path
+    )
+  })
 
-  return(docker_command)
+  return(commands)
 }
 
 #' msConvertR_execute_command
 #'
 #' This function executes the command to convert files to mzML format.
 #' @keywords internal
-#' @param command The command string to execute.
+#' @param commands The command string to execute for each plate.
 #' @return None. The function executes the command.
 #' @examples
 #' \dontrun{
 #' msConvertR_execute_command(command)
 #' }
-msConvertR_execute_command <- function(command) {
-  system(command)
+msConvertR_execute_command <- function(commands, output_directory, plateIDs) {
+  message("Converting vendor files...")
+  logs_dir <- file.path(output_directory, "msConvertR_logs")
+  dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
+
+  future::plan(future::multisession)
+  on.exit(future::plan(future::sequential), add = TRUE)
+
+  available_cores <- max(1, parallel::detectCores() - 1)
+  options(future.maxWorkers = available_cores)
+
+  # Start conversion tasks as futures
+  futures <- lapply(seq_along(commands), function(i) {
+    future::future({
+      plateID <- plateIDs[i]
+      cmd <- commands[[i]]
+      log_file <- file.path(logs_dir, paste0(plateID, "_log.txt"))
+
+      start_time <- Sys.time()
+
+      output <- system(cmd, intern = TRUE)
+      exit_status <- attr(output, "status")
+      success <- is.null(exit_status) || exit_status == 0
+
+      writeLines(enc2utf8(c(
+        paste("Start time:", start_time),
+        paste("Command:", cmd),
+        "Output:",
+        output,
+        paste("End time:", Sys.time()),
+        paste("Status:", if (success) "SUCCESS" else "FAILURE")
+      )), con = log_file)
+
+      message(sprintf("Finished conversion for %s — %s", plateID, if (success) "SUCCESS" else "FAILURE"))
+      success
+    })
+  })
+
+  # Start looping progress bar
+  pb <- txtProgressBar(min = 0, max = 100, style = 3)
+  i <- 0
+  repeat {
+    i <- (i + 10) %% 110
+    setTxtProgressBar(pb, ifelse(i == 0, 100, i))
+    Sys.sleep(3)
+
+    # Check if all futures are resolved
+    if (all(sapply(futures, future::resolved))) {
+      break
+    }
+  }
+  close(pb)
+  # Collect results
+  results <- lapply(futures, future::value)
+  names(results) <- plateIDs
+
+  return(results)
 }
 
 #' msConvertR_restructure_directory
