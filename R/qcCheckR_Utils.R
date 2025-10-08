@@ -3060,15 +3060,15 @@ export_master_list_rda <- function(master_list) {
     paste0(
       Sys.Date(),
       "_",
-      master_list$project_details$user_name,
-      "_",
       master_list$project_details$project_name,
       "_",
       "_qcCheckR.rda"
     )
   )
 
-  save(master_list, file = output_file, compress = "xz")
+  callr::r_bg(function() {
+    save(master_list, file = output_file, compress = FALSE)
+  })
 
   master_list <- update_script_log(
     master_list,
