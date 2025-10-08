@@ -77,6 +77,7 @@ msConvertR_mzml_conversion <- function(input_directory,
 #' }
 msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
   for (plateID in plateIDs) {
+    dir.create(file.path(output_directory,"user_files"))
     base_path <- file.path(output_directory, plateID)
     dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
     dir.create(file.path(base_path, "data"),
@@ -153,7 +154,9 @@ msConvertR_construct_command_for_terminal <- function(input_directory, output_di
     container_data_path <- "/data"
     output_data_path <- "/output"
 
-    file_name <- paste0(plateID, ".wiff")
+    files <- list.files(input_path)
+    file_name <- files[grepl(plateID, files)]
+    file_name <- file_name[!grepl(".scan", file_name)]
 
     sprintf(
       'docker run --rm -v "%s:%s" -v "%s:%s" %s wine msconvert %s -o %s',
@@ -181,8 +184,9 @@ msConvertR_construct_command_for_terminal <- function(input_directory, output_di
 #' msConvertR_execute_command(command)
 #' }
 msConvertR_execute_command <- function(commands, output_directory, plateIDs) {
-  message("Converting vendor files...")
-  logs_dir <- file.path(output_directory, "msConvertR_logs")
+  message("Converting vendor files:\n", paste(plateIDs,collapse = "\n"))
+
+  logs_dir <- file.path(output_directory, "metaboexplorer_logs")
   dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
 
   future::plan(future::multisession)
