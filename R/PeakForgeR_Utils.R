@@ -1234,7 +1234,7 @@ execute_PeakForgeR_command <- function(master_list, plate_idx) {
   #--instrument-method-mz-tolerance=0.0006 \
 
   docker_command <- sprintf(
-    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses wine SkylineCmd \
+    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:skyline_daily_25.1.1.270-67f3e15 wine SkylineCmd \
       --dir=/data \
       --in=%s \
       --instrument-method-mz-tolerance=0.055 \
@@ -1433,31 +1433,28 @@ save_plate_data <- function(master_list, plate_idx) {
   if (length(long_path) > 260 & .Platform$OS.type == "windows") {
     cmd <- paste0('cmd /c mklink /J "C:\\rda" "', long_path, '"')
     system(cmd, intern = FALSE, ignore.stdout = TRUE)
-    mzml_path <- "C:/rda"
+    save_path <- "C:/rda"
   } else {
     # Use full path directly on macOS/Linux
-    mzml_path <- file.path(master_list$project_details$project_dir,
+    save_path <- file.path(master_list$project_details$project_dir,
                            plate_idx,
                            "data",
-                           "mzml")
+                           "rda")
   }
-  save(
-    master_list,
-    file = paste0(
-      master_list$project_details$project_dir,
-      "/",
-      plate_idx,
-      "/data/rda/",
-      Sys.Date(),
-      "_",
-      master_list$project_details$user_name,
-      "_",
-      master_list$project_details$project_name,
-      "_",
-      plate_idx,
-      "_PeakForgeR.rda"
+
+
+  callr::r_bg(function() {
+    save(
+      master_list,
+      file = file.path(
+        save_path,
+        paste0(Sys.Date(), "_", master_list$project_details$project_name, "_",
+               plate_idx, "_PeakForgeR.rda")
+      ),
+      compress = FALSE
     )
-  )
+  })
+
 
   if (length(long_path) > 260 & .Platform$OS.type == "windows") {
     unlink("C:/rda", recursive = TRUE)
@@ -1479,8 +1476,9 @@ save_plate_data <- function(master_list, plate_idx) {
 #' }
 archive_raw_files <- function(project_directory) {
   validate_project_directory(project_directory)
+  archive_files(project_directory, "MetaboExploreR_logs")
   archive_files(project_directory, "raw_data")
-  archive_files(project_directory, "msConvert_mzml_output")
+  #archive_files(project_directory, "msConvert_mzml_output")
   message("\n PeakForgeR is now finished running all plates :)")
 }
 

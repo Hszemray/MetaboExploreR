@@ -80,6 +80,14 @@
 #'    \item Message about availability of chromatograms and reports
 #'   }
 #' }
+#' Import specific functions from packages
+#' @keywords internal
+#' @name PeakForgeR_import_external_functions
+#' @importFrom future plan sequential multisession
+#' @importFrom future.apply future_lapply
+#' @importFrom parallel detectCores
+NULL
+
 PeakForgeR <- function(user_name,
                      project_directory,
                      mrm_template_list = NULL,
@@ -117,17 +125,17 @@ PeakForgeR <- function(user_name,
 
   # Set plateIDs
   file_paths <- list.files(project_directory)
-  plateIDs <- file_paths[!grepl("raw_data|msConvert_mzml_output|all|archive|error_log.txt",
-                                file_paths)]
+  exclude_names <- c("raw_data", "msConvert_mzml_output", "all", "archive",
+                     "error_log.txt","MetaboExploreR_logs", "logs", "user_files")
+  plateIDs <- file_paths[!basename(file_paths) %in% exclude_names]
+
 
   if (is.null(plateIDs) || length(plateIDs) == 0) {
-    # Check if plate_ID_outputs are contained in mzML files
-    mzml_files <- list.files(file.path(project_directory, "msConvert_mzml_output"))
-    valid_count <- 0
     count_data <- list()
-
     for (plate in plateID_outputs) {
-      count_data[[plate]] <- length(mzml_files[grepl(plate, mzml_files)])
+      mzml_files <- list.files(file.path(project_directory, plate, "data","mzml"))
+      valid_count <- 0
+      count_data[[plate]] <- length(mzml_files)
       valid_count <- valid_count + count_data[[plate]]
     }
 
@@ -174,38 +182,81 @@ PeakForgeR <- function(user_name,
   failed_plates <- c()
   successful_plates <- c()
 
-  # Process each plate
-  for (plateID in plateIDs) {
+  # Process each plate in parallel
+  logs_dir <- file.path(project_directory, "MetaboExploreR_logs")
+  dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
+
+  #Parallel settings
+  future::plan(future::multisession)
+  on.exit(future::plan(future::sequential), add = TRUE)
+  total_cores <- parallel::detectCores()
+  available_cores <- if (total_cores <= 2) 1 else total_cores - 2
+  options(future.maxWorkers = available_cores)
+
+  results <- future.apply::future_lapply(plateIDs, function(plateID) {
+    start_time <- Sys.time()
+    log_file <- file.path(logs_dir, paste0(plateID, "_MetaboExploreR_log.txt"))
+
+    # Helper to write a line to the log
+    write_log <- function(text) {
+      timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+      line <- paste0("[", timestamp, "] ", text, "\n")
+      cat(enc2utf8(line), file = log_file, append = TRUE)
+    }
+
     tryCatch({
-      message("Initialising plate: ", paste(plateID))
-      master_list <- PeakForgeR_setup_project(user_name,
-                                           project_directory,
-                                           plateID,
-                                           mrm_template_list,
-                                           QC_sample_label)
+      write_log(paste("Starting processing for plate:", plateID))
+
+      write_log("Step 1: Setting up project...")
+      master_list <- PeakForgeR_setup_project(
+        user_name,
+        project_directory,
+        plateID,
+        mrm_template_list,
+        QC_sample_label
+      )
+      write_log("Project setup complete.")
+
+      write_log("Step 2: Importing mzML files...")
       master_list <- import_mzml(plateID, master_list)
+      write_log("mzML import complete.")
+
+      write_log("Step 3: Performing peak picking...")
       master_list <- peak_picking(plateID, master_list)
-      successful_plates <- c(successful_plates, plateID)
+      write_log("Peak picking complete.")
+
+      write_log(paste("Finished processing plate:", plateID))
+      write_log("Status: SUCCESS")
+
+      list(success = TRUE, plateID = plateID)
+
     }, error = function(e) {
-      message(paste("Error processing plate ", plateID, ": ", e$message))
-      log_error(paste("Error processing plate ", plateID, ": ", e$message))
-      failed_plates <<- c(failed_plates, plateID)
+      write_log(paste("Error during processing:", e$message))
+      write_log("Status: FAILURE")
+
+      log_error(paste("Error processing plate", plateID, ":", e$message))
+      list(success = FALSE, plateID = plateID, error = e$message)
     })
-    message("Finished processing: ", paste(plateID))
+  })
+
+  # Extract successful and failed plate IDs
+  successful_plates <- sapply(results, function(x) x$success && !is.null(x$plateID))
+  failed_plates <- sapply(results, function(x) !x$success && !is.null(x$plateID))
+
+  # Display summary
+  message("\nProcessing complete.")
+
+  if (any(successful_plates)) {
+    message("\nPlates processed successfully:\n",
+            paste(sapply(results[successful_plates], `[[`, "plateID"), collapse = "\n"))
   }
 
-  # Display results
-  message("Processing complete! \n")
-  if (length(successful_plates) > 0) {
-    message("Successful plates:\n",
-            paste(successful_plates, collapse = "\n"))
-  }
-  if (length(failed_plates) > 0) {
-    message("Failed plates:\n", paste(failed_plates, collapse = "\n "))
+  if (any(failed_plates)) {
+    message("\nPlates that failed to process:\n",
+            paste(sapply(results[failed_plates], `[[`, "plateID"), collapse = "\n"))
   }
 
-  # Check if all plates failed
-  if (length(successful_plates) == 0) {
+  if (!any(successful_plates)) {
     stop("All plates failed. Halting script.")
   }
 
