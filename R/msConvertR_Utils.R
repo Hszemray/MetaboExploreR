@@ -191,8 +191,8 @@ msConvertR_execute_command <- function(commands, output_directory, plateIDs) {
 
   future::plan(future::multisession)
   on.exit(future::plan(future::sequential), add = TRUE)
-
-  available_cores <- max(1, parallel::detectCores() - 1)
+  total_cores <- parallel::detectCores()
+  available_cores <- if (total_cores <= 2) 1 else total_cores - 2
   options(future.maxWorkers = available_cores)
 
   # Start conversion tasks as futures
