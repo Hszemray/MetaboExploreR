@@ -36,7 +36,9 @@ Please visit https://www.docker.com/get-started/ for installation process.
 Note: Please ensure Docker Application is running in the background when using MetaboExploreR if you are using a Mac or Windows OS.
 
 **`MetaboExploreR`**
-Installation is effortless with the below helper function
+Installation is effortless with the below helper function.
+Once the package is attached you will be asked for a username and a default
+default workflow will open for your convenience.
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
 install_MetaboExploreR()
@@ -93,7 +95,7 @@ Process iterates by plate to:
 Post-execution directory of msConvertR, PeakForgeR, and qcCheckR:
 
     User Project Directory
-    ├── Archive #Archive of all mzml and wiff files for backup
+    ├── Archive #Archive of wiff files and MetaboExploreR logs by plate
     ├── ALL
     │   ├── data
     │   │   ├── batch_correction # batch  and singnal drift correction outputs

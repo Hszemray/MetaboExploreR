@@ -83,7 +83,7 @@ This would create mzML files in the appropriate directory structure.
 
 The `PeakForgeR` function is the core of the peak picking and integration workflow. It takes the mzML files and an MRM transition list as input and produces a report with the integrated peak areas.
 
-The MRM transition list is a tab-separated file that contains information about the molecules to be quantified. An example file, `LGW_lipid_mrm_template_v1.tsv`, is included in the package. Let's inspect its contents.
+The MRM transition list is a tab-separated or csv file that contains information about the molecules to be quantified. An example file, `LGW_lipid_mrm_template_v1.tsv`, is included in the package. Let's inspect its contents.
 
 ```{r mrm_example}
 mrm_template_path <- system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR")
