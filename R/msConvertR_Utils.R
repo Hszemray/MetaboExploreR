@@ -77,7 +77,7 @@ msConvertR_mzml_conversion <- function(input_directory,
 #' }
 msConvertR_setup_project_directories <- function(output_directory, plateIDs) {
   for (plateID in plateIDs) {
-    dir.create(file.path(output_directory,"user_files"))
+    dir.create(file.path(output_directory,"user_files"), showWarnings = FALSE)
     base_path <- file.path(output_directory, plateID)
     dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
     dir.create(file.path(base_path, "data"),
