@@ -2964,14 +2964,44 @@ export_xlsx_file <- function(master_list) {
       "QC.sampleMV" = master_list$filters$samples.missingValues,
       "QC.lipidsMV" = dplyr::bind_rows(master_list$filters$lipid.missingValues$allPlates),
       "QC.lipidQcRsd" = format_rsd_table(master_list),
-      "DATA.peakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(-dplyr::contains("SIL")),
-      "DATA.silPeakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>% dplyr::select(dplyr::contains("sample") |
-                                                                                                  dplyr::contains("SIL")),
-      "DATA.all.concentration" = dplyr::bind_rows(master_list$data$concentration$sorted),
-      "DATA.preProcessed.concentration" = filter_concentration(master_list, "concentration"),
-      "DATA.all.concentration.S.T." = dplyr::bind_rows(master_list$data$concentration$statTargetProcessed),
-      "DATA.preProcessed.conc.S.T." = filter_concentration(master_list, "concentration[statTarget]")
-    ),
+      "DATA.peakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>%
+        dplyr::select(-dplyr::contains("SIL"))%>%
+        dplyr::mutate(dplyr::across(
+          .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+          .fns = ~ ifelse(is.na(.), NA,
+                          ifelse(. < 1, signif(., 3), round(., 2)))
+        )),
+      "DATA.silPeakArea" = dplyr::bind_rows(master_list$data$peakArea$sorted) %>%
+        dplyr::select(dplyr::contains("sample") | dplyr::contains("SIL"))%>%
+        dplyr::mutate(dplyr::across(
+          .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+          .fns = ~ ifelse(is.na(.), NA,
+                          ifelse(. < 1, signif(., 3), round(., 2)))
+        )),
+      "DATA.all.concentration" = dplyr::bind_rows(master_list$data$concentration$sorted)%>%
+        dplyr::mutate(dplyr::across(
+          .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+          .fns = ~ ifelse(is.na(.), NA,
+                          ifelse(. < 1, signif(., 3), round(., 2)))
+        )),
+      "DATA.preProcessed.concentration" = filter_concentration(master_list, "concentration")%>%
+        dplyr::mutate(dplyr::across(
+          .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+          .fns = ~ ifelse(is.na(.), NA,
+                          ifelse(. < 1, signif(., 3), round(., 2)))
+        )),
+      "DATA.all.concentration.S.T." = dplyr::bind_rows(master_list$data$concentration$statTargetProcessed)%>%
+        dplyr::mutate(dplyr::across(
+          .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+          .fns = ~ ifelse(is.na(.), NA,
+                          ifelse(. < 1, signif(., 3), round(., 2)))
+        )),
+      "DATA.preProcessed.conc.S.T." = filter_concentration(master_list, "concentration[statTarget]"))%>%
+      dplyr::mutate(dplyr::across(
+        .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
+        .fns = ~ ifelse(is.na(.), NA,
+                        ifelse(. < 1, signif(., 3), round(., 2)))
+      )),
     file = output_path,
     overwrite = TRUE,
   )
