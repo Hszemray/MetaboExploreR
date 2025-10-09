@@ -777,7 +777,7 @@ initialise_mzml_filelist <- function(master_list) {
       pattern = ".mzML",
       full.names = FALSE
     )
-    mzml_filelist[[idx_plate]] <- mzml_filelist[[idx_plate]][!grepl("-COND\\d+_|-COND_\\d+|-BLANK\\d+_|-BLANK_\\d+|-ISTDs_\\d+", mzml_filelist[[idx_plate]], ignore.case = TRUE)]
+    mzml_filelist[[idx_plate]] <- mzml_filelist[[idx_plate]][!grepl("-COND\\d+_|-COND_\\d+|-BLANK\\d+_|-BLANK_\\d+|-ISTDs_\\d+|-ISTDs\\d+_", mzml_filelist[[idx_plate]], ignore.case = TRUE)]
   }
   return(mzml_filelist)
 }
