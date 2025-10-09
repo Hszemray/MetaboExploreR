@@ -1460,7 +1460,8 @@ integrate_corrected_data <- function(master_list, FUNC_list) {
     stop("Missing required column: sample_plate_id")
   }
 
-  corrected <- FUNC_list$corrected_data$data_qc_mean_adjusted
+  corrected <- FUNC_list$corrected_data$data_qc_mean_adjusted %>%
+    dplyr::relocate(sample_ID, .after = sample_name)
   master_list$data$concentration$corrected <- split(corrected, corrected$sample_plate_id)
 
   for (batch in names(master_list$data$concentration$corrected)) {
@@ -1470,8 +1471,12 @@ integrate_corrected_data <- function(master_list, FUNC_list) {
   master_list$data$peakArea$statTargetProcessed <- list()
   master_list$data$concentration$statTargetProcessed <- list()
   for (batch in unique(corrected$sample_plate_id)) {
-    master_list$data$peakArea$statTargetProcessed[[batch]] <- corrected %>% dplyr::filter(sample_plate_id == batch)
-    master_list$data$concentration$statTargetProcessed[[batch]] <- corrected %>% dplyr::filter(sample_plate_id == batch)
+    master_list$data$peakArea$statTargetProcessed[[batch]] <- corrected %>%
+      dplyr::filter(sample_plate_id == batch) %>%
+      dplyr::relocate(sample_ID, .after = sample_name)
+    master_list$data$concentration$statTargetProcessed[[batch]] <- corrected %>%
+      dplyr::filter(sample_plate_id == batch) %>%
+      dplyr::relocate(sample_ID, .after = sample_name)
     master_list$data$peakArea$statTargetProcessed[[batch]]$sample_data_source <- "concentration.statTarget"
   }
 
@@ -2996,14 +3001,14 @@ export_xlsx_file <- function(master_list) {
           .fns = ~ ifelse(is.na(.), NA,
                           ifelse(. < 1, signif(., 3), round(., 2)))
         )),
-      "DATA.preProcessed.conc.S.T." = filter_concentration(master_list, "concentration[statTarget]"))%>%
+      "DATA.preProcessed.conc.S.T." = filter_concentration(master_list, "concentration[statTarget]")%>%
       dplyr::mutate(dplyr::across(
         .cols = where(is.numeric) & !matches("sample", ignore.case = TRUE),
         .fns = ~ ifelse(is.na(.), NA,
                         ifelse(. < 1, signif(., 3), round(., 2)))
-      )),
+      ))),
     file = output_path,
-    overwrite = TRUE,
+    overwrite = TRUE
   )
 
   return(master_list)
