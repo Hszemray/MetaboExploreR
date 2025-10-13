@@ -301,8 +301,8 @@ validate_mrm_template_list <- function(mrm_template_list, user_name) {
 #' \dontrun{
 #' log_error("An error occurred while processing the data.")
 #' }
-log_error <- function(error_message) {
-  log_file <- "error_log.txt"
+log_error <- function(error_message, plateID) {
+  log_file <- file.path(project_directory, "MetaboExploreR_logs", paste0(plateID, "_MetaboExploreR_log.txt"))
   write(error_message, file = log_file, append = TRUE)
 }
 

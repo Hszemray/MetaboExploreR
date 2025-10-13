@@ -12,15 +12,16 @@ output:
 ```{r Single project workflow, include = FALSE}
 # User parameters:
 project_path <- "USER/PATH/TO/PROJECT" # Please define path to project file
-qc_label <- "PQC"   # Options: LTR, PQC, VLTR, etc.
+qc_label <- "LTR"   # Options: LTR, PQC, VLTR, etc.
 missing_val_threshold <- 50 #default for ANPC methods
 
+start <- Sys.time()
 message("Step 1: Converting raw vendor files to mzml...")
 MetaboExploreR::msConvertR(
   input_directory  = project_path,
   output_directory = project_path
 )
-
+end_msconvert <- Sys.time()
 message("Step 2: Running PeakForgeR...")
 MetaboExploreR::PeakForgeR(
   user_name = "ANPC",
@@ -29,7 +30,7 @@ MetaboExploreR::PeakForgeR(
   QC_sample_label = qc_label,
   plateID_outputs = NULL
 )
-
+end_peakforge <- Sys.time()
 message("Step 3: Running QC check...")
 MetaboExploreR::qcCheckR(
   user_name = "ANPC",
@@ -39,6 +40,12 @@ MetaboExploreR::qcCheckR(
   sample_tags = NULL,
   mv_threshold = missing_val_threshold
 )
+end_qccheck <- Sys.time()
+
+print("msconvert:", end_msconvert - start)
+print("peakforge:", end_peakforge - end_msconvert)
+print("qccheck:", end_qccheck - end_peakforge)
+print("total run time:", end_qccheck - start)
 
 sessionInfo()
 ```

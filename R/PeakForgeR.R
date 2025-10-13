@@ -196,12 +196,17 @@ PeakForgeR <- function(user_name,
   results <- future.apply::future_lapply(plateIDs, function(plateID) {
     start_time <- Sys.time()
     log_file <- file.path(logs_dir, paste0(plateID, "_MetaboExploreR_log.txt"))
+    library(MetaboExploreR)
 
     # Helper to write a line to the log
     write_log <- function(text) {
       timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
       line <- paste0("[", timestamp, "] ", text, "\n")
       cat(enc2utf8(line), file = log_file, append = TRUE)
+    }
+    #Helper to write error to log
+    log_error <- function(error_message, plateID) {
+      write(error_message, file = log_file, append = TRUE)
     }
 
     tryCatch({
@@ -234,7 +239,7 @@ PeakForgeR <- function(user_name,
       write_log(paste("Error during processing:", e$message))
       write_log("Status: FAILURE")
 
-      log_error(paste("Error processing plate", plateID, ":", e$message))
+      log_error(paste("Error processing plate", plateID, ":", e$message), plateID)
       list(success = FALSE, plateID = plateID, error = e$message)
     })
   })
