@@ -519,8 +519,34 @@ extract_run_order <- function(report, plate_id) {
     dplyr::distinct(FileName, .keep_all = TRUE) %>%
     dplyr::mutate(FileName = sub(".mzML", "", FileName)) %>%
     dplyr::rename(sample_name = FileName, sample_timestamp = AcquiredTime) %>%
-    dplyr::filter(!is.na(sample_timestamp) & sample_timestamp != "") %>%
+    dplyr::mutate(sample_timestamp = as.POSIXct(
+      sample_timestamp,
+      tryFormats = c(
+        # ISO 8601 formats
+        "%Y-%m-%dT%H:%M:%SZ",         # e.g. 2021-03-13T18:12:31Z (UTC)
+        "%Y-%m-%dT%H:%M:%S",          # e.g. 2021-03-13T18:12:31
+        "%Y-%m-%dT%H:%M:%S%z",        # e.g. 2021-03-13T18:12:31+0800
+        # Standard formats
+        "%Y-%m-%d %H:%M:%S",          # e.g. 2021-03-13 18:12:31
+        "%Y/%m/%d %H:%M:%S",          # e.g. 2021/03/13 18:12:31
+        "%d/%m/%Y %H:%M:%S",          # e.g. 13/03/2021 18:12:31
+        "%d-%m-%Y %H:%M:%S",          # e.g. 13-03-2021 18:12:31
+        # AM/PM formats
+        "%d/%m/%Y %I:%M %p",          # e.g. 13/03/2021 6:12 PM
+        "%Y-%m-%d %I:%M %p",          # e.g. 2021-03-13 6:12 PM
+        # Long formats
+        "%B %d, %Y %H:%M",            # e.g. March 13, 2021 18:12
+        "%b %d, %Y %I:%M %p",         # e.g. Mar 13, 2021 6:12 PM
+        # Date-only formats (if needed)
+        "%Y-%m-%d",                   # e.g. 2021-03-13
+        "%d/%m/%Y",                   # e.g. 13/03/2021
+        "%B %d, %Y"                   # e.g. March 13, 2021
+      ))) %>%
+
+    # Now filter and arrange safely
+    dplyr::filter(!is.na(sample_timestamp)) %>%
     dplyr::arrange(sample_timestamp) %>%
+
     dplyr::mutate(
       sample_plate_id = plate_id,
       sample_plate_order = dplyr::row_number(),
@@ -531,8 +557,10 @@ extract_run_order <- function(report, plate_id) {
         TRUE ~ NA_character_
       )
     )
+
   return(extracted_data)
 }
+
 
 #' Assign Sample Type
 #'
