@@ -246,7 +246,7 @@ validate_mrm_template_list <- function(mrm_template_list, user_name) {
     if (is.null(mrm_template_list)) {
       mrm_template_list <- list(
         v1 = system.file("extdata", "LGW_lipid_mrm_template_v1.tsv", package = "MetaboExploreR"),
-        v3 = system.file("extdata", "LGW_lipid_mrm_template_v3.tsv", package = "MetaboExploreR"),
+        v2 = system.file("extdata", "LGW_lipid_mrm_template_v2.tsv", package = "MetaboExploreR"),
         v4 = system.file("extdata", "LGW_lipid_mrm_template_v4.tsv", package = "MetaboExploreR")
       )
       message("mrm_template validation complete")
