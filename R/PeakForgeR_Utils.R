@@ -1017,10 +1017,10 @@ version_selector <- function(master_list) {
 
   # Define convention key as a named list
   convention_key <- list(
-    "_MS-LIPIDS"  = "LGW_lipid_mrm_template_v1.tsv",
-    "_MS-LIPIDS-2" = "LGW_lipid_mrm_template_v3.tsv",
-    "_MS-LIPIDS-3" = "LGW_lipid_mrm_template_v3.tsv",
-    "_MS-LIPIDS-4" = "LGW_lipid_mrm_template_v4.tsv"
+    "MS-LIPIDS"  = "LGW_lipid_mrm_template_v1.tsv",
+    "MS-LIPIDS-2" = "LGW_lipid_mrm_template_v2.tsv",
+    "MS-LIPIDS-3" = "LGW_lipid_mrm_template_v2.tsv",
+    "MS-LIPIDS-4" = "LGW_lipid_mrm_template_v4.tsv"
   )
 
   matching_version <- convention_key[[plate_indicated_version]]
@@ -1234,7 +1234,7 @@ execute_PeakForgeR_command <- function(master_list, plate_idx) {
   #--instrument-method-mz-tolerance=0.0006 \
 
   docker_command <- sprintf(
-    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:skyline_daily_25.1.1.270-67f3e15 wine SkylineCmd \
+    'docker run --rm -v "%s:/data" proteowizard/pwiz-skyline-i-agree-to-the-vendor-licenses:latest wine SkylineCmd \
       --dir=/data \
       --in=%s \
       --instrument-method-mz-tolerance=0.055 \
@@ -1405,7 +1405,7 @@ check_sil_standards <- function(master_list, plate_idx, current_version) {
   # Compute SILs unique to current version
   unique_sils_current <- setdiff(current_sils, other_sils)
 
-  # Match plate SILs to unique SILs and keep if 75% match
+  # Match plate SILs to unique SILs and keep if 90% match
   matching_sils <- intersect(sil_on_plate, unique_sils_current)
   match_ratio <- length(matching_sils) / length(unique_sils_current)
 
