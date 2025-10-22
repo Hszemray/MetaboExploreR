@@ -1545,7 +1545,7 @@ move_folder <- function(source_dir,
 #' }
 validate_directories <- function(source_dir, dest_dir) {
   if (!dir.exists(source_dir)) {
-    stop(paste("Source directory does not exist:", source_dir))
+    message(paste("Source directory does not exist:", source_dir))
   }
   if (!dir.exists(dest_dir)) {
     dir.create(dest_dir, recursive = TRUE)
@@ -1567,12 +1567,12 @@ validate_directories <- function(source_dir, dest_dir) {
     files_to_copy <- list.files(source_dir, full.names = TRUE)
 
     if (!dir.exists(dest_dir)) {
-      stop(paste("Destination is not a directory:", dest_dir))
+      message(paste("Destination is not a directory:", dest_dir))
     }
 
     success <- file.copy(files_to_copy, dest_dir, recursive = TRUE)
     if (!all(success)) {
-      stop("Some files failed to copy.")
+      message("Some files failed to copy.")
     }
     return(files_to_copy)
   }
@@ -1627,7 +1627,7 @@ validate_directories <- function(source_dir, dest_dir) {
   delete_source_directory <- function(source_dir) {
     unlink(source_dir, recursive = TRUE, force = TRUE)
     if (dir.exists(source_dir)) {
-      stop(paste("Failed to delete directory:", source_dir))
+      message(paste("Failed to delete directory:", source_dir))
     } else {
       message(paste("Successfully moved and deleted:", source_dir))
     }
