@@ -676,7 +676,7 @@ assess_qc_coverage <- function(master_list) {
       total <- nrow(plate_data)
       count <- sum(tolower(plate_data$sample_type) == tolower(qc))
       ratio <- count / total
-      status <- if (ratio < 8 / 104 || count < 2)
+      status <- if (ratio < 8 / 120 || count < 2)
         "fail"
       else
         "pass"
