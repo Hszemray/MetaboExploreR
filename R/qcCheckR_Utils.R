@@ -523,6 +523,7 @@ extract_run_order <- function(report, plate_id) {
       sample_timestamp,
       tryFormats = c(
         "%d/%m/%Y %H:%M",               # e.g. 9/02/2022 16:00
+        "%m/%d/%Y %H:%M:%S",            # e.g. 09/27/2024 10:41:28
         # ISO 8601 formats
         "%Y-%m-%dT%H:%M:%SZ",           # e.g. 2021-03-13T18:12:31Z (UTC)
         "%Y-%m-%dT%H:%M:%S",            # e.g. 2021-03-13T18:12:31
