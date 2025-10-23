@@ -522,25 +522,26 @@ extract_run_order <- function(report, plate_id) {
     dplyr::mutate(sample_timestamp = as.POSIXct(
       sample_timestamp,
       tryFormats = c(
+        "%d/%m/%Y %H:%M",               # e.g. 9/02/2022 16:00
         # ISO 8601 formats
-        "%Y-%m-%dT%H:%M:%SZ",         # e.g. 2021-03-13T18:12:31Z (UTC)
-        "%Y-%m-%dT%H:%M:%S",          # e.g. 2021-03-13T18:12:31
-        "%Y-%m-%dT%H:%M:%S%z",        # e.g. 2021-03-13T18:12:31+0800
+        "%Y-%m-%dT%H:%M:%SZ",           # e.g. 2021-03-13T18:12:31Z (UTC)
+        "%Y-%m-%dT%H:%M:%S",            # e.g. 2021-03-13T18:12:31
+        "%Y-%m-%dT%H:%M:%S%z",          # e.g. 2021-03-13T18:12:31+0800
         # Standard formats
-        "%Y-%m-%d %H:%M:%S",          # e.g. 2021-03-13 18:12:31
-        "%Y/%m/%d %H:%M:%S",          # e.g. 2021/03/13 18:12:31
-        "%d/%m/%Y %H:%M:%S",          # e.g. 13/03/2021 18:12:31
-        "%d-%m-%Y %H:%M:%S",          # e.g. 13-03-2021 18:12:31
+        "%Y-%m-%d %H:%M:%S",            # e.g. 2021-03-13 18:12:31
+        "%Y/%m/%d %H:%M:%S",            # e.g. 2021/03/13 18:12:31
+        "%d/%m/%Y %H:%M:%S",            # e.g. 13/03/2021 18:12:31
+        "%d-%m-%Y %H:%M:%S",            # e.g. 13-03-2021 18:12:31
         # AM/PM formats
-        "%d/%m/%Y %I:%M %p",          # e.g. 13/03/2021 6:12 PM
-        "%Y-%m-%d %I:%M %p",          # e.g. 2021-03-13 6:12 PM
+        "%d/%m/%Y %I:%M %p",            # e.g. 13/03/2021 6:12 PM
+        "%Y-%m-%d %I:%M %p",            # e.g. 2021-03-13 6:12 PM
         # Long formats
-        "%B %d, %Y %H:%M",            # e.g. March 13, 2021 18:12
-        "%b %d, %Y %I:%M %p",         # e.g. Mar 13, 2021 6:12 PM
-        # Date-only formats (if needed)
-        "%Y-%m-%d",                   # e.g. 2021-03-13
-        "%d/%m/%Y",                   # e.g. 13/03/2021
-        "%B %d, %Y"                   # e.g. March 13, 2021
+        "%B %d, %Y %H:%M",              # e.g. March 13, 2021 18:12
+        "%b %d, %Y %I:%M %p",           # e.g. Mar 13, 2021 6:12 PM
+        # Date-only formats
+        "%Y-%m-%d",                     # e.g. 2021-03-13
+        "%d/%m/%Y",                     # e.g. 13/03/2021
+        "%B %d, %Y"                     # e.g. March 13, 2021
       ))) %>%
 
     # Now filter and arrange safely
