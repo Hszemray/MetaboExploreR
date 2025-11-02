@@ -3130,10 +3130,10 @@ export_master_list_rda <- function(master_list) {
       "_qcCheckR.rda"
     )
   )
-
-  callr::r_bg(function() {
+  dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
+  callr::r_bg(function(master_list, output_file) {
     save(master_list, file = output_file, compress = FALSE)
-  })
+  },args = list(master_list = master_list, output_file = output_file))
 
   master_list <- update_script_log(
     master_list,

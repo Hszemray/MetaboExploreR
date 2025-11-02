@@ -1017,10 +1017,10 @@ version_selector <- function(master_list) {
 
   # Define convention key as a named list
   convention_key <- list(
-    "MS-LIPIDS"  = "LGW_lipid_mrm_template_v1.tsv",
-    "MS-LIPIDS-2" = "LGW_lipid_mrm_template_v2.tsv",
-    "MS-LIPIDS-3" = "LGW_lipid_mrm_template_v2.tsv",
-    "MS-LIPIDS-4" = "LGW_lipid_mrm_template_v4.tsv"
+    "_MS-LIPIDS"  = "LGW_lipid_mrm_template_v1.tsv",
+    "_MS-LIPIDS-2" = "LGW_lipid_mrm_template_v2.tsv",
+    "_MS-LIPIDS-3" = "LGW_lipid_mrm_template_v2.tsv",
+    "_MS-LIPIDS-4" = "LGW_lipid_mrm_template_v4.tsv"
   )
 
   matching_version <- convention_key[[plate_indicated_version]]
@@ -1443,7 +1443,7 @@ save_plate_data <- function(master_list, plate_idx) {
   }
 
 
-  callr::r_bg(function() {
+  callr::r_bg(function(master_list, save_path, plate_idx) {
     save(
       master_list,
       file = file.path(
@@ -1452,8 +1452,8 @@ save_plate_data <- function(master_list, plate_idx) {
                plate_idx, "_PeakForgeR.rda")
       ),
       compress = FALSE
-    )
-  })
+    )}, args = list(master_list = master_list, save_path = save_path, plate_idx = plate_idx)
+  )
 
 
   if (length(long_path) > 260 & .Platform$OS.type == "windows") {
