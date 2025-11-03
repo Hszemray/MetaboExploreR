@@ -3,7 +3,7 @@
 #' Import specific functions from packages
 #' @keywords internal
 #' @name PeakForgeR_import_external_functions
-#' @importFrom utils installed.packages sessionInfo data str flush.console
+#' @importFrom utils installed.packages sessionInfo data str flush.console setTxtProgressBar txtProgressBar
 #' @importFrom readr read_csv write_csv read_tsv write_tsv
 #' @importFrom dplyr bind_rows bind_cols filter select setequal rename arrange contains intersect
 #' @importFrom tibble tibble add_column

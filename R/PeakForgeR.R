@@ -9,6 +9,7 @@
 #' If the user has not used MetaboExploreR::msConvertR to convert vendor files
 #' please ensure you create a project folder containing sub folder
 #' "msConvert_mzml_output" with mzml files for the project.
+#' @export
 #' @param user_name A character string to identify user.
 #' @param project_directory A path to project directory
 #' @param mrm_template_list Path to MRM transition list,
@@ -34,7 +35,6 @@
 #'  - plateID_outputs = c("JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1",
 #'                        "JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2")
 #' @return A curated project directory with sub folders for each plate containing Skyline exports.
-#' @export
 #' @examples
 #' \dontrun{
 #' #Load example mrm_guide
@@ -80,14 +80,9 @@
 #'    \item Message about availability of chromatograms and reports
 #'   }
 #' }
-#' Import specific functions from packages
-#' @keywords internal
-#' @name PeakForgeR_import_external_functions
 #' @importFrom future plan sequential multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom parallel detectCores
-NULL
-
 PeakForgeR <- function(user_name,
                      project_directory,
                      mrm_template_list = NULL,

@@ -37,7 +37,7 @@ Note: Please ensure Docker Application is running in the background when using M
 
 **`MetaboExploreR`**
 Installation is effortless with the below helper function.
-Once the package is attached you will be asked for a username and a default
+Once the package is attached you will be asked for a username and a
 default workflow will open for your convenience.
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
