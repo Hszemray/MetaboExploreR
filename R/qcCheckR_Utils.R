@@ -278,18 +278,36 @@ qcCheckR_import_PeakForgeR_reports <- function(master_list) {
   }
 
   for (file in PeakForgeR_report_files) {
-    file_ext <- tools::file_ext(file)
 
+    if (.Platform$OS.type == "windows" && nchar(file) > 260) {
+      path <- dirname(file)
+      short_link <- "C:/PeakForgeR"
+      if (dir.exists(short_link)) {
+        unlink(short_link, recursive = TRUE, force = TRUE)
+      }
+      cmd <- paste("cmd", "/c", "mklink", "/J", shQuote(short_link), shQuote(path))
+      system(cmd, intern = FALSE)
+
+      file_to_read <- file.path(short_link, basename(file))
+    } else {
+      file_to_read <- file
+    }
+
+    file_ext <- tools::file_ext(file_to_read)
     if (file_ext == "csv") {
-      PeakForgeR_report <- readr::read_csv(file, show_col_types = FALSE)
+      PeakForgeR_report <- readr::read_csv(file_to_read, show_col_types = FALSE)
     } else if (file_ext == "tsv") {
-      PeakForgeR_report <- readr::read_tsv(file, show_col_types = FALSE)
+      PeakForgeR_report <- readr::read_tsv(file_to_read, show_col_types = FALSE)
     } else {
       warning(paste("Unsupported file type:", file))
       next
     }
 
-    file_name <- basename(file) %>%
+    if (exists("short_link") && dir.exists(short_link)) {
+      unlink(short_link, recursive = TRUE, force = TRUE)
+    }
+
+    file_name <- basename(file_to_read) %>%
       sub("\\.(csv|tsv)$", "", .) %>%
       sub("_PeakForgeR_", "_", .)
 
@@ -301,7 +319,7 @@ qcCheckR_import_PeakForgeR_reports <- function(master_list) {
                                              PeakForgeR_report$Height != 0, ]
     PeakForgeR_report <- PeakForgeR_report[!apply(is.na(PeakForgeR_report), 1, all), ]
     PeakForgeR_report <- PeakForgeR_report[
-      !grepl("(?i)\\bCOND\\b|\\bBLANK\\b|\\bISTDs\\b", PeakForgeR_report$FileName),
+      !grepl("(?i)\\bCOND\\b|\\bBLANK\\b|\\bISTDs\\b", PeakForgeR_report$FileName, perl = TRUE),
     ]
     master_list$data$PeakForgeRReport[[file_name]] <- PeakForgeR_report
     master_list$project_details$plateIDs <- c(master_list$project_details$plateIDs, file_name)
