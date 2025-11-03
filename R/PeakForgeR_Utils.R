@@ -778,7 +778,7 @@ initialise_mzml_filelist <- function(master_list) {
       full.names = FALSE
     )
     mzml_filelist[[idx_plate]] <- mzml_filelist[[idx_plate]][
-      !grepl("(?i)\\bCOND\\b|\\bBLANK\\b|\\bISTDs\\b", mzml_filelist[[idx_plate]])
+      !grepl("(?i)\\bCOND\\b|\\bBLANK\\b|\\bISTDs\\b", mzml_filelist[[idx_plate]], perl = TRUE)
     ]  }
   return(mzml_filelist)
 }
