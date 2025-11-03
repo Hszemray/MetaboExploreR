@@ -3184,6 +3184,7 @@ create_user_guide <- function(master_list) {
       "DATA.lipidPeakArea",
       "DATA.silPeakArea",
       "DATA.all.concentration",
+      "DATA.preProcessed.concentration",
       "DATA.all.concentration.S.T.",
       "DATA.preProcessed.conc.S.T."
     ),
@@ -3227,7 +3228,8 @@ create_user_guide <- function(master_list) {
       "detailed overview of lipid quality (% RSD in QC samples)",
       "lipid target peak area integrals (PeakForgeR)",
       "stable isotope labelled internal standard peak area integrals (PeakForgeR)",
-      "peakArea >> imputed >> SIL ratio >> concentration factor adjusted",
+      "peakArea >> SIL ratio >> concentration factor adjusted",
+      "peakArea >> imputed >> SIL ratio >> concentration factor adjusted >> filtered",
       "peakArea >> imputed >> SIL ratio >> concentration factor adjusted >> statTarget correction",
       "same as above, but filtered"
     )
