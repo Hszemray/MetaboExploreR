@@ -300,7 +300,9 @@ qcCheckR_import_PeakForgeR_reports <- function(master_list) {
     PeakForgeR_report <- PeakForgeR_report[PeakForgeR_report$Area != 0 &
                                              PeakForgeR_report$Height != 0, ]
     PeakForgeR_report <- PeakForgeR_report[!apply(is.na(PeakForgeR_report), 1, all), ]
-
+    PeakForgeR_report <- PeakForgeR_report[
+      !grepl("(?i)\\bCOND\\b|\\bBLANK\\b|\\bISTDs\\b", PeakForgeR_report$FileName),
+    ]
     master_list$data$PeakForgeRReport[[file_name]] <- PeakForgeR_report
     master_list$project_details$plateIDs <- c(master_list$project_details$plateIDs, file_name)
   }
