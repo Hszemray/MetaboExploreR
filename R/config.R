@@ -503,8 +503,8 @@ validate_file_types <- function(input_directory) {
         message("Missing .wiff.scan for: ", basename(file))
         invalid_files <- c(invalid_files, file)
       }
-    } else if (grepl("\\.wiff2$", file)) {
-      validated_files <- c(validated_files, file)
+    # } else if (grepl("\\.wiff2$", file)) {
+    #   validated_files <- c(validated_files, file)
     } else if (grepl("\\.raw$", file, ignore.case = TRUE)) {
       validated_files <- c(validated_files, file)
     } else if (grepl("\\.d$", file) && dir.exists(file)) {
@@ -533,7 +533,7 @@ validate_file_types <- function(input_directory) {
     } else if (grepl("\\.wcf$", file) ||
                grepl("\\.wproj$", file) || grepl("\\.wdata$", file)) {
       validated_files <- c(validated_files, file)
-    } else if (!grepl("\\.wiff\\.scan$", file)) {
+    } else {
       message("Unsupported file type found: ", basename(file))
       invalid_files <- c(invalid_files, file)
     }
