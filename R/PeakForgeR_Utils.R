@@ -1633,3 +1633,60 @@ validate_directories <- function(source_dir, dest_dir) {
       message(paste("Successfully moved and deleted:", source_dir))
     }
   }
+
+  extract_transition_values <- function(ids, tag) {
+    TRANSITION_REGEX <- "([+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[eE][+-]?\\d+)?)"
+    rx <- paste0("\\b", tag, "=", TRANSITION_REGEX)
+    matches <- regmatches(ids, regexec(rx, ids, perl = TRUE))
+    as.numeric(vapply(matches, function(m) if (length(m) >= 2) m[2] else NA_character_, ""))
+  }
+
+  build_transitions_list <- function(chroms, targets) {
+    stopifnot(is.data.frame(chroms), "id" %in% names(chroms))
+    stopifnot(is.data.frame(targets))
+    count_decimals <- function(x) {
+      s <- sub("e.*", "", format(x, digits = 22, scientific = FALSE, trim = TRUE))
+      frac <- sub("^-?\\d+\\.?", "", s)
+      nchar(sub("0+$", "", frac))
+    }
+    rounded_equal <- function(a, vec) {
+      da <- count_decimals(a)
+      dv <- count_decimals(vec)
+      dec <- pmin.int(da, dv)
+      round(vec, dec) == round(a, dec)
+    }
+    ids_chr <- as.character(chroms$id)
+    q1_vals <- extract_transition_values(ids_chr, "Q1")
+    q3_vals <- extract_transition_values(ids_chr, "Q3")
+    n_targets <- nrow(targets)
+    idx1 <- rep.int(NA_integer_, n_targets)
+    idx0 <- rep.int(NA_integer_, n_targets)
+    match_id <- rep(NA_character_, n_targets)
+    explicit_rt <- suppressWarnings(as.numeric(targets$explicitRetentionTime))
+    explicit_window <- suppressWarnings(as.numeric(targets$explicitRetentionTimeWindow))
+    for (i in seq_len(n_targets)) {
+      target_q1 <- suppressWarnings(as.numeric(targets$precursorMz[i]))
+      target_q3 <- suppressWarnings(as.numeric(targets$productMz[i]))
+      if (!is.finite(target_q1) || !is.finite(target_q3)) next
+      have_both <- !is.na(q1_vals) & !is.na(q3_vals)
+      q1_match <- have_both & rounded_equal(target_q1, q1_vals)
+      q3_match <- have_both & rounded_equal(target_q3, q3_vals)
+      hits <- which(q1_match & q3_match)
+      if (length(hits)) {
+        # idx1[i] <- hits[1L]
+        idx0[i] <- hits[1L] - 1L
+        match_id[i] <- ids_chr[hits[1L]]
+      }
+    }
+    res <- data.frame(
+      idx = idx0,
+      # idx1 = idx1,
+      id = match_id,
+      rt = explicit_rt,
+      window = explicit_window,
+      stringsAsFactors = FALSE
+    )
+    res <- res[order(res$idx, na.last = TRUE), , drop = FALSE]
+    rownames(res) <- NULL
+    res
+  }
