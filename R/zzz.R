@@ -40,6 +40,7 @@ utils::globalVariables(
     "p3",
     "plateID",
     "precursor_name",
+    "project_directory",
     "sample.flag",
     "sample_data_source",
     "sample_ID",

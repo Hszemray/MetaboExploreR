@@ -1,3 +1,176 @@
+compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label) {
+
+  if (!(length(mrm_template_list) >= 1)) {
+    stop("No MRM template provided in mrm_template_list")
+  }
+
+  targets_path <- mrm_template_list[[1]]
+  targets <- readr::read_tsv(targets_path, show_col_types = FALSE)
+
+  #Log setup
+  logs_dir <- file.path(project_directory, "MetaboExploreR_logs")
+  dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
+
+  for (plateID in plateIDs) {
+
+    log_file <- file.path(logs_dir, paste0(plateID,"_Peakforger_log.txt"))
+
+    if (!file.exists(log_file)) {
+      file.create(log_file)
+    }
+
+    # Helper to write a line to the log
+    write_log <- function(text) {
+      timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+      line <- paste0("[", timestamp, "] ", text, "\n")
+      cat(enc2utf8(line), file = log_file, append = TRUE)
+    }
+
+    # Helper to write error to log
+    log_error <- function(error_message, plateID) {
+      timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+      line <- paste0("[", timestamp, "] ERROR in plate ", plateID, ": ", error_message, "\n")
+      cat(enc2utf8(line), file = log_file, append = TRUE)
+    }
+
+    write_log(paste0 ("Step 1: Setting up project:", plateID))
+    master_list <- PeakForgeR_setup_project(
+      user_name,
+      project_directory,
+      plateID,
+      mrm_template_list,
+      QC_sample_label
+    )
+    write_log("Project setup complete.")
+
+    write_log("Step 2: Importing mzML files...")
+    master_list <- import_mzml(plateID, master_list)
+    write_log("mzML import complete.")
+
+    write_log("Step 3: Optimizing retention times")
+    plate_idx <- plateID
+    master_list$templates$mrm_guides$by_plate[[plate_idx]] <- optimise_retention_times(master_list, plate_idx)
+    write_log("Optimization complete")
+
+    write_log("Step 4 : Performing MSUT peak picking...")
+    tryCatch({
+      mzml_dir <- file.path(project_directory, plateID, "data", "mzml")
+      mzml_files <- list.files(mzml_dir, pattern="\\.mzML$", ignore.case=TRUE, full.names=TRUE)
+      if (length(mzml_files) == 0L) stop("No mzML files found for plate")
+
+      template_path <- mzml_files[[1]]
+      template_bin <- readBin(template_path, "raw", n = file.info(template_path)$size)
+      template_file <- msut::parse_mzml(template_bin)
+      template_df <- msut::bin_to_df(template_file)
+      chroms <- template_df$Ok$run$chromatograms
+      transitions <- build_transitions_list(chroms, targets)
+
+      plate_rows <- vector("list", length(mzml_files))
+      for (i in seq_along(mzml_files)) {
+        mzml_path <- mzml_files[[i]]
+        bin <- readBin(mzml_path, "raw", n = file.info(mzml_path)$size)
+        file <- msut::parse_mzml(bin)
+        peaks <- msut::get_peaks_from_chrom(
+          file,
+          transitions,
+          auto_baseline = TRUE,
+          auto_noise = FALSE
+        )
+        if (!is.data.frame(peaks)) peaks <- as.data.frame(peaks)
+        peaks$name <- tools::file_path_sans_ext(basename(mzml_path))
+        peaks$plate <- plateID
+        peaks <- peaks[, c("name", "plate", setdiff(names(peaks), c("name","plate")))]
+        plate_rows[[i]] <- peaks
+      }
+
+      plate_table <- if (length(plate_rows)) do.call(rbind, plate_rows) else data.frame()
+      out_path <- file.path(project_directory, plateID, paste0(plateID, ".tsv"))
+      readr::write_tsv(plate_table, out_path)
+      write_log("Peak picking complete.")
+
+      write_log(paste("Finished processing plate:", plateID))
+    }, error = function(e) {
+      message(sprintf("ANPC: plate %s failed: %s", plateID, conditionMessage(e)))
+    })
+  }
+  invisible(NULL)
+}
+
+compute_results_skyline <- function(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label) {
+  #Check install and run status of docker
+  check_docker()
+
+  #Parallel settings
+  future::plan(future::multisession)
+  on.exit(future::plan(future::sequential), add = TRUE)
+  total_cores <- parallel::detectCores()
+  available_cores <- if (total_cores <= 2) 1 else total_cores - 2
+  options(future.maxWorkers = available_cores)
+
+  #Log setup
+  logs_dir <- file.path(project_directory, "MetaboExploreR_logs")
+  dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
+
+  #Process
+  future.apply::future_lapply(plateIDs, function(plateID) {
+    start_time <- Sys.time()
+    library(MetaboExploreR)
+
+      log_file <- file.path(logs_dir, paste0(plateID,"_Peakforger_log.txt"))
+
+      if (!file.exists(log_file)) {
+        file.create(log_file)
+      }
+
+      # Helper to write a line to the log
+      write_log <- function(text) {
+        timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        line <- paste0("[", timestamp, "] ", text, "\n")
+        cat(enc2utf8(line), file = log_file, append = TRUE)
+      }
+
+      # Helper to write error to log
+      log_error <- function(error_message, plateID) {
+        timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        line <- paste0("[", timestamp, "] ERROR in plate ", plateID, ": ", error_message, "\n")
+        cat(enc2utf8(line), file = log_file, append = TRUE)
+      }
+
+    tryCatch({
+      write_log("Step 1: Setting up project...")
+      master_list <- PeakForgeR_setup_project(
+        user_name,
+        project_directory,
+        plateID,
+        mrm_template_list,
+        QC_sample_label
+      )
+      write_log("Project setup complete.")
+
+      write_log("Step 2: Importing mzML files...")
+      master_list <- import_mzml(plateID, master_list)
+      write_log("mzML import complete.")
+
+      write_log("Step 3: Performing peak picking...")
+      master_list <- peak_picking(plateID, master_list)
+      write_log("Peak picking complete.")
+
+      write_log(paste("Finished processing plate:", plateID))
+      write_log("Status: SUCCESS")
+
+      list(success = TRUE, plateID = plateID)
+
+    }, error = function(e) {
+      write_log(paste("Error during processing:", e$message))
+      write_log("Status: FAILURE")
+
+      log_error(paste("Error processing plate", plateID, ":", e$message), plateID)
+      list(success = FALSE, plateID = plateID, error = e$message)
+    })
+  })
+  invisible(NULL)
+}
+
 #'PeakForgeR
 #'
 #' @description This function performs peak picking and integration via Skyline
@@ -9,6 +182,7 @@
 #' If the user has not used MetaboExploreR::msConvertR to convert vendor files
 #' please ensure you create a project folder containing sub folder
 #' "msConvert_mzml_output" with mzml files for the project.
+#' @export
 #' @param user_name A character string to identify user.
 #' @param project_directory A path to project directory
 #' @param mrm_template_list Path to MRM transition list,
@@ -34,7 +208,6 @@
 #'  - plateID_outputs = c("JANE_DOE_C5_URI_MS-LIPIDS_PLATE_1",
 #'                        "JANE_DOE_C5_URI_MS-LIPIDS_PLATE_2")
 #' @return A curated project directory with sub folders for each plate containing Skyline exports.
-#' @export
 #' @examples
 #' \dontrun{
 #' #Load example mrm_guide
@@ -80,19 +253,16 @@
 #'    \item Message about availability of chromatograms and reports
 #'   }
 #' }
-#' Import specific functions from packages
-#' @keywords internal
-#' @name PeakForgeR_import_external_functions
 #' @importFrom future plan sequential multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom parallel detectCores
-NULL
-
 PeakForgeR <- function(user_name,
-                     project_directory,
-                     mrm_template_list = NULL,
-                     QC_sample_label = NULL,
-                     plateID_outputs = NULL) {
+                       project_directory,
+                       mrm_template_list = NULL,
+                       QC_sample_label = NULL,
+                       plateID_outputs = NULL,
+                       method = c("skyline", "anpc")) {
+  method <- match.arg(method)
   #Validate user
   if (!is.character(user_name) || nchar(user_name) == 0) {
     stop("Invalid user name. Please provide a valid character string.")
@@ -120,15 +290,11 @@ PeakForgeR <- function(user_name,
     )
   }
 
-  #Check install and run status of docker
-  check_docker()
-
   # Set plateIDs
   file_paths <- list.files(project_directory)
   exclude_names <- c("raw_data", "msConvert_mzml_output", "all", "archive",
                      "error_log.txt","MetaboExploreR_logs", "logs", "user_files")
   plateIDs <- file_paths[!basename(file_paths) %in% exclude_names]
-
 
   if (is.null(plateIDs) || length(plateIDs) == 0) {
     count_data <- list()
@@ -182,67 +348,13 @@ PeakForgeR <- function(user_name,
   failed_plates <- c()
   successful_plates <- c()
 
-  # Process each plate in parallel
-  logs_dir <- file.path(project_directory, "MetaboExploreR_logs")
-  dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
-
-  #Parallel settings
-  future::plan(future::multisession)
-  on.exit(future::plan(future::sequential), add = TRUE)
-  total_cores <- parallel::detectCores()
-  available_cores <- if (total_cores <= 2) 1 else total_cores - 2
-  options(future.maxWorkers = available_cores)
-
-  results <- future.apply::future_lapply(plateIDs, function(plateID) {
-    start_time <- Sys.time()
-    log_file <- file.path(logs_dir, paste0(plateID, "_MetaboExploreR_log.txt"))
-    library(MetaboExploreR)
-
-    # Helper to write a line to the log
-    write_log <- function(text) {
-      timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-      line <- paste0("[", timestamp, "] ", text, "\n")
-      cat(enc2utf8(line), file = log_file, append = TRUE)
-    }
-    #Helper to write error to log
-    log_error <- function(error_message, plateID) {
-      write(error_message, file = log_file, append = TRUE)
-    }
-
-    tryCatch({
-      write_log(paste("Starting processing for plate:", plateID))
-
-      write_log("Step 1: Setting up project...")
-      master_list <- PeakForgeR_setup_project(
-        user_name,
-        project_directory,
-        plateID,
-        mrm_template_list,
-        QC_sample_label
-      )
-      write_log("Project setup complete.")
-
-      write_log("Step 2: Importing mzML files...")
-      master_list <- import_mzml(plateID, master_list)
-      write_log("mzML import complete.")
-
-      write_log("Step 3: Performing peak picking...")
-      master_list <- peak_picking(plateID, master_list)
-      write_log("Peak picking complete.")
-
-      write_log(paste("Finished processing plate:", plateID))
-      write_log("Status: SUCCESS")
-
-      list(success = TRUE, plateID = plateID)
-
-    }, error = function(e) {
-      write_log(paste("Error during processing:", e$message))
-      write_log("Status: FAILURE")
-
-      log_error(paste("Error processing plate", plateID, ":", e$message), plateID)
-      list(success = FALSE, plateID = plateID, error = e$message)
-    })
-  })
+  if (method == "skyline") {
+    results <- compute_results_skyline(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label)
+  } else if (method == "anpc") {
+    results <- compute_results_anpc(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label)
+  } else {
+    stop("Choose one of the valid processing methods")
+  }
 
   # Extract successful and failed plate IDs
   successful_plates <- sapply(results, function(x) x$success && !is.null(x$plateID))

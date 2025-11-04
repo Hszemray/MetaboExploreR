@@ -40,7 +40,7 @@ using MetaboExploreR if you are using a Mac or Windows OS.
 
 **`MetaboExploreR`** Installation is effortless with the below helper
 function. Once the package is attached you will be asked for a username
-and a default default workflow will open for your convenience.
+and a default workflow will open for your convenience.
 
 ``` r
 source("https://raw.githubusercontent.com/Hszemray/MetaboExploreR/master/R/install.R")
