@@ -1,17 +1,16 @@
 compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label) {
-
   if (!(length(mrm_template_list) >= 1)) {
     stop("No MRM template provided in mrm_template_list")
   }
-
-  targets_path <- mrm_template_list[[1]]
-  targets <- readr::read_tsv(targets_path, show_col_types = FALSE)
 
   #Log setup
   logs_dir <- file.path(project_directory, "MetaboExploreR_logs")
   dir.create(logs_dir, showWarnings = FALSE, recursive = TRUE)
 
+  results <- list()
+
   for (plateID in plateIDs) {
+    message(paste("\nProcessing plateID:", plateID,"\n"))
 
     log_file <- file.path(logs_dir, paste0(plateID,"_Peakforger_log.txt"))
 
@@ -47,12 +46,33 @@ compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_tem
     master_list <- import_mzml(plateID, master_list)
     write_log("mzML import complete.")
 
-    write_log("Step 3: Optimizing retention times")
+    # version supply for msut
+    if (master_list$project_details$user_name == "ANPC"){
+
+      plate_id <- master_list$project_details$plateID
+      plate_indicated_version <- unique(stringr::str_extract(plate_id, "_MS-LIPIDS(?:-[2-4])?"))
+
+      convention_key <- list(
+        "_MS-LIPIDS"  = "LGW_lipid_mrm_template_v1.tsv",
+        "_MS-LIPIDS-2" = "LGW_lipid_mrm_template_v2.tsv",
+        "_MS-LIPIDS-3" = "LGW_lipid_mrm_template_v2.tsv",
+        "_MS-LIPIDS-4" = "LGW_lipid_mrm_template_v4.tsv"
+      )
+
+      master_list$project_details$is_ver <- convention_key[[plate_indicated_version]]
+    }else{
+     master_list$project_details$is_ver <- names(master_list$templates$mrm_guides)[1]
+    }
+    message(paste("Using method template: ",master_list$project_details$is_ver))
+    write_log(paste("Using method template: ",master_list$project_details$is_ver))
+
+    write_log("Step 3: Optimising retention times")
     plate_idx <- plateID
     master_list$templates$mrm_guides$by_plate[[plate_idx]] <- optimise_retention_times(master_list, plate_idx)
-    write_log("Optimization complete")
+    write_log("Optimisation complete")
 
     write_log("Step 4 : Performing MSUT peak picking...")
+    message ("Picking peaks and integrating...")
     tryCatch({
       mzml_dir <- file.path(project_directory, plateID, "data", "mzml")
       mzml_files <- list.files(mzml_dir, pattern="\\.mzML$", ignore.case=TRUE, full.names=TRUE)
@@ -63,7 +83,12 @@ compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_tem
       template_file <- msut::parse_mzml(template_bin)
       template_df <- msut::bin_to_df(template_file)
       chroms <- template_df$Ok$run$chromatograms
+      targets_path <-  master_list$templates$mrm_guides[[master_list$project_details$is_ver]]$mrm_guide
+      targets <- master_list$templates$mrm_guides[[master_list$project_details$is_ver]]$mrm_guide
       transitions <- build_transitions_list(chroms, targets)
+
+      total_cores <- parallel::detectCores()
+      available_cores <- if (total_cores <= 2) 1 else total_cores - 2
 
       plate_rows <- vector("list", length(mzml_files))
       for (i in seq_along(mzml_files)) {
@@ -74,7 +99,8 @@ compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_tem
           file,
           transitions,
           auto_baseline = TRUE,
-          auto_noise = FALSE
+          auto_noise = FALSE,
+          cores = available_cores
         )
         if (!is.data.frame(peaks)) peaks <- as.data.frame(peaks)
         peaks$name <- tools::file_path_sans_ext(basename(mzml_path))
@@ -84,16 +110,19 @@ compute_results_anpc <- function(plateIDs, user_name, project_directory, mrm_tem
       }
 
       plate_table <- if (length(plate_rows)) do.call(rbind, plate_rows) else data.frame()
-      out_path <- file.path(project_directory, plateID, paste0(plateID, ".tsv"))
+      out_path <- file.path(project_directory, plateID, "data", "PeakForgeR", paste0(plateID, ".tsv"))
       readr::write_tsv(plate_table, out_path)
-      write_log("Peak picking complete.")
-
       write_log(paste("Finished processing plate:", plateID))
+      message(paste("Finished processing plate:", plateID))
+      results[[plateID]] <- list(success = TRUE, plateID = plateID)
     }, error = function(e) {
-      message(sprintf("ANPC: plate %s failed: %s", plateID, conditionMessage(e)))
+      write_log(sprintf("anpc method: plate %s failed: %s", plateID, conditionMessage(e)))
+      message(sprintf("anpc method: plate %s failed: %s", plateID, conditionMessage(e)))
+      results[[plateID]] <- list(success = FALSE, plateID = plateID, error = e$message)
     })
+    write_log("Peak picking complete.")
   }
-  invisible(NULL)
+  return(results)
 }
 
 compute_results_skyline <- function(plateIDs, user_name, project_directory, mrm_template_list, QC_sample_label) {
@@ -158,17 +187,16 @@ compute_results_skyline <- function(plateIDs, user_name, project_directory, mrm_
       write_log(paste("Finished processing plate:", plateID))
       write_log("Status: SUCCESS")
 
-      list(success = TRUE, plateID = plateID)
-
+      results[[plateID]] <- list(success = TRUE, plateID = plateID)
     }, error = function(e) {
       write_log(paste("Error during processing:", e$message))
       write_log("Status: FAILURE")
 
       log_error(paste("Error processing plate", plateID, ":", e$message), plateID)
-      list(success = FALSE, plateID = plateID, error = e$message)
+      results[[plateID]] <- list(success = FALSE, plateID = plateID, error = e$message)
     })
   })
-  invisible(NULL)
+  return(results)
 }
 
 #'PeakForgeR
@@ -356,26 +384,36 @@ PeakForgeR <- function(user_name,
     stop("Choose one of the valid processing methods")
   }
 
-  # Extract successful and failed plate IDs
-  successful_plates <- sapply(results, function(x) x$success && !is.null(x$plateID))
-  failed_plates <- sapply(results, function(x) !x$success && !is.null(x$plateID))
 
-  # Display summary
+  # Separate successful and failed plates
+  success_flags <- sapply(results, function(x) x$success)
+  plate_ids <- sapply(results, function(x) x$plateID)
+  successful_plates <- plate_ids[success_flags]
+  failed_plates     <- plate_ids[!success_flags]
+
+  successful_plates
+  failed_plates
+
   message("\nProcessing complete.")
 
-  if (any(successful_plates)) {
+  if (length(successful_plates) > 0) {
     message("\nPlates processed successfully:\n",
-            paste(sapply(results[successful_plates], `[[`, "plateID"), collapse = "\n"))
+            paste(successful_plates, collapse = "\n"))
+  } else {
+    message("\nNo plates processed successfully.")
   }
 
-  if (any(failed_plates)) {
+  if (length(failed_plates) > 0) {
     message("\nPlates that failed to process:\n",
-            paste(sapply(results[failed_plates], `[[`, "plateID"), collapse = "\n"))
+            paste(failed_plates, collapse = "\n"))
+  } else {
+    message("\nNo plates failed.")
   }
 
-  if (!any(successful_plates)) {
+  if (length(successful_plates) == 0) {
     stop("All plates failed. Halting script.")
   }
+
 
   # Final cleanup and archiving
   archive_raw_files(project_directory)

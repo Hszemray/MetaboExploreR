@@ -3082,7 +3082,7 @@ export_html_report <- function(master_list) {
       "_",
       master_list$project_details$project_name,
       "_",
-      "_lipidExploreR_qcCheckeR_report.html"
+      "_MetaboExplore_qcCheckeR_report.html"
     )
   )
 

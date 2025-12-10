@@ -1662,11 +1662,11 @@ validate_directories <- function(source_dir, dest_dir) {
     idx1 <- rep.int(NA_integer_, n_targets)
     idx0 <- rep.int(NA_integer_, n_targets)
     match_id <- rep(NA_character_, n_targets)
-    explicit_rt <- suppressWarnings(as.numeric(targets$explicitRetentionTime))
-    explicit_window <- suppressWarnings(as.numeric(targets$explicitRetentionTimeWindow))
+    explicit_rt <- suppressWarnings(as.numeric(targets$`Explicit Retention Time`))
+    explicit_window <- suppressWarnings(as.numeric(targets$`Explicit Retention Time Window`))
     for (i in seq_len(n_targets)) {
-      target_q1 <- suppressWarnings(as.numeric(targets$precursorMz[i]))
-      target_q3 <- suppressWarnings(as.numeric(targets$productMz[i]))
+      target_q1 <- suppressWarnings(as.numeric(targets$`Precursor Mz`[i]))
+      target_q3 <- suppressWarnings(as.numeric(targets$`Product Mz`[i]))
       if (!is.finite(target_q1) || !is.finite(target_q3)) next
       have_both <- !is.na(q1_vals) & !is.na(q3_vals)
       q1_match <- have_both & rounded_equal(target_q1, q1_vals)

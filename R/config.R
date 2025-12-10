@@ -265,6 +265,10 @@ validate_mrm_template_list <- function(mrm_template_list, user_name) {
     stop("mrm_template_list must be a list.")
   }
 
+  if(master_list$project_details$user_name != "ANPC" & mrm_template_list > 1){
+    stop("Error: PeakForgeR method = anpc, currenlty only supports a single mrm_template_list entry for users")
+  }
+
   for (version in names(mrm_template_list)) {
     version_list <- mrm_template_list[[version]]
 
@@ -553,6 +557,321 @@ validate_file_types <- function(input_directory) {
     )
   }
 
+}
+
+
+# match_templates_to_mzml ----
+#' replace_precursor_symbols
+#'
+#' This function collects unique transitions between the supplied mrm_templates
+#' Then opens an mzml from a project to compare the unique transitions in the templates
+#' to the transitions contained in the mzml, returning the best matched method.
+#' @keywords internal
+#' @param  dataframe of transitions (mrm_template) for SkylineR or qcCheckR
+#' @return Updated mrm_template with special characters replaced in 'Precursor Name' and 'Note', while the original names are preserved for the columns in original_col
+#' @examples
+#' \dontrun{
+#' replace_precursor_symbols(mrm_template, columns = c("Precursor Name", "Note"))
+match_templates_to_mzml <- function(template_paths,
+                                    mzml_file,
+                                    precursor_col = "Precursor Mz",
+                                    product_col   = "Product Mz",
+                                    name_col      = "Precursor Name",
+                                    standardize   = TRUE,
+                                    verbose       = TRUE) {
+  # Load required packages
+  if (!requireNamespace("data.table", quietly = TRUE))
+    stop("Install 'data.table'")
+  if (!requireNamespace("xml2", quietly = TRUE))
+    stop("Install 'xml2'")
+  if (!requireNamespace("dplyr", quietly = TRUE))
+    stop("Install 'dplyr'")
+  if (!requireNamespace("stringr", quietly = TRUE))
+    stop("Install 'stringr'")
+
+  # --- Helper: Extract chromatogram info from mzML ---
+  extract_chromatogram_info <- function(file) {
+    doc <- xml2::read_xml(file)
+    ns <- xml2::xml_ns(doc)
+    chromatograms <- xml2::xml_find_all(doc, ".//d1:chromatogram", ns)
+
+    chrom_info <- lapply(chromatograms, function(chrom) {
+      chrom_id <- xml2::xml_attr(chrom, "id")
+      if (!grepl("SRM SIC", chrom_id))
+        return(NULL)
+
+      name <- sub(".*name=(.*)", "\\1", chrom_id)
+      name <- stringr::str_replace_all(
+        name,
+        c(
+          "name=" = "",
+          ".IS" = "",
+          "\\+H" = "",
+          "\\+NH4" = "",
+          "\\-H" = "",
+          "\\+AcO" = "",
+          "/" = "_",
+          "\\)d" = ")_d"
+        )
+      )
+      name <- ifelse(
+        grepl("_Lipidyzer|_SPLASH|_Lyso", name) & !grepl("^SIL_", name),
+        paste0("SIL_", name),
+        name
+      )
+
+      q1 <- as.numeric(sub(".*Q1=([0-9.]+).*", "\\1", chrom_id))
+      q3 <- as.numeric(sub(".*Q3=([0-9.]+).*", "\\1", chrom_id))
+
+      list(
+        file = basename(file),
+        name = name,
+        Q1 = q1,
+        Q3 = q3
+      )
+    })
+
+    chrom_info <- chrom_info[!sapply(chrom_info, is.null)]
+    if (length(chrom_info) > 0)
+      dplyr::bind_rows(chrom_info)
+    else
+      NULL
+  }
+
+  unique_pairs_by_file <- function(
+    paths,
+    precursor_col = "Precursor Mz",
+    product_col   = "Product Mz",
+    name_col      = "Precursor Name",
+    standardize   = TRUE,
+    return_format = c("list", "long_df"),
+    write_excel   = NULL # e.g., "unique_pairs_by_file.xlsx"
+  ) {
+    return_format <- match.arg(return_format)
+
+    # ---- Helpers --------------------------------------------------------------
+    # Read file with auto delimiter detection (data.table::fread is robust & fast).
+    read_any <- function(p) {
+      if (!requireNamespace("data.table", quietly = TRUE)) {
+        stop("Please install 'data.table' for robust auto-delimited reading: install.packages('data.table')")
+      }
+      df <- data.table::fread(p, data.table = FALSE)
+      df
+    }
+
+    # Try to standardise column names (case-insensitive) to expected names
+    standardize_cols <- function(df) {
+      lc <- tolower(trimws(names(df)))
+      map <- setNames(names(df), nm = lc)
+
+      # Locate columns by case-insensitive matching
+      get_col <- function(targets) {
+        idx <- match(tolower(targets), lc)
+        # If not found, try partials (common variants)
+        if (is.na(idx)) {
+          # attempt fuzzy candidates
+          candidates <- c("precursor name" = "Precursor Name",
+                          "precursor mz"   = "Precursor Mz",
+                          "product mz"     = "Product Mz")
+          tgt <- tolower(targets)
+          for (cand in names(candidates)) {
+            if (grepl(tgt, cand, fixed = TRUE)) {
+              idx <- match(cand, lc)
+              if (!is.na(idx)) break
+            }
+          }
+        }
+        if (is.na(idx)) stop(sprintf("Column '%s' not found. Available: %s",
+                                     targets, paste(names(df), collapse = ", ")))
+        names(df)[idx]
+      }
+
+      list(
+        name = get_col(name_col),
+        prec = get_col(precursor_col),
+        prod = get_col(product_col)
+      )
+    }
+
+    # Coerce m/z columns to numeric and drop rows missing either m/z
+    clean_mz <- function(df, cols) {
+      df[[cols$prec]] <- suppressWarnings(as.numeric(df[[cols$prec]]))
+      df[[cols$prod]] <- suppressWarnings(as.numeric(df[[cols$prod]]))
+      df <- df[!is.na(df[[cols$prec]]) & !is.na(df[[cols$prod]]), , drop = FALSE]
+      df
+    }
+
+    # Build the set of exact pairs and a mapping to molecules for that file
+    build_pairs <- function(df, cols) {
+      # exact pair set
+      pairs_mat <- cbind(df[[cols$prec]], df[[cols$prod]])
+      # Remove any NA (should already be cleaned)
+      pairs_df <- unique(as.data.frame(pairs_mat))
+      names(pairs_df) <- c("Precursor Mz", "Product Mz")
+
+      # Map each pair to molecules present in this file
+      # We keep all molecule names (unique) per pair
+      key <- paste(df[[cols$prec]], df[[cols$prod]], sep = "||")
+      mol_map <- tapply(
+        df[[cols$name]],
+        INDEX = key,
+        FUN = function(x) paste(sort(unique(as.character(x))), collapse = "; ")
+      )
+
+      # align mapping back to pairs_df
+      pairs_key <- paste(pairs_df[["Precursor Mz"]], pairs_df[["Product Mz"]], sep = "||")
+      pairs_df$molecules   <- unname(mol_map[pairs_key])
+      pairs_df$n_molecules <- vapply(strsplit(pairs_df$molecules, ";\\s*"), length, integer(1))
+
+      pairs_df
+    }
+
+    # ---- Read and prepare all files ------------------------------------------
+    if (length(paths) < 2) stop("Provide 2 or more files to compute uniqueness.")
+
+    raw_list <- lapply(paths, read_any)
+
+    # Resolve columns per file (allows different capitalizations per file)
+    col_list <- vector("list", length(paths))
+    for (i in seq_along(paths)) {
+      df <- raw_list[[i]]
+      if (standardize) {
+        col_list[[i]] <- standardize_cols(df)
+      } else {
+        # Assume caller passed exact column names already present in df
+        col_list[[i]] <- list(name = name_col, prec = precursor_col, prod = product_col)
+      }
+      # Clean m/z
+      raw_list[[i]] <- clean_mz(df, col_list[[i]])
+    }
+
+    # Build pair-sets and mapping; also retain set for difference ops
+    pair_sets <- vector("list", length(paths))
+    pair_maps <- vector("list", length(paths))  # data.frame of pairs + mapping
+    for (i in seq_along(paths)) {
+      pm <- build_pairs(raw_list[[i]], col_list[[i]])
+      pair_maps[[i]] <- pm
+      # use exact numeric pairs as keys (data frame to character keys)
+      pair_sets[[i]] <- paste(pm[["Precursor Mz"]], pm[["Product Mz"]], sep = "||")
+    }
+
+    # ---- Compute unique pairs per file (exact match) --------------------------
+    uniq_per_file <- vector("list", length(paths))
+    for (i in seq_along(paths)) {
+      others <- setdiff(seq_along(paths), i)
+      union_others <- unique(unlist(pair_sets[others], use.names = FALSE))
+      exact_unique_keys <- setdiff(pair_sets[[i]], union_others)
+
+      # Filter the mapping DF to those exact unique keys
+      pm <- pair_maps[[i]]
+      pm_keys <- paste(pm[["Precursor Mz"]], pm[["Product Mz"]], sep = "||")
+      df_unique <- pm[pm_keys %in% exact_unique_keys, , drop = FALSE]
+      # Add file tag for clarity
+      df_unique$source_file <- basename(paths[[i]])
+      # Sort for readability
+      df_unique <- df_unique[order(df_unique[["Precursor Mz"]], df_unique[["Product Mz"]]), ]
+      uniq_per_file[[i]] <- df_unique
+    }
+
+    names(uniq_per_file) <- basename(paths)
+
+    # ---- Optional: write Excel -----------------------------------------------
+    if (!is.null(write_excel)) {
+      if (!requireNamespace("openxlsx", quietly = TRUE)) {
+        warning("To write Excel, please install 'openxlsx': install.packages('openxlsx')\nSkipping Excel export.")
+      } else {
+        wb <- openxlsx::createWorkbook()
+        for (nm in names(uniq_per_file)) {
+          openxlsx::addWorksheet(wb, sheetName = gsub("[^A-Za-z0-9_]", "_", nm))
+          openxlsx::writeData(wb, sheet = gsub("[^A-Za-z0-9_]", "_", nm), uniq_per_file[[nm]])
+        }
+        openxlsx::saveWorkbook(wb, write_excel, overwrite = TRUE)
+      }
+    }
+
+    # ---- Return ---------------------------------------------------------------
+    if (return_format == "list") {
+      return(uniq_per_file)
+    } else {
+      # Bind all unique lists into a single long DF
+      out <- do.call(rbind, uniq_per_file)
+      rownames(out) <- NULL
+      return(out)
+    }
+  }
+
+  # --- Step 1: Extract unique transitions from templates ---
+  template_list <- unique_pairs_by_file(
+    paths = template_paths,
+    precursor_col = precursor_col,
+    product_col   = product_col,
+    name_col      = name_col,
+    standardize   = standardize,
+    return_format = "list"
+  )
+
+  # --- Step 2: Extract transitions from mzML file ---
+  res <- extract_chromatogram_info(mzml_file)
+  if (is.null(res)) {
+    message("No chromatogram data extracted.")
+    return(NULL)
+  }
+
+  res2 <- data.frame(
+    "Precursor Name" = res$name,
+    "Precursor Mz"   = as.numeric(res$Q1),
+    "Product Mz"     = as.numeric(res$Q3),
+    stringsAsFactors = FALSE
+  )
+
+  names(res2)[names(res2) == "Precursor.Mz"] <- "Precursor Mz"
+  names(res2)[names(res2) == "Product.Mz"]   <- "Product Mz"
+  names(res2)[names(res2) == "Precursor.Name"] <- "Precursor Name"
+
+
+  # --- Step 3: Compare unique template transitions to mzML transitions ---
+  calculate_matches <- function(template_df, res2_df) {
+    required_cols <- c("Precursor Mz", "Product Mz")
+
+    # Ensure required columns exist
+    if (!all(required_cols %in% names(template_df))) {
+      stop("template_df is missing required columns: ",
+           paste(setdiff(required_cols, names(template_df)), collapse = ", "))
+    }
+    if (!all(required_cols %in% names(res2_df))) {
+      stop("res2_df is missing required columns: ",
+           paste(setdiff(required_cols, names(res2_df)), collapse = ", "))
+    }
+
+    matches <- merge(template_df, res2_df, by = required_cols)
+    percentage <- (nrow(matches) / nrow(template_df)) * 100
+    list(percentage = round(percentage, 2),
+         matched_df = matches)
+  }
+
+  match_results <- list()
+  for (template_name in names(template_list)) {
+    result <- calculate_matches(template_list[[template_name]], res2)
+    match_results[[template_name]] <- result
+    if (verbose) {
+      cat(sprintf(
+        "Match percentage for %s: %.2f%%\n",
+        template_name,
+        result$percentage
+      ))
+    }
+  }
+
+  percentages <- sapply(match_results, function(x)
+    x$percentage)
+  best_match_name <- names(percentages)[which.max(percentages)]
+  best_match_percentage <- max(percentages)
+
+  list(
+    best_match_name = best_match_name,
+    best_match_percentage = best_match_percentage,
+    all_results = match_results
+  )
 }
 
 # special character replacement for mrm_templates----
