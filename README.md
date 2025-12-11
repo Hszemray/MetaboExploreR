@@ -4,7 +4,7 @@ MetaboExploreR
 
 [![license](https://img.shields.io/github/license/vimalnathnambiar/exfilms.svg?color=%23A31F34)](LICENSE)
 [![semantic-release](https://img.shields.io/badge/semantic--release-angular-E10079.svg?logo=semantic-release&logoColor=%23E10079)](https://github.com/semantic-release/semantic-release)
-[![doi-zenodo](https://img.shields.io/badge/zenodo-10.5281/zenodo.10976761-blue.svg?logo=doi&logoColor=blue)](https://doi.org/10.5281/zenodo.10976761)
+[![doi-zenodo](https://img.shields.io/badge/zenodo-10.5281/zenodo.17889838-blue.svg?logo=doi&logoColor=blue)](https://doi.org/10.5281/zenodo.17889838)
 
 ## Overview
 
